@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String                @id @default(cuid())
+  email           String                @unique
+  name            String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  members         OrganizationMember[]
+  createdBatches  ContentBatch?         @relation("BatchCreator")
+}
+
+model Organization {
+  id                    String                @id @default(cuid())
+  name                  String
+  planId                String                @default("FREE")
+  aiCredits             Int                   @default(0)
+  activationStatus      String                @default("PENDING")
+  firstScheduledPostAt  DateTime?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  members               OrganizationMember[]
+  aiRuns                AiRun[]
+  aiUsageLedgers        AiUsageLedger[]
+  scheduledPosts        ScheduledPost[]
+  publishedPosts        PublishedPost[]
+  drafts                Draft[]
+  contentBatches        ContentBatch[]
+  notifications         Notification[]
+  connectedAccounts     ConnectedAccount[]
+  brands                Brand[]
+
+  @@index([planId])
+  @@index([activationStatus])
+}
+
+model Brand {
+  id               String           @id @default(cuid())
+  name             String
+  organizationId   String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  scheduledPosts   ScheduledPost[]
+  publishedPosts   PublishedPost[]
+  drafts           Draft[]
+  contentBatches   ContentBatch[]
+  notifications    Notification[]
+  aiRuns           AiRun[]
+
+  @@index([organizationId])
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String   @default("MEMBER")
+  joinedAt       DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model AiRun {
+  id                 String      @id @default(cuid())
+  organizationId     String
+  brandId            String
+  model              String
+  runType            String
+  estimatedTokens    Int
+  reservedCredits    Int
+  actualInputTokens  Int?
+  actualOutputTokens Int?
+  actualTotalTokens  Int?
+  chargedCredits     Int?
+  status             String      @default("PROCESSING")
+  completedAt        DateTime?
+  failedAt           DateTime?
+  errorMessage       String?
+  startedAt          DateTime    @default(now())
+  createdAt          DateTime    @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brand        Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([status])
+  @@index([organizationId, startedAt])
+}
+
+model AiUsageLedger {
+  id             String      @id @default(cuid())
+  organizationId String
+  amount         Int
+  type           String
+  description    String?
+  createdAt      DateTime    @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, createdAt])
+}
+
+model ScheduledPost {
+  id             String     @id @default(cuid())
+  organizationId String
+  brandId        String
+  caption        String
+  platform       String?
+  scheduledAt    DateTime
+  status         String     @default("PENDING")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brand        Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([organizationId, status])
+  @@index([scheduledAt])
+}
+
+model PublishedPost {
+  id             String   @id @default(cuid())
+  organizationId String
+  brandId        String
+  caption        String
+  platform       String
+  publishedAt    DateTime @default(now())
+  totalLikes     Int      @default(0)
+  totalComments  Int      @default(0)
+  totalShares    Int      @default(0)
+  totalSaves     Int      @default(0)
+  totalReach     Int      @default(0)
+  engagement     Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brand            Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  repurposedDrafts Draft[]      @relation("RepurposeSource")
+
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([organizationId, engagement(sort: Desc)])
+  @@index([publishedAt])
+}
+
+model Draft {
+  id               String      @id @default(cuid())
+  organizationId   String
+  brandId          String
+  batchId          String?
+  repurposedFromId String?
+  caption          String
+  pillar           String?
+  visualBrief      String?
+  platform         String?
+  suggestedAt      DateTime?
+  status           String    @default("SUGGESTED")
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brand          Brand          @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  batch          ContentBatch?  @relation(fields: [batchId], references: [id])
+  repurposedFrom PublishedPost? @relation("RepurposeSource", fields: [repurposedFromId], references: [id])
+
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([batchId])
+  @@index([organizationId, status])
+  @@index([repurposedFromId])
+}
+
+model ContentBatch {
+  id              String      @id @default(cuid())
+  organizationId  String
+  brandId         String
+  createdByUserId String      @unique
+  itemCount       Int
+  status          String      @default("COMPLETED")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brand        Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("BatchCreator", fields: [createdByUserId], references: [id])
+  drafts       Draft[]
+
+  @@index([organizationId])
+  @@index([brandId])
+}
+
+model Notification {
+  id             String           @id @default(cuid())
+  organizationId String
+  brandId        String?
+  type           String
+  title          String
+  body           String
+  read           Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brand        Brand?        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([organizationId, type])
+}
+
+model ConnectedAccount {
+  id             String    @id @default(cuid())
+  organizationId String
+  platform       String
+  externalId     String
+  accessToken    String?
+  refreshToken   String?
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, platform, externalId])
+  @@index([organizationId])
+}
