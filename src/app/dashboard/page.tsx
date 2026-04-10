@@ -18,7 +18,8 @@ const getDashboardData = cache(async (organizationId: string) => {
       }),
       prisma.draft.findMany({
         where: { organizationId, status: "SUGGESTED" },
-        take: 10,
+        orderBy: { createdAt: "desc" },
+        take: 50,
       }),
       prisma.notification.findMany({
         where: { organizationId, read: false },

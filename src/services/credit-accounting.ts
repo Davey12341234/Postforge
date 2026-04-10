@@ -25,7 +25,7 @@ async function reconcileCredits(runId: string, input: number, output: number): P
     await tx.aiRun.update({ where: { id: runId }, data: { actualInputTokens: input, actualOutputTokens: output, actualTotalTokens: total, chargedCredits: charge, status: "COMPLETED", completedAt: new Date() } });
   });
 }
-async function failAndRefundRun(runId: string, error: string): Promise<void> {
+export async function failAndRefundRun(runId: string, error: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
     const run = await tx.aiRun.findUniqueOrThrow({ where: { id: runId } });
     await tx.organization.update({ where: { id: run.organizationId }, data: { aiCredits: { increment: run.reservedCredits } } });

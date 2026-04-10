@@ -15,6 +15,10 @@ model User {
   updatedAt       DateTime              @updatedAt
   members         OrganizationMember[]
   createdBatches  ContentBatch?         @relation("BatchCreator")
+
+  unifiedProfile   UnifiedStudioProfile?
+  referralsMade    UnifiedReferral[]    @relation("UnifiedReferralReferrer")
+  referralReceived UnifiedReferral?     @relation("UnifiedReferralReferred")
 }
 
 model Organization {
@@ -240,4 +244,335 @@ model ConnectedAccount {
 
   @@unique([organizationId, platform, externalId])
   @@index([organizationId])
+}
+
+// ============================================
+// UNIFIED CONTENT STUDIO (isolated; prefixed tables)
+// ============================================
+
+enum UnifiedSubscriptionTier {
+  FREE
+  PRO
+  BUSINESS
+  ENTERPRISE
+}
+
+enum UnifiedMissionStatus {
+  ACTIVE
+  COMPLETED
+  LOCKED
+}
+
+enum UnifiedDraftStatus {
+  DRAFT
+  READY
+  SCHEDULED
+  PUBLISHED
+}
+
+enum UnifiedAssetUsageType {
+  INSTAGRAM_POST
+  INSTAGRAM_STORY
+  INSTAGRAM_REEL
+  FACEBOOK_POST
+  THUMBNAIL
+  PROFILE_PICTURE
+  OTHER
+}
+
+enum UnifiedPaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum UnifiedRetentionCampaignType {
+  WIN_BACK
+  FEATURE_UPDATE
+  PROMOTIONAL
+}
+
+model UnifiedStudioProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  xpTotal        Int @default(0)
+  level          Int @default(1)
+  streakCount    Int @default(0)
+  lastStreakDate DateTime?
+
+  subscriptionTier UnifiedSubscriptionTier @default(FREE)
+  unifiedCredits Int                     @default(100)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  missions            UnifiedUserMission[]
+  achievements        UnifiedUserAchievement[]
+  drafts              UnifiedStudioDraft[]
+  sessions            UnifiedConversationSession[]
+  notifications       UnifiedStudioNotification[]
+  analyticsEvents     UnifiedAnalyticsEvent[]
+  assets              UnifiedAsset[]
+  payments            UnifiedPayment[]
+  retentionCampaigns  UnifiedRetentionCampaign[]
+  subscription        UnifiedSubscription?
+  invoices            UnifiedInvoice[]
+
+  @@index([userId])
+  @@map("unified_studio_profiles")
+}
+
+model UnifiedUserMission {
+  id        String @id @default(cuid())
+  profileId String
+  profile   UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  missionKey  String
+  title       String
+  description String?
+  progress    Int                @default(0)
+  target      Int                @default(1)
+  status      UnifiedMissionStatus @default(ACTIVE)
+  xpReward    Int                @default(50)
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([profileId, missionKey])
+  @@index([profileId])
+  @@map("unified_user_missions")
+}
+
+model UnifiedUserAchievement {
+  id        String @id @default(cuid())
+  profileId String
+  profile   UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  achievementKey String
+  title          String
+  icon           String?
+  unlockedAt     DateTime @default(now())
+
+  @@unique([profileId, achievementKey])
+  @@index([profileId])
+  @@map("unified_user_achievements")
+}
+
+model UnifiedStudioDraft {
+  id        String @id @default(cuid())
+  profileId String
+  profile   UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  caption  String
+  platform String?
+  status   UnifiedDraftStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([profileId, status])
+  @@map("unified_studio_drafts")
+}
+
+model UnifiedConversationSession {
+  id        String @id @default(cuid())
+  profileId String
+  profile   UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages UnifiedConversationMessage[]
+
+  @@index([profileId])
+  @@map("unified_conversation_sessions")
+}
+
+model UnifiedConversationMessage {
+  id        String @id @default(cuid())
+  sessionId String
+  session   UnifiedConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  role    String
+  content String @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@map("unified_conversation_messages")
+}
+
+model UnifiedStudioNotification {
+  id        String @id @default(cuid())
+  profileId String
+  profile   UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  type    String
+  title   String
+  body    String
+  read    Boolean  @default(false)
+  payload Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+  @@index([profileId, read])
+  @@map("unified_studio_notifications")
+}
+
+model UnifiedAnalyticsEvent {
+  id        String @id @default(cuid())
+  profileId String?
+  profile   UnifiedStudioProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  sessionId String?
+  eventName String
+  properties Json
+  timestamp DateTime @default(now())
+
+  @@index([profileId])
+  @@index([eventName])
+  @@index([timestamp])
+  @@map("unified_analytics_events")
+}
+
+model UnifiedAsset {
+  id        String @id @default(cuid())
+  profileId String
+  profile   UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  fileName   String
+  fileType   String
+  fileSize   Int
+  url        String
+  publicUrl  String
+  width      Int?
+  height     Int?
+  duration   Int?
+  usageType  UnifiedAssetUsageType
+  draftId    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+  @@index([usageType])
+  @@map("unified_assets")
+}
+
+model UnifiedPayment {
+  id        String @id @default(cuid())
+  profileId String
+  profile   UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  amountCents           Int
+  currency              String               @default("usd")
+  status                UnifiedPaymentStatus @default(PENDING)
+  stripePaymentId       String?
+  stripePaymentIntentId String?              @unique
+  stripeInvoiceId       String?
+  stripeCustomerId      String?
+  description           String?
+  metadata              Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([status])
+  @@map("unified_payments")
+}
+
+/// Stripe subscription state (one per unified profile).
+model UnifiedSubscription {
+  id                   String @id @default(cuid())
+  profileId            String @unique
+  profile              UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  stripePriceId        String?
+
+  plan                 String   @default("free")
+  status               String   @default("active")
+
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean  @default(false)
+
+  monthlyCreditsLimit  Int      @default(100)
+  aiGenerationsLimit   Int      @default(50)
+  draftStorageLimit    Int      @default(20)
+  teamMembersLimit     Int      @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  canceledAt DateTime?
+
+  @@index([plan])
+  @@index([status])
+  @@map("unified_subscriptions")
+}
+
+model UnifiedInvoice {
+  id              String @id @default(cuid())
+  profileId     String
+  profile         UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  stripeInvoiceId String @unique
+  amountPaidCents Int
+  amountDueCents  Int
+  status          String
+  invoicePdf      String?
+
+  periodStart     DateTime
+  periodEnd       DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+  @@index([status])
+  @@map("unified_invoices")
+}
+
+model UnifiedReferral {
+  id             String @id @default(cuid())
+  referrerUserId String
+  referredUserId String? @unique
+
+  referralCode String  @unique
+  status       String  @default("PENDING")
+  rewardCredits Int    @default(0)
+
+  createdAt   DateTime  @default(now())
+  convertedAt DateTime?
+
+  referrer User  @relation("UnifiedReferralReferrer", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  referred User? @relation("UnifiedReferralReferred", fields: [referredUserId], references: [id], onDelete: SetNull)
+
+  @@index([referrerUserId])
+  @@index([referralCode])
+  @@map("unified_referrals")
+}
+
+model UnifiedRetentionCampaign {
+  id        String @id @default(cuid())
+  profileId String
+  profile   UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  campaignType UnifiedRetentionCampaignType
+  title        String
+  body         String
+  sentAt       DateTime?
+  scheduledFor DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+  @@map("unified_retention_campaigns")
 }

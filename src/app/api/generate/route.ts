@@ -10,6 +10,135 @@ import { generate30DayContentBatch } from "@/services/content-batch";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
+const ALLOWED_POST_KEYS = new Set([
+  "caption",
+  "pillar",
+  "platform",
+  "suggestedAt",
+]);
+
+function stripMarkdownFences(s: string): string {
+  let t = s.trim();
+  t = t.replace(/^`{3,4}(?:json)?\s*/i, "").replace(/\s*`{3,4}$/m, "");
+  t = t.replace(/```(?:json)?/gi, "").replace(/```/g, "");
+  return t.replace(/`{4,}/g, "");
+}
+
+function extractPostsArray(parsed: unknown): unknown[] | null {
+  if (!parsed || typeof parsed !== "object") return null;
+  const po = parsed as Record<string, unknown>;
+  if (Array.isArray(po.posts)) return po.posts;
+  return null;
+}
+
+function pickPostFields(
+  raw: Record<string, unknown>,
+): {
+  caption: string;
+  pillar?: string;
+  platform?: string;
+  suggestedAt?: Date;
+} {
+  const next: Record<string, unknown> = {};
+  for (const k of ALLOWED_POST_KEYS) {
+    if (k in raw) next[k] = raw[k];
+  }
+  const caption = typeof next.caption === "string" ? next.caption : "";
+  const pillar = typeof next.pillar === "string" ? next.pillar : undefined;
+  const platform = typeof next.platform === "string" ? next.platform : undefined;
+  let suggestedAt: Date | undefined;
+  if (next.suggestedAt != null) {
+    if (typeof next.suggestedAt === "string") {
+      const d = new Date(next.suggestedAt);
+      if (!Number.isNaN(d.getTime())) suggestedAt = d;
+    }
+  }
+  return { caption, pillar, platform, suggestedAt };
+}
+
+function parseAiPostsJson(
+  raw: string,
+  postCount: number,
+): Array<{
+  caption: string;
+  pillar?: string;
+  platform?: string;
+  suggestedAt?: Date;
+}> {
+  const cleaned = stripMarkdownFences(raw);
+
+  let objects: Array<Record<string, unknown>> | null = null;
+
+  const tryParseObject = (s: string): void => {
+    try {
+      const parsed = JSON.parse(s) as unknown;
+      const posts = extractPostsArray(parsed);
+      if (!posts) return;
+      objects = posts.map((p) => {
+        if (!p || typeof p !== "object") return pickPostFields({});
+        return pickPostFields(p as Record<string, unknown>);
+      }) as Array<Record<string, unknown>>;
+    } catch {
+      /* fall through */
+    }
+  };
+
+  tryParseObject(cleaned);
+
+  if (!objects) {
+    const postsMatch = cleaned.match(/"posts"\s*:\s*(\[[\s\S]*\])/);
+    if (postsMatch) {
+      try {
+        const arr = JSON.parse(postsMatch[1]) as unknown;
+        if (Array.isArray(arr)) {
+          objects = arr.map((p) => {
+            if (!p || typeof p !== "object") return pickPostFields({});
+            return pickPostFields(p as Record<string, unknown>);
+          }) as Array<Record<string, unknown>>;
+        }
+      } catch {
+        objects = null;
+      }
+    }
+  }
+
+  if (!objects) {
+    const anyArray = cleaned.match(/\[[\s\S]*\]/);
+    if (anyArray) {
+      try {
+        const arr = JSON.parse(anyArray[0]) as unknown;
+        if (Array.isArray(arr)) {
+          objects = arr.map((p) => {
+            if (!p || typeof p !== "object") return pickPostFields({});
+            return pickPostFields(p as Record<string, unknown>);
+          }) as Array<Record<string, unknown>>;
+        }
+      } catch {
+        objects = null;
+      }
+    }
+  }
+
+  if (!objects) {
+    return [];
+  }
+
+  return objects.slice(0, postCount).map((o) => ({
+    caption: typeof o.caption === "string" ? o.caption : "",
+    pillar: typeof o.pillar === "string" ? o.pillar : undefined,
+    platform: typeof o.platform === "string" ? o.platform : undefined,
+    suggestedAt:
+      o.suggestedAt instanceof Date
+        ? o.suggestedAt
+        : typeof o.suggestedAt === "string"
+          ? (() => {
+              const d = new Date(o.suggestedAt);
+              return Number.isNaN(d.getTime()) ? undefined : d;
+            })()
+          : undefined,
+  }));
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
@@ -35,7 +164,8 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-    const { topic, postCount, brandId: inputBrandId } = parseResult.data;
+    const { topic, postCount, brandId: inputBrandId, platforms } =
+      parseResult.data;
 
     const brand = inputBrandId
       ? await prisma.brand.findFirst({
@@ -56,6 +186,14 @@ export async function POST(req: NextRequest) {
 
     const estimatedTokens = 400 * postCount;
 
+    const systemPrompt = `You are an elite social media content strategist generating a batch of ${postCount} posts. Use professional but warm tone. Use short paragraphs and emojis sparingly for visual break-up. LinkedIn: 150-300 words. X: under 280 chars. Instagram: visual-first hooks. Adjust tone per platform context if provided. Strict JSON: { "posts": [{ "caption": "Exact post text here", "pillar": "Educational", "platform": "LINKEDIN" }] }`;
+
+    const platformHint =
+      platforms && platforms.length > 0
+        ? ` Distribute posts across these platforms only (vary across posts): ${platforms.join(", ")}.`
+        : "";
+    const userPrompt = `Topic: ${topic}. Generate exactly ${postCount} posts using the context provided above.${platformHint} Return ONLY valid JSON.`;
+
     const batchId = await withCreditValidation(
       {
         orgId: organizationId,
@@ -68,11 +206,8 @@ export async function POST(req: NextRequest) {
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [
-            {
-              role: "system",
-              content: `Generate ${postCount} unique social media posts about the given topic. Respond with JSON: { "posts": [{ "caption": "..." }] }`,
-            },
-            { role: "user", content: `Topic: ${topic}` },
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
           ],
           temperature: 0.8,
           response_format: { type: "json_object" },
@@ -81,14 +216,15 @@ export async function POST(req: NextRequest) {
         const raw = completion.choices[0]?.message?.content;
         if (!raw) throw new Error("Empty AI response");
 
-        const parsed = JSON.parse(raw) as {
-          posts?: Array<{ caption?: string; content?: string }>;
-        };
-        const posts = (parsed.posts || []).slice(0, postCount);
+        const posts = parseAiPostsJson(raw, postCount);
 
         const draftInputs = posts.map((p, i) => ({
-          caption: p.caption || p.content || "",
-          suggestedAt: new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000),
+          caption: p.caption || "",
+          pillar: p.pillar,
+          platform: p.platform,
+          suggestedAt:
+            p.suggestedAt ??
+            new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000),
         }));
 
         const id = await generate30DayContentBatch(

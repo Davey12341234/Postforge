@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# Cursor / IDE
+.cursor/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
@@ -32,6 +35,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
+!.env.production.template
+deploy/secrets.preview.env
 
 # vercel
 .vercel
@@ -39,3 +45,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+.env*.local
+
+# Local user uploads (dev)
+public/uploads/*
+!public/uploads/.gitkeep

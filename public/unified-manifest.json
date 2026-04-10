@@ -1,0 +1,21 @@
+{
+  "name": "AI Content Studio",
+  "short_name": "AI Studio",
+  "description": "AI-powered social content studio (Unified route)",
+  "id": "/unified",
+  "start_url": "/unified",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07070f",
+  "theme_color": "#6366f1",
+  "categories": ["social", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ]
+}

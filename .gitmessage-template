@@ -1,0 +1,16 @@
+feat(unified): add Prisma migration and production deploy tooling
+
+## What
+- Initial migration prisma/migrations/20260410120000_init_unified_studio
+- GET /api/health for Railway health checks
+- railway.json: preDeploy migrate + healthcheckPath
+- Scripts: generate-migration.sh, verify-deployment.mjs
+- .env.production.template, Stripe setup guide, CURSOR-TASKS.md
+
+## Verify
+- npx tsc --noEmit
+- npm run build
+- npm run verify:deploy (optional: pass production URL)
+
+## Note
+- Existing non-empty DBs may need: prisma migrate resolve --applied <name> (baseline)

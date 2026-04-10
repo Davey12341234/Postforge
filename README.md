@@ -1,5 +1,18 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Unified Content Studio (`/unified`)
+
+The **Unified** route is a self-contained studio (AI chat via Anthropic, XP/missions, drafts UI, publish stub, referrals) backed by `Unified*` Prisma models. It uses the same NextAuth session as the rest of Postforge.
+
+- **URL:** [http://localhost:3000/unified](http://localhost:3000/unified) (after sign-in)
+- **Env:** set `ANTHROPIC_API_KEY` for chat; `DATABASE_URL` must match your Prisma datasource (PostgreSQL).
+- **DB:** run `npx prisma migrate dev` or `npx prisma db push`, then `npx prisma generate`.
+- **APIs:** `/api/unified/chat`, `/api/unified/upload`, `/api/unified/user/progress`, `/api/unified/referrals`, `/api/unified/publish`, `/api/unified/generate`, `/api/unified/drafts`, `/api/unified/checkout`, `/api/stripe/webhook`, `/api/admin/revenue` (protected)
+- **Stripe:** set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_PRO` / `STRIPE_PRICE_BUSINESS` / `STRIPE_PRICE_ENTERPRISE`; run `npx prisma migrate dev` after pulling schema changes.
+- **Setup script (Git Bash / WSL / macOS/Linux):** `./setup.sh`
+
+Styles live in `src/app/unified/unified-globals.css` (scoped under `.ucs-root`). Do not add a second `<html>` in route layouts — only the root `src/app/layout.tsx` should wrap `<html>`.
+
 ## Getting Started
 
 First, run the development server:

@@ -1,0 +1,19 @@
+{
+  "required": [
+    "NEXTAUTH_URL",
+    "NEXTAUTH_SECRET",
+    "ANTHROPIC_API_KEY",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_PUBLISHABLE_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "STRIPE_PRICE_PRO",
+    "STRIPE_PRICE_BUSINESS",
+    "STRIPE_PRICE_ENTERPRISE",
+    "ADMIN_REVENUE_SECRET"
+  ],
+  "notes": {
+    "NEXTAUTH_URL": "https://yourdomain.com — no trailing slash; must match public URL",
+    "DATABASE_URL": "Usually auto-set by Railway PostgreSQL — omit from manual list unless external DB",
+    "STRIPE_PRICE_*": "Stripe Dashboard → Products → Price ID (price_...)"
+  }
+}
