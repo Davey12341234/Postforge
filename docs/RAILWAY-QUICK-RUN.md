@@ -1,6 +1,7 @@
 # Railway deploy — simple steps (PostForge / Unified Studio)
 
-Longer reference: [`PRODUCTION-DEPLOYMENT.md`](./PRODUCTION-DEPLOYMENT.md)
+Longer reference: [`PRODUCTION-DEPLOYMENT.md`](./PRODUCTION-DEPLOYMENT.md).  
+**Working with another AI on Variables / Networking / `NEXTAUTH_URL`:** [`AI-RAILWAY-ENV-HANDOFF.md`](./AI-RAILWAY-ENV-HANDOFF.md)
 
 ---
 

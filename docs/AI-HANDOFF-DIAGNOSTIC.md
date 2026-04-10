@@ -3,6 +3,8 @@
 **Purpose:** Give another AI or engineer a single place to understand **what works**, **what’s unverified**, and **what to fix next**.  
 **Repo:** Next.js app (`postforge`), primary new surface: **`/unified`**.
 
+**Railway variables, networking, and `NEXTAUTH_URL`:** Use the dedicated paired-AI brief — **[`AI-RAILWAY-ENV-HANDOFF.md`](./AI-RAILWAY-ENV-HANDOFF.md)** — so another assistant can walk through the dashboard without re-explaining context.
+
 ---
 
 ## 1. Verified working locally (this codebase)
@@ -112,6 +114,7 @@ See **`.env.local.example`**. Minimum for Unified + Stripe:
 
 | Document | Contents |
 |----------|----------|
+| [`AI-RAILWAY-ENV-HANDOFF.md`](./AI-RAILWAY-ENV-HANDOFF.md) | **Start here for Railway:** web vs Postgres service, Variables, `DATABASE_URL` reference, Networking, `NEXTAUTH_URL`, verification commands |
 | [`REVIEW-HANDOFF.md`](./REVIEW-HANDOFF.md) | Schema/API corrections (credits `balance`, drafts `caption`, etc.) |
 | [`GO-LIVE-DEPLOYMENT-PLAN.md`](./GO-LIVE-DEPLOYMENT-PLAN.md) | Repo-correct go-live checklist |
 | [`ZAI-GO-LIVE-HANDOFF.md`](./ZAI-GO-LIVE-HANDOFF.md) | Objectives + inventory |
