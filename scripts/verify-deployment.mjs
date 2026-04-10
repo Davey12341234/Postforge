@@ -53,7 +53,17 @@ if (existsSync(secrets) || existsSync(prodLocal)) {
   w("No deploy/secrets.preview.env or .env.production.local — run npm run deploy:check after creating one");
 }
 
-// 2) tsc
+// 2) migration SQL must not have UTF-8 BOM (PostgreSQL rejects it)
+const bomScript = join(root, "scripts", "check-migration-bom.mjs");
+const bom = spawnSync(process.execPath, [bomScript], { cwd: root, encoding: "utf8" });
+if (bom.status === 0) {
+  ok("migration.sql files have no BOM");
+} else {
+  bad("migration BOM check failed");
+  console.log(bom.stdout || bom.stderr || "");
+}
+
+// 3) tsc
 const tsc = spawnSync(
   "npx",
   ["tsc", "--noEmit"],
@@ -74,6 +84,18 @@ async function liveChecks() {
   }
   const url = base.replace(/\/$/, "");
   console.log(`\n--- HTTP checks: ${url} ---\n`);
+  try {
+    const live = await fetch(`${url}/api/health/live`, {
+      signal: AbortSignal.timeout(15000),
+    });
+    if (live.ok) {
+      ok(`/api/health/live (${live.status})`);
+    } else {
+      bad(`/api/health/live HTTP ${live.status}`);
+    }
+  } catch (e) {
+    bad(`/api/health/live unreachable: ${e instanceof Error ? e.message : e}`);
+  }
   try {
     const health = await fetch(`${url}/api/health`, {
       signal: AbortSignal.timeout(15000),

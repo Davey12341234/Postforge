@@ -10,6 +10,7 @@
     "start:production": "node scripts/railway-deploy-migrate.mjs && next start --hostname 0.0.0.0",
     "deploy:check": "node scripts/check-deploy-readiness.mjs",
     "verify:deploy": "node scripts/verify-deployment.mjs",
+    "check:migrations": "node scripts/check-migration-bom.mjs",
     "lint": "eslint"
   },
   "dependencies": {
