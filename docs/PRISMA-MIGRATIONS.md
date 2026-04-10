@@ -12,7 +12,22 @@
 npx prisma migrate deploy
 ```
 
-`railway.json` runs **`node scripts/railway-deploy-migrate.mjs`** before **`next start`** (migrate deploy; on **P3005**, `migrate resolve --applied` per migration, then retry). You normally do **not** need to run `migrate resolve` by hand on Railway.
+`railway.json` runs **`node scripts/railway-deploy-migrate.mjs`** before **`next start`** (migrate deploy; automatic recovery for **P3009** and **P3005**). You usually do **not** need to run `migrate resolve` by hand on Railway.
+
+## Failed migration (P3009)
+
+If a migration **started but failed** (e.g. timeout, error mid-SQL), Prisma records it as failed and **`migrate deploy`** stops with **P3009**.
+
+**`scripts/railway-deploy-migrate.mjs`** runs **`prisma migrate resolve --rolled-back <migration_name>`** for each folder under `prisma/migrations`, then retries **`migrate deploy`**.
+
+**Manual fix** (same DATABASE_URL as production):
+
+```bash
+npx prisma migrate resolve --rolled-back 20260410120000_init_unified_studio
+npx prisma migrate deploy
+```
+
+If the database is **half-created** (some tables exist), you may get “already exists” on retry. Then either **drop and recreate** the schema on a throwaway DB, or manually align tables and use **`migrate resolve --applied`** (advanced).
 
 ## Existing database (already has tables from `db push`)
 

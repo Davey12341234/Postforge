@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Run before `next start` on Railway: `prisma migrate deploy`, and on P3005
- * baseline with `migrate resolve --applied` per migration, then retry.
+ * Run before `next start` on Railway: `prisma migrate deploy`, with recovery for:
+ * - P3009: failed migration recorded → `migrate resolve --rolled-back`, then retry
+ * - P3005: non-empty DB / no history → `migrate resolve --applied` per migration, then retry
  *
  * Usage: node scripts/railway-deploy-migrate.mjs
  */
@@ -25,7 +26,6 @@ function listMigrationNames() {
 }
 
 function runPrisma(args) {
-  // Prefer the installed CLI (reliable on Linux/Railway).
   const binUnix = join(root, "node_modules", ".bin", "prisma");
   const binWin = join(root, "node_modules", ".bin", "prisma.cmd");
   let cmd;
@@ -68,6 +68,10 @@ function runPrisma(args) {
   return { status, combined };
 }
 
+function isP3009FailedMigration(combined) {
+  return /P3009/i.test(combined) || /failed migrations/i.test(combined);
+}
+
 function isP3005NonEmpty(combined) {
   return (
     /P3005/i.test(combined) ||
@@ -80,10 +84,12 @@ function resolveAlreadyRecorded(combined) {
   return /already recorded|already been applied|already applied/i.test(combined);
 }
 
-// On Railway, DATABASE_URL must be set on the *web* service (Postgres does not
-// inject it automatically). Prisma in the deploy image usually has no `.env` file.
+function rolledBackNoop(combined) {
+  return /not in a failed state|No failed migration|could not find migration/i.test(combined);
+}
+
 const isRailwayRuntime = Boolean(
-  process.env.RAILWAY_ENVIRONMENT_ID || process.env.RAILWAY_DEPLOYMENT_ID
+  process.env.RAILWAY_ENVIRONMENT_ID || process.env.RAILWAY_DEPLOYMENT_ID,
 );
 if (isRailwayRuntime && !String(process.env.DATABASE_URL || "").trim()) {
   console.error(`
@@ -107,6 +113,30 @@ if (result.status === 0) {
   process.exit(0);
 }
 
+// P3009: migration recorded as failed — mark rolled back and retry once.
+if (isP3009FailedMigration(result.combined) && names.length > 0) {
+  console.error(
+    "[railway-deploy-migrate] P3009 (failed migration in _prisma_migrations). Marking rolled back, then retry deploy.",
+  );
+  for (const name of names) {
+    const res = runPrisma(["migrate", "resolve", "--rolled-back", name]);
+    if (res.status !== 0 && !rolledBackNoop(res.combined)) {
+      console.error(`[railway-deploy-migrate] migrate resolve --rolled-back ${name} failed.`);
+      process.exit(1);
+    }
+  }
+  result = runPrisma(["migrate", "deploy"]);
+  if (result.status === 0) {
+    process.exit(0);
+  }
+  if (isP3009FailedMigration(result.combined)) {
+    console.error(
+      "[railway-deploy-migrate] Still P3009 after rolled-back. DB may be half-migrated — reset the DB or fix manually (see docs/PRISMA-MIGRATIONS.md).",
+    );
+    process.exit(1);
+  }
+}
+
 if (!isP3005NonEmpty(result.combined)) {
   process.exit(1);
 }
@@ -117,7 +147,7 @@ if (names.length === 0) {
 }
 
 console.error(
-  "[railway-deploy-migrate] P3005 (non-empty DB / missing migration history). Baseline migrations as applied, then retry deploy."
+  "[railway-deploy-migrate] P3005 (non-empty DB / missing migration history). Baseline migrations as applied, then retry deploy.",
 );
 
 for (const name of names) {
