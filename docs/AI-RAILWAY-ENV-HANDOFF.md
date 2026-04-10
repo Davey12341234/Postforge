@@ -56,6 +56,16 @@ Optional / feature flags: see same template and **`docs/PRODUCTION-DEPLOYMENT.md
 
 5. **`NODE_ENV=production`** is often set automatically on Railway; if not, set it on the web service.
 
+### Stripe: automated provision (CLI)
+
+If **`railway`** is logged in and linked to the **Postforge** service, and **`STRIPE_SECRET_KEY`** is already set on Railway:
+
+```bash
+npm run stripe:sync-railway
+```
+
+This runs **`scripts/stripe-sync-railway.mjs`**: ensures a **Postforge** product exists, creates or reuses **monthly** prices (Pro / Business / Enterprise in USD), recreates the **webhook** at **`https://<your-host>/api/stripe/webhook`**, and pushes **`STRIPE_PRICE_*`** and **`STRIPE_WEBHOOK_SECRET`** to Railway. Re-run after changing public URL.
+
 ---
 
 ## 4. Step-by-step: Public URL (Networking)

@@ -102,7 +102,7 @@ export async function checkUsageLimits(userId: string): Promise<UsageLimitsResul
     prisma.unifiedAnalyticsEvent.count({
       where: {
         profileId: profile.id,
-        eventName: "content_generation",
+        eventName: { in: ["content_generation", "image_generation"] },
         timestamp: { gte: periodStart },
       },
     }),

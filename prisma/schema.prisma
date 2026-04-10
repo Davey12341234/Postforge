@@ -293,6 +293,16 @@ enum UnifiedRetentionCampaignType {
   PROMOTIONAL
 }
 
+enum UnifiedImageProvider {
+  DALLE3
+}
+
+enum UnifiedImageStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 model UnifiedStudioProfile {
   id     String @id @default(cuid())
   userId String @unique
@@ -320,6 +330,7 @@ model UnifiedStudioProfile {
   retentionCampaigns  UnifiedRetentionCampaign[]
   subscription        UnifiedSubscription?
   invoices            UnifiedInvoice[]
+  generatedImages     UnifiedGeneratedImage[]
 
   @@index([userId])
   @@map("unified_studio_profiles")
@@ -463,6 +474,39 @@ model UnifiedAsset {
   @@index([profileId])
   @@index([usageType])
   @@map("unified_assets")
+}
+
+/// AI-generated image (DALL·E 3); file persisted under /public/uploads when possible.
+model UnifiedGeneratedImage {
+  id        String @id @default(cuid())
+  profileId String
+  profile   UnifiedStudioProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  prompt           String
+  enhancedPrompt   String?
+  provider         UnifiedImageProvider @default(DALLE3)
+  openaiRevisedPrompt String?
+
+  size    String
+  quality String
+  width   Int
+  height  Int
+  format  String @default("png")
+
+  /// Served URL (relative /uploads/... or absolute with APP_URL in prod)
+  publicUrl String
+  /// Original provider URL (short-lived); cleared after persist when stored
+  transientUrl String?
+
+  costCredits Int
+  status      UnifiedImageStatus @default(COMPLETED)
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+  @@index([profileId, createdAt])
+  @@map("unified_generated_images")
 }
 
 model UnifiedPayment {

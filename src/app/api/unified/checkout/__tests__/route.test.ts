@@ -31,7 +31,7 @@ import { POST } from "../route";
 
 describe("POST /api/unified/checkout", () => {
   it("returns 401 when not signed in", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    vi.mocked(auth).mockResolvedValue(null as never);
     const req = new NextRequest("http://localhost/api/unified/checkout", {
       method: "POST",
       body: JSON.stringify({ planId: "pro" }),

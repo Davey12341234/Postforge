@@ -424,6 +424,13 @@ export default function UnifiedStudioClient({
   const [genContentType, setGenContentType] = useState("post");
   const [genOutput, setGenOutput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [imgPrompt, setImgPrompt] = useState("");
+  const [imgSize, setImgSize] = useState<
+    "1024x1024" | "1792x1024" | "1024x1792"
+  >("1024x1024");
+  const [imgQuality, setImgQuality] = useState<"standard" | "hd">("standard");
+  const [imgResultUrl, setImgResultUrl] = useState<string | null>(null);
+  const [imgLoading, setImgLoading] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [online, setOnline] = useState(true);
   const [publishPlatform, setPublishPlatform] = useState("instagram");
@@ -734,6 +741,80 @@ export default function UnifiedStudioClient({
       );
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleImageGenerate = async () => {
+    const p = imgPrompt.trim();
+    if (!p) {
+      showToast("Enter an image prompt", "warn");
+      return;
+    }
+    setImgLoading(true);
+    setImgResultUrl(null);
+    try {
+      let res: Response;
+      try {
+        res = await fetch("/api/unified/images/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: p,
+            size: imgSize,
+            quality: imgQuality,
+          }),
+        });
+      } catch {
+        throw new UnifiedAPIError(
+          "Network error — check your connection.",
+          0,
+          {},
+        );
+      }
+      const data = (await res.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
+      if (!res.ok) {
+        throw UnifiedAPIError.fromResponse(res.status, data);
+      }
+      const img = data.image as
+        | { absoluteUrl?: string; publicUrl?: string }
+        | undefined;
+      const url = String(img?.absoluteUrl ?? img?.publicUrl ?? "");
+      if (url) setImgResultUrl(url);
+      showToast("Image ready", "ok");
+      await loadProgress();
+    } catch (e: unknown) {
+      if (isUnifiedAPIError(e)) {
+        if (e.status === 0) {
+          showToast(e.message, "warn");
+          return;
+        }
+        if (e.status === 402 && e.code === "LIMIT_REACHED") {
+          setUpgradePromptType("generation_limit");
+          setShowUpgradePrompt(true);
+          return;
+        }
+        if (e.status === 402) {
+          setUpgradePromptType("credits");
+          setShowUpgradePrompt(true);
+          showToast(e.message || "Insufficient credits", "warn");
+          return;
+        }
+        showToast(e.message, "error");
+        return;
+      }
+      if (isLikelyNetworkError(e)) {
+        showToast("Network error — check your connection.", "error");
+        return;
+      }
+      showToast(
+        e instanceof Error ? e.message : "Image generation failed",
+        "error",
+      );
+    } finally {
+      setImgLoading(false);
     }
   };
 
@@ -1209,6 +1290,86 @@ export default function UnifiedStudioClient({
                   }}
                 >
                   {genOutput}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="ucs-card">
+              <p className="ucs-h2">Image (DALL·E 3)</p>
+              <p style={{ fontSize: 13, color: "#a1a1aa", marginTop: 0 }}>
+                Uses <code style={{ fontSize: 12 }}>/api/unified/images/generate</code>{" "}
+                and <code style={{ fontSize: 12 }}>OPENAI_API_KEY</code>. Standard
+                15 credits · HD 30 credits (see server).
+              </p>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 10,
+                  marginBottom: 10,
+                }}
+              >
+                <label style={{ fontSize: 12, color: "#a1a1aa" }}>
+                  Size
+                  <select
+                    className="ucs-input"
+                    style={{ width: "100%", marginTop: 4 }}
+                    value={imgSize}
+                    onChange={(e) =>
+                      setImgSize(
+                        e.target.value as typeof imgSize,
+                      )
+                    }
+                  >
+                    <option value="1024x1024">1024 × 1024</option>
+                    <option value="1792x1024">1792 × 1024</option>
+                    <option value="1024x1792">1024 × 1792</option>
+                  </select>
+                </label>
+                <label style={{ fontSize: 12, color: "#a1a1aa" }}>
+                  Quality
+                  <select
+                    className="ucs-input"
+                    style={{ width: "100%", marginTop: 4 }}
+                    value={imgQuality}
+                    onChange={(e) =>
+                      setImgQuality(e.target.value as typeof imgQuality)
+                    }
+                  >
+                    <option value="standard">Standard</option>
+                    <option value="hd">HD</option>
+                  </select>
+                </label>
+              </div>
+              <textarea
+                className="ucs-textarea"
+                placeholder="Describe the image you want…"
+                value={imgPrompt}
+                onChange={(e) => setImgPrompt(e.target.value)}
+                style={{ minHeight: 80 }}
+              />
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                <button
+                  type="button"
+                  className="ucs-btn ucs-btn-primary"
+                  disabled={imgLoading}
+                  onClick={() => void handleImageGenerate()}
+                >
+                  {imgLoading ? "Generating…" : "Generate image"}
+                </button>
+              </div>
+              {imgResultUrl ? (
+                <div style={{ marginTop: 12 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imgResultUrl}
+                    alt="Generated"
+                    style={{
+                      maxWidth: "100%",
+                      borderRadius: 12,
+                      border: "1px solid rgba(255,255,255,0.1)",
+                    }}
+                  />
                 </div>
               ) : null}
             </div>

@@ -73,6 +73,7 @@ Base: **`/api/unified/`**
 |-------|------|
 | `chat` | POST — Anthropic chat |
 | `generate` | POST — one-shot generation |
+| **`images/generate`** | **POST/GET** — **DALL·E 3** (`OPENAI_API_KEY`), see [`IMAGE-GENERATION-SPEC.md`](./IMAGE-GENERATION-SPEC.md) |
 | `credits` | GET/POST |
 | `settings` | GET/POST — settings via analytics events |
 | `analytics` | GET |
@@ -114,6 +115,9 @@ See **`.env.local.example`**. Minimum for Unified + Stripe:
 
 | Document | Contents |
 |----------|----------|
+| [`AI-CAPABILITIES-HANDOFF.md`](./AI-CAPABILITIES-HANDOFF.md) | **Anthropic vs OpenAI**, unified routes, limits/credits, rate-limit note, performance levers |
+| [`IMAGE-GENERATION-SPEC.md`](./IMAGE-GENERATION-SPEC.md) | **Planned (not built):** `GeneratedImage`, `BrandKit`, provider grid, 5-step pipeline |
+| [`CURSOR-IMPLEMENTATION-BRIEF.md`](./CURSOR-IMPLEMENTATION-BRIEF.md) | **Target vs reality:** Cursor backlog prompts; accuracy matrix (tenantId, LangGraph, pgvector, etc.) |
 | [`AI-RAILWAY-ENV-HANDOFF.md`](./AI-RAILWAY-ENV-HANDOFF.md) | **Start here for Railway:** web vs Postgres service, Variables, `DATABASE_URL` reference, Networking, `NEXTAUTH_URL`, verification commands |
 | [`REVIEW-HANDOFF.md`](./REVIEW-HANDOFF.md) | Schema/API corrections (credits `balance`, drafts `caption`, etc.) |
 | [`GO-LIVE-DEPLOYMENT-PLAN.md`](./GO-LIVE-DEPLOYMENT-PLAN.md) | Repo-correct go-live checklist |
