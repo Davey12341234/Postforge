@@ -7,7 +7,7 @@
  * Usage: node scripts/railway-deploy-migrate.mjs
  */
 
-import { readdirSync, existsSync } from "fs";
+import { readdirSync, existsSync, readFileSync, writeFileSync } from "fs";
 import { spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -23,6 +23,29 @@ function listMigrationNames() {
     .filter((d) => d.isDirectory() && /^\d{14}_/.test(d.name))
     .map((d) => d.name)
     .sort();
+}
+
+/** PostgreSQL rejects a leading UTF-8 BOM (U+FEFF) — "syntax error at or near \"﻿\"" */
+function stripBomFromMigrationSqlFiles() {
+  const dir = join(root, "prisma", "migrations");
+  if (!existsSync(dir)) return;
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    if (!ent.isDirectory()) continue;
+    const sqlPath = join(dir, ent.name, "migration.sql");
+    if (!existsSync(sqlPath)) continue;
+    const buf = readFileSync(sqlPath);
+    const bom = Buffer.from([0xef, 0xbb, 0xbf]);
+    if (buf.length >= 3 && buf.subarray(0, 3).equals(bom)) {
+      console.error(`[railway-deploy-migrate] Stripping UTF-8 BOM from ${ent.name}/migration.sql`);
+      writeFileSync(sqlPath, buf.subarray(3));
+      continue;
+    }
+    const text = buf.toString("utf8");
+    if (text.length > 0 && text.charCodeAt(0) === 0xfeff) {
+      console.error(`[railway-deploy-migrate] Stripping U+FEFF from ${ent.name}/migration.sql`);
+      writeFileSync(sqlPath, text.slice(1), "utf8");
+    }
+  }
 }
 
 function runPrisma(args) {
@@ -72,6 +95,15 @@ function isP3009FailedMigration(combined) {
   return /P3009/i.test(combined) || /failed migrations/i.test(combined);
 }
 
+/** P3009 or P3018 / "migration failed to apply" — use rolled-back then retry */
+function needsRolledBackRecovery(combined) {
+  return (
+    isP3009FailedMigration(combined) ||
+    /P3018/i.test(combined) ||
+    /A migration failed to apply/i.test(combined)
+  );
+}
+
 function isP3005NonEmpty(combined) {
   return (
     /P3005/i.test(combined) ||
@@ -106,6 +138,8 @@ if (isRailwayRuntime && !String(process.env.DATABASE_URL || "").trim()) {
   process.exit(1);
 }
 
+stripBomFromMigrationSqlFiles();
+
 const names = listMigrationNames();
 let result = runPrisma(["migrate", "deploy"]);
 
@@ -113,10 +147,10 @@ if (result.status === 0) {
   process.exit(0);
 }
 
-// P3009: migration recorded as failed — mark rolled back and retry once.
-if (isP3009FailedMigration(result.combined) && names.length > 0) {
+// P3009 / P3018: failed migration — mark rolled back and retry deploy.
+if (needsRolledBackRecovery(result.combined) && names.length > 0) {
   console.error(
-    "[railway-deploy-migrate] P3009 (failed migration in _prisma_migrations). Marking rolled back, then retry deploy.",
+    "[railway-deploy-migrate] Failed migration recorded (P3009/P3018). Marking rolled back, then retry deploy.",
   );
   for (const name of names) {
     const res = runPrisma(["migrate", "resolve", "--rolled-back", name]);
@@ -129,9 +163,9 @@ if (isP3009FailedMigration(result.combined) && names.length > 0) {
   if (result.status === 0) {
     process.exit(0);
   }
-  if (isP3009FailedMigration(result.combined)) {
+  if (needsRolledBackRecovery(result.combined)) {
     console.error(
-      "[railway-deploy-migrate] Still P3009 after rolled-back. DB may be half-migrated — reset the DB or fix manually (see docs/PRISMA-MIGRATIONS.md).",
+      "[railway-deploy-migrate] Still failing after rolled-back. DB may be half-migrated — reset the DB or fix manually (see docs/PRISMA-MIGRATIONS.md).",
     );
     process.exit(1);
   }
