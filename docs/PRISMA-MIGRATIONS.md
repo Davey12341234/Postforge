@@ -12,11 +12,11 @@
 npx prisma migrate deploy
 ```
 
-`railway.json` runs this in **`preDeployCommand`** before `npm run start`.
+`railway.json` runs **`node scripts/railway-deploy-migrate.mjs`** in **`preDeployCommand`** (which runs `prisma migrate deploy` and, on **P3005**, automatically runs `migrate resolve --applied` for each migration in order, then retries). You normally do **not** need to run `migrate resolve` by hand on Railway.
 
 ## Existing database (already has tables from `db push`)
 
-`migrate deploy` errors with **P3005** (schema not empty). Baseline:
+`migrate deploy` errors with **P3005** (schema not empty). On Railway this is handled by **`scripts/railway-deploy-migrate.mjs`**. For a **manual** baseline elsewhere:
 
 ```bash
 npx prisma migrate resolve --applied 20260410120000_init_unified_studio

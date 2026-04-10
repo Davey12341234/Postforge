@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "start:production": "prisma migrate deploy && next start",
+    "start:production": "node scripts/railway-deploy-migrate.mjs && next start",
     "deploy:check": "node scripts/check-deploy-readiness.mjs",
     "verify:deploy": "node scripts/verify-deployment.mjs",
     "lint": "eslint"

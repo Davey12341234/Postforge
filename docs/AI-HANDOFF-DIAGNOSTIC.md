@@ -28,7 +28,7 @@
 | Item | Status |
 |------|--------|
 | **`prisma/migrations/`** | **Present** — `20260410120000_init_unified_studio` + `migration_lock.toml` (PostgreSQL). |
-| **Railway** | **`railway.json`** uses **`preDeployCommand`**: `npx prisma migrate deploy` (not `preStartCommand`). |
+| **Railway** | **`railway.json`** uses **`preDeployCommand`**: `node scripts/railway-deploy-migrate.mjs` (migrate deploy + P3005 recovery; not `preStartCommand`). |
 | **Existing DB** (was created with `db push`) | Use **`prisma migrate resolve --applied 20260410120000_init_unified_studio`** once to baseline — see [`docs/PRISMA-MIGRATIONS.md`](./PRISMA-MIGRATIONS.md). |
 | **Fresh production DB** | Run **`migrate deploy`** only; no baseline needed. |
 
@@ -100,7 +100,7 @@ See **`.env.local.example`**. Minimum for Unified + Stripe:
 
 | File | Role |
 |------|------|
-| **`railway.json`** | `buildCommand`: `npm run build`; **`preDeployCommand`**: `npx prisma migrate deploy`; **`startCommand`**: `npm run start`. |
+| **`railway.json`** | `buildCommand`: `npm run build`; **`preDeployCommand`**: `node scripts/railway-deploy-migrate.mjs`; **`startCommand`**: `npm run start`. |
 | **`scripts/check-deploy-readiness.mjs`** | Env validation before deploy. |
 | **`deploy/secrets.preview.env.example`** | Template for paste-from-Railway checks. |
 
