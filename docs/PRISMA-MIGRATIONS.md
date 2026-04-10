@@ -2,6 +2,7 @@
 
 ## Initial migration
 
+- SQL files must be **UTF-8 without BOM**. A leading BOM (`U+FEFF`) causes PostgreSQL `syntax error at or near "﻿"` on migrate.
 - Folder: `prisma/migrations/20260410120000_init_unified_studio/migration.sql`
 - Generated with: `prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script`
 - **PostgreSQL only** (see `migration_lock.toml`).
