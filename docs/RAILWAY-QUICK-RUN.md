@@ -12,8 +12,8 @@ The repo includes guardrails so you don’t ship with missing env vars or forget
 |------|-----|
 | **Validate env before deploy** | Copy variables from Railway into **`deploy/secrets.preview.env`** (see **`deploy/secrets.preview.env.example`**). Run **`npm run deploy:check`**. Exit code **0** = all required keys are non-empty and basic format checks pass (`NEXTAUTH_URL` is `https://…`, Stripe prices look like `price_…`). |
 | **Required variable list** | **`scripts/required-env.production.json`** — single source of truth; update if you add new secrets. |
-| **Migrations on Railway** | Root **`railway.json`** runs **`node scripts/railway-deploy-migrate.mjs`** as **`preDeployCommand`** (migrate deploy + automatic P3005 baseline), then **`npm run start`**. Healthcheck: **`GET /api/health`**. |
-| **Manual / non-Railway** | **`npm run start:production`** runs migrate then `next start` (e.g. custom Docker without pre-deploy). |
+| **Migrations on Railway** | **`startCommand`**: **`node scripts/railway-deploy-migrate.mjs && npm run start`** (migrate deploy + P3005 baseline, then Next). Set **`DATABASE_URL`** on the web service (e.g. `${{ Postgres.DATABASE_URL }}`). Healthcheck: **`GET /api/health`**. |
+| **Manual / non-Railway** | **`npm run start:production`** runs the same migrate script then `next start`. |
 
 **Workflow:** Set vars in Railway → copy them into `deploy/secrets.preview.env` locally → `npm run deploy:check` → fix until green → push or `railway up`.
 

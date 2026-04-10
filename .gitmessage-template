@@ -3,7 +3,7 @@ feat(unified): add Prisma migration and production deploy tooling
 ## What
 - Initial migration prisma/migrations/20260410120000_init_unified_studio
 - GET /api/health for Railway health checks
-- railway.json: preDeploy migrate + healthcheckPath
+- railway.json: startCommand migrate + next start; healthcheckPath
 - Scripts: generate-migration.sh, verify-deployment.mjs
 - .env.production.template, Stripe setup guide, CURSOR-TASKS.md
 

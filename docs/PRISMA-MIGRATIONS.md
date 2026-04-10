@@ -12,7 +12,7 @@
 npx prisma migrate deploy
 ```
 
-`railway.json` runs **`node scripts/railway-deploy-migrate.mjs`** in **`preDeployCommand`** (which runs `prisma migrate deploy` and, on **P3005**, automatically runs `migrate resolve --applied` for each migration in order, then retries). You normally do **not** need to run `migrate resolve` by hand on Railway.
+`railway.json` runs **`node scripts/railway-deploy-migrate.mjs`** before **`next start`** (migrate deploy; on **P3005**, `migrate resolve --applied` per migration, then retry). You normally do **not** need to run `migrate resolve` by hand on Railway.
 
 ## Existing database (already has tables from `db push`)
 
