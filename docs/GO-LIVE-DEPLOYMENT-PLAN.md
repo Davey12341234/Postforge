@@ -14,7 +14,7 @@
 | Stripe webhook events (handled in code) | `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, **`invoice.paid`**, `invoice.payment_failed` | `invoice.payment_succeeded` (different name in Stripe API) — subscribe to what **`webhook/route.ts`** handles |
 | Rate limiting | **`checkUsageLimits`** in `unified-limits.ts` on generate/chat | A separate `rateLimit()` helper is **not** present unless you add it |
 | UI tabs | **Home, Create, Drafts, Publish, Stats** — preferences live under **Create**, not a separate Settings tab | “Settings tab” as its own top-level tab |
-| Health endpoint | **`GET /api/health`** | DB ping; use for Railway healthcheck |
+| Health endpoint | **`GET /api/health/live`** (Railway) / **`GET /api/health`** (DB ping) | Liveness vs readiness |
 | Windows | Use `Remove-Item -Recurse` / `;` instead of `&&` if needed | Bash-only one-liners may fail in PowerShell |
 
 ---

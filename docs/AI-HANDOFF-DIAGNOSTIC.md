@@ -134,7 +134,7 @@ See **`.env.local.example`**. Minimum for Unified + Stripe:
 
 ## 10. One-line summary
 
-**Unified Studio builds cleanly; initial Prisma migration is committed; `GET /api/health` supports Railway healthchecks. Production deploy, DNS, and Stripe live flows remain unverified per environment.**
+**Unified Studio builds cleanly; initial Prisma migration is committed; Railway uses **`GET /api/health/live`**; **`GET /api/health`** checks the database. Production deploy, DNS, and Stripe live flows remain unverified per environment.**
 
 ---
 
