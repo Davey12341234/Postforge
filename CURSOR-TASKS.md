@@ -4,7 +4,7 @@
 
 - [x] Initial migration: `prisma/migrations/20260410120000_init_unified_studio/`
 - [x] `GET /api/health` — Railway healthcheck target
-- [x] `railway.json` — `preDeployCommand` + healthcheck
+- [x] `railway.json` — `startCommand` migrate + `npm run start` + healthcheck
 - [x] `npm run deploy:check`, `npm run verify:deploy`
 - [x] `.env.production.template`, `docs/STRIPE-SETUP-GUIDE.md`
 
