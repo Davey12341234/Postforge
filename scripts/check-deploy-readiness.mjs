@@ -95,6 +95,29 @@ function main() {
     if (key.startsWith("STRIPE_PRICE_") && !v.startsWith("price_")) {
       bad.push(`${key} should look like price_... (Stripe Price ID)`);
     }
+    if (key.startsWith("STRIPE_PRICE_") && v.includes("...")) {
+      bad.push(`${key} must be a real price ID from Stripe, not price_...`);
+    }
+    if (key === "NEXTAUTH_SECRET" && /GENERATE_WITH|openssl_rand|changeme/i.test(v)) {
+      bad.push(`${key} must be a real random string, not placeholder instructions`);
+    }
+    if (key === "NEXTAUTH_URL" && v.includes("YOUR_DOMAIN_HERE")) {
+      bad.push(`${key} must be your real public https URL`);
+    }
+    if (key === "ADMIN_REVENUE_SECRET" && v === "random-long-string") {
+      bad.push(`${key} must be a real random secret, not the literal "random-long-string"`);
+    }
+    if (key === "DATABASE_URL" && !/^postgres(ql)?:\/\//i.test(v) && !v.includes("${{")) {
+      bad.push(
+        `${key} must be a postgresql://... URL or Railway reference like \${{ Postgres.DATABASE_URL }}`,
+      );
+    }
+    if (
+      (key === "STRIPE_SECRET_KEY" || key === "STRIPE_PUBLISHABLE_KEY" || key === "STRIPE_WEBHOOK_SECRET") &&
+      v.includes("...")
+    ) {
+      bad.push(`${key} looks incomplete (contains ...)`);
+    }
   }
 
   console.log("\n=== PostForge — deploy readiness check ===\n");
