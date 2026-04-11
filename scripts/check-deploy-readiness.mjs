@@ -36,11 +36,14 @@ function parseEnvFile(content) {
   return out;
 }
 
-function loadRequiredKeys() {
+function loadEnvSpec() {
   const j = JSON.parse(
     readFileSync(join(__dirname, "required-env.production.json"), "utf8"),
   );
-  return j.required;
+  return {
+    required: Array.isArray(j.required) ? j.required : [],
+    recommended: Array.isArray(j.recommended) ? j.recommended : [],
+  };
 }
 
 function main() {
@@ -69,7 +72,7 @@ function main() {
     }
   }
 
-  const required = loadRequiredKeys();
+  const { required, recommended } = loadEnvSpec();
   const missing = [];
   const empty = [];
   const bad = [];
@@ -162,7 +165,27 @@ function main() {
     process.exit(1);
   }
 
-  console.log("\nAll required variables are set. Safe to deploy.\n");
+  const recMissing = [];
+  for (const key of recommended) {
+    const v = env[key];
+    if (v === undefined || String(v).trim() === "") {
+      recMissing.push(key);
+    }
+  }
+  if (recMissing.length) {
+    console.log("\nRecommended (set in Railway for full Unified features):");
+    for (const key of recommended) {
+      const present = env[key] !== undefined && String(env[key]).trim() !== "";
+      console.log(`  ${present ? "✓" : "○"} ${key}${present ? "" : " — see scripts/required-env.production.json notes"}`);
+    }
+    console.log(
+      "\nDeploy can proceed without these, but image gen (OpenAI), voice, or absolute upload URLs may fail until set.\n",
+    );
+  } else {
+    console.log("\nRecommended variables are also set.\n");
+  }
+
+  console.log("All required variables are set. Safe to deploy.\n");
   process.exit(0);
 }
 

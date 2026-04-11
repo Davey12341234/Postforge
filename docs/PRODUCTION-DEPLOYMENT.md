@@ -25,9 +25,12 @@ Railway injects **`DATABASE_URL`** when you add the PostgreSQL plugin — do not
 | **`STRIPE_PRICE_BUSINESS`** | Yes* | *Required if you offer Business checkout |
 | **`STRIPE_PRICE_ENTERPRISE`** | Yes* | *Required if you offer Enterprise checkout |
 | **`ADMIN_REVENUE_SECRET`** | Recommended | Protects `GET /api/admin/revenue` |
+| **`OPENAI_API_KEY`** | **Recommended** | DALL·E / GPT Image edit, Whisper transcribe, **OpenAI chat** (`UNIFIED_CHAT_PROVIDER=openai`). Unified **text generate** and default **Anthropic chat** work with Anthropic only. |
+| **`APP_URL`** | Recommended | Same public `https://` origin as `NEXTAUTH_URL` when the app builds absolute URLs for uploads. |
+| **`UNIFIED_CHAT_PROVIDER`** | Optional | `anthropic` (default) or `openai` — requires matching API key configured. |
 | **`NODE_ENV`** | Optional | Railway often sets `production` automatically |
 
-Optional: **`APP_URL`** = same public origin as `NEXTAUTH_URL` if your code uses it for absolute URLs.
+**Validate before deploy:** copy Railway variables into `deploy/secrets.preview.env` (see `deploy/secrets.preview.env.example`), then run **`npm run deploy:check`**. After deploy, **`npm run verify:deploy https://your-domain.com`** for HTTP smoke checks.
 
 ---
 
@@ -137,10 +140,13 @@ railway rollback
 
 ### Sign-off checklist
 
+- [ ] `npm run deploy:check` passes (using `deploy/secrets.preview.env` or `.env.production.local`)  
 - [ ] `NEXTAUTH_URL` = production `https://` origin  
+- [ ] `OPENAI_API_KEY` + `APP_URL` set if you need OpenAI image/voice/chat or absolute asset URLs  
 - [ ] All Stripe **price** env vars set (`STRIPE_PRICE_*`)  
 - [ ] Webhook URL uses **production** domain + `invoice.paid` selected  
-- [ ] `railway run npx prisma migrate deploy` (or equivalent) succeeded  
+- [ ] `railway run npx prisma migrate deploy` (or equivalent) succeeded — **or** rely on `railway.json` start command running `railway-deploy-migrate.mjs`  
+- [ ] `npm run verify:deploy https://your-domain.com` passes (optional but recommended)  
 - [ ] `/unified` loads signed in; generate + chat smoke-tested  
 
 ---
