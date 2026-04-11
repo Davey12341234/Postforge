@@ -771,39 +771,35 @@ export default function UnifiedStudioClient({
 
   useEffect(() => {
     if (!draftQueryId) return;
-    let cancelled = false;
+    const ac = new AbortController();
     void (async () => {
       try {
         const res = await fetch(
           `/api/unified/drafts/${encodeURIComponent(draftQueryId)}`,
+          { signal: ac.signal },
         );
         const data = (await res.json().catch(() => ({}))) as {
           caption?: string;
           error?: string;
         };
         if (!res.ok) {
-          if (!cancelled) {
-            showToast(data.error ?? "Draft not found", "error");
-            router.replace("/unified", { scroll: false });
-          }
+          showToast(data.error ?? "Draft not found", "error");
+          router.replace("/unified", { scroll: false });
           return;
         }
-        if (cancelled || !data.caption) return;
+        if (!data.caption) return;
         importDraftCaptionIntoChat(
           data.caption,
           "Draft loaded from link — press Send.",
         );
         router.replace("/unified", { scroll: false });
-      } catch {
-        if (!cancelled) {
-          showToast("Could not load draft", "error");
-          router.replace("/unified", { scroll: false });
-        }
+      } catch (e: unknown) {
+        if (e instanceof Error && e.name === "AbortError") return;
+        showToast("Could not load draft", "error");
+        router.replace("/unified", { scroll: false });
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => ac.abort();
   }, [draftQueryId, router, importDraftCaptionIntoChat, showToast]);
 
   const clearConversationalChat = useCallback(() => {
@@ -849,6 +845,8 @@ export default function UnifiedStudioClient({
         code?: string;
       };
       if (res.status === 402) {
+        setMessages((m) => m.slice(0, -1));
+        setInput(t);
         if (data.code === "LIMIT_REACHED") {
           setUpgradePromptType("generation_limit");
           setShowUpgradePrompt(true);
@@ -870,8 +868,9 @@ export default function UnifiedStudioClient({
       }
       const reply = data.text?.trim() ?? "(No text returned)";
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
-      await loadProgress();
     } catch (e: unknown) {
+      setMessages((m) => m.slice(0, -1));
+      setInput(t);
       if (isLikelyNetworkError(e)) {
         showToast("Network error — check your connection.", "error");
       } else {
@@ -880,6 +879,11 @@ export default function UnifiedStudioClient({
       }
     } finally {
       setChatLoading(false);
+    }
+    try {
+      await loadProgress();
+    } catch {
+      /* credits/XP refresh is best-effort */
     }
   };
 
