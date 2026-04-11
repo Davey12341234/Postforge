@@ -73,6 +73,9 @@ type DraftRow = {
 
 const LOCAL_DRAFTS_KEY = "unified-drafts";
 
+const CHAT_WELCOME_TEXT =
+  "Hi! I'm your content copilot. Ask for hooks, threads, or a full caption — I'll keep it platform-aware.";
+
 const UNIFIED_API = {
   getAnalytics: async (): Promise<AnalyticsPayload> => {
     const res = await fetch("/api/unified/analytics");
@@ -450,17 +453,12 @@ export default function UnifiedStudioClient({
 
   const [messages, setMessages] = useState<
     { role: "user" | "assistant"; content: string }[]
-  >([
-    {
-      role: "assistant",
-      content:
-        "Hi! I’m your content copilot. Ask for hooks, threads, or a full caption — I’ll keep it platform-aware.",
-    },
-  ]);
+  >([{ role: "assistant", content: CHAT_WELCOME_TEXT }]);
   const [input, setInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [transcribeLoading, setTranscribeLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const conversationCardRef = useRef<HTMLDivElement>(null);
 
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
   const [isSyncingDrafts, setIsSyncingDrafts] = useState(false);
@@ -702,6 +700,76 @@ export default function UnifiedStudioClient({
       showToast(e instanceof Error ? e.message : "Reset failed", "error");
     }
   };
+
+  const scrollConversationIntoView = useCallback(() => {
+    requestAnimationFrame(() => {
+      conversationCardRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    });
+  }, []);
+
+  const continueStructuredThreadInChat = useCallback(() => {
+    if (genThread.length === 0) {
+      showToast(
+        "Generate something in Structured generate first — then continue here.",
+        "warn",
+      );
+      return;
+    }
+    setMessages([
+      {
+        role: "assistant",
+        content:
+          "Imported your structured generate thread below. Ask for free-form tweaks (tone, hashtags, alternatives).",
+      },
+      ...genThread,
+    ]);
+    scrollConversationIntoView();
+    showToast("Thread loaded into conversational chat", "ok");
+  }, [genThread, scrollConversationIntoView, showToast]);
+
+  const loadLatestCloudDraftIntoChat = useCallback(async () => {
+    try {
+      const { drafts: list } = await UNIFIED_API.drafts.list();
+      if (!list.length) {
+        showToast(
+          "No cloud drafts yet — save one from Create or the Drafts tab.",
+          "warn",
+        );
+        return;
+      }
+      const text = list[0].caption;
+      setInput((prev) => {
+        const p = prev.trim();
+        const block = `Please improve this draft:\n\n---\n${text}\n---`;
+        return p ? `${p}\n\n${block}` : block;
+      });
+      scrollConversationIntoView();
+      showToast("Latest cloud draft added to your message — press Send.", "ok");
+    } catch {
+      showToast("Could not load drafts", "error");
+    }
+  }, [scrollConversationIntoView, showToast]);
+
+  const clearConversationalChat = useCallback(() => {
+    setMessages([{ role: "assistant", content: CHAT_WELCOME_TEXT }]);
+    setInput("");
+    showToast("Chat cleared", "ok");
+  }, [showToast]);
+
+  const copyEntireConversation = useCallback(async () => {
+    const text = messages
+      .map((m) => `${m.role === "user" ? "You" : "Assistant"}: ${m.content}`)
+      .join("\n\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Full conversation copied", "ok");
+    } catch {
+      showToast("Copy failed", "error");
+    }
+  }, [messages, showToast]);
 
   const sendChat = async () => {
     const t = input.trim();
@@ -1584,18 +1652,28 @@ export default function UnifiedStudioClient({
                       : "Send follow-up"}
                 </button>
                 {genThread.length > 0 ? (
-                  <button
-                    type="button"
-                    className="ucs-btn ucs-btn-ghost"
-                    disabled={isGenerating}
-                    onClick={() => {
-                      setGenThread([]);
-                      setGenPrompt("");
-                      showToast("Conversation cleared", "ok");
-                    }}
-                  >
-                    Clear conversation
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className="ucs-btn ucs-btn-ghost"
+                      disabled={isGenerating}
+                      onClick={() => void continueStructuredThreadInChat()}
+                    >
+                      Continue in chat ↓
+                    </button>
+                    <button
+                      type="button"
+                      className="ucs-btn ucs-btn-ghost"
+                      disabled={isGenerating}
+                      onClick={() => {
+                        setGenThread([]);
+                        setGenPrompt("");
+                        showToast("Conversation cleared", "ok");
+                      }}
+                    >
+                      Clear conversation
+                    </button>
+                  </>
                 ) : null}
               </div>
             </div>
@@ -1844,7 +1922,7 @@ export default function UnifiedStudioClient({
               </button>
             </div>
 
-            <div className="ucs-card">
+            <div className="ucs-card" ref={conversationCardRef}>
               <p className="ucs-h2">Conversational AI</p>
               <p style={{ fontSize: 12, color: "#71717a", marginTop: 0 }}>
                 {chatProvider === "openai"
@@ -1857,6 +1935,7 @@ export default function UnifiedStudioClient({
                   flexWrap: "wrap",
                   gap: 8,
                   marginBottom: 10,
+                  alignItems: "center",
                 }}
               >
                 {chatProvider === "openai" ? (
@@ -1868,6 +1947,27 @@ export default function UnifiedStudioClient({
                     Reset OpenAI thread
                   </button>
                 ) : null}
+                <button
+                  type="button"
+                  className="ucs-btn ucs-btn-ghost"
+                  onClick={() => void loadLatestCloudDraftIntoChat()}
+                >
+                  Load latest cloud draft
+                </button>
+                <button
+                  type="button"
+                  className="ucs-btn ucs-btn-ghost"
+                  onClick={() => clearConversationalChat()}
+                >
+                  Clear chat
+                </button>
+                <button
+                  type="button"
+                  className="ucs-btn ucs-btn-ghost"
+                  onClick={() => void copyEntireConversation()}
+                >
+                  Copy conversation
+                </button>
                 <input
                   ref={audioTranscribeRef}
                   type="file"
@@ -1895,8 +1995,33 @@ export default function UnifiedStudioClient({
                   <div
                     key={i}
                     className={`ucs-chat-msg ${m.role === "user" ? "user" : "assistant"}`}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      gap: 10,
+                    }}
                   >
-                    {m.content}
+                    <span style={{ flex: 1, whiteSpace: "pre-wrap" }}>
+                      {m.content}
+                    </span>
+                    <button
+                      type="button"
+                      className="ucs-btn ucs-btn-ghost"
+                      style={{
+                        fontSize: 11,
+                        padding: "2px 8px",
+                        flexShrink: 0,
+                      }}
+                      onClick={() => {
+                        void navigator.clipboard.writeText(m.content).then(
+                          () => showToast("Copied", "ok"),
+                          () => showToast("Copy failed", "error"),
+                        );
+                      }}
+                    >
+                      Copy
+                    </button>
                   </div>
                 ))}
                 <div ref={chatEndRef} />
@@ -1904,7 +2029,7 @@ export default function UnifiedStudioClient({
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <textarea
                   className="ucs-textarea"
-                  placeholder="Ask for a LinkedIn thread, X hook, or IG caption…"
+                  placeholder="Ask for a LinkedIn thread, X hook, or IG caption… (Enter send · Shift+Enter new line)"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -1914,22 +2039,35 @@ export default function UnifiedStudioClient({
                     }
                   }}
                 />
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  <button
-                    type="button"
-                    className="ucs-btn ucs-btn-primary"
-                    disabled={chatLoading}
-                    onClick={() => void sendChat()}
-                  >
-                    {chatLoading ? "Thinking…" : "Send"}
-                  </button>
-                  <button
-                    type="button"
-                    className="ucs-btn ucs-btn-ghost"
-                    onClick={() => void saveAsDraft()}
-                  >
-                    Save reply as draft
-                  </button>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    <button
+                      type="button"
+                      className="ucs-btn ucs-btn-primary"
+                      disabled={chatLoading}
+                      onClick={() => void sendChat()}
+                    >
+                      {chatLoading ? "Thinking…" : "Send"}
+                    </button>
+                    <button
+                      type="button"
+                      className="ucs-btn ucs-btn-ghost"
+                      onClick={() => void saveAsDraft()}
+                    >
+                      Save reply as draft
+                    </button>
+                  </div>
+                  <span style={{ fontSize: 11, color: "#71717a" }}>
+                    {input.length.toLocaleString()} chars
+                  </span>
                 </div>
               </div>
             </div>
