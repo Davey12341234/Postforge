@@ -1957,6 +1957,16 @@ export default function UnifiedStudioClient({
                 <button
                   type="button"
                   className="ucs-btn ucs-btn-ghost"
+                  onClick={() => {
+                    setTab("drafts");
+                    showToast("Drafts tab — copy any caption back into chat here.", "ok");
+                  }}
+                >
+                  Open Drafts tab
+                </button>
+                <button
+                  type="button"
+                  className="ucs-btn ucs-btn-ghost"
                   onClick={() => clearConversationalChat()}
                 >
                   Clear chat
