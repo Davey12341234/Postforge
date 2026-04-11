@@ -11,3 +11,8 @@ export function dalle3CreditCost(
   if (quality === "hd") return 30;
   return 15;
 }
+
+/** GPT Image edit (inpaint / variation) — aligned with generate tiering. */
+export function gptImageEditCreditCost(): number {
+  return 20;
+}

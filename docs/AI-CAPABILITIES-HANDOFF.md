@@ -13,27 +13,37 @@
 
 ---
 
-## Two AI backends (by product area)
+## AI backends (by product area)
 
-### 1) Unified Content Studio (`/unified`) — Anthropic
+### 1) Unified Content Studio (`/unified`) — Anthropic **or** OpenAI chat
+
+#### Anthropic (Messages API)
 
 | Item | Detail |
 |------|--------|
-| **Env** | `ANTHROPIC_API_KEY` — required for unified AI routes. |
+| **Env** | `ANTHROPIC_API_KEY` — required when chat/generate use Claude (default chat provider). |
 | **HTTP API** | `https://api.anthropic.com/v1/messages` |
 | **Headers** | `anthropic-version: 2023-06-01`, `x-api-key: <key>` |
 | **Default model** | `claude-sonnet-4-20250514` (chat route allows override via JSON body `model`). |
+
+#### OpenAI (Responses API + Conversations)
+
+| Item | Detail |
+|------|--------|
+| **Env** | `OPENAI_API_KEY`; optional `UNIFIED_CHAT_PROVIDER=openai`, `UNIFIED_OPENAI_CHAT_MODEL` (default `gpt-4o`). |
+| **API** | `openai.responses.create` with server-side **`conversation`** id stored on `UnifiedStudioProfile.openaiChatConversationId`; each request sends the **latest user** message only (history lives in OpenAI). User text is **moderated** before the API call. |
+| **Reset** | POST body `resetOpenAiConversation: true` (+ `provider: "openai"`) clears the stored conversation id. |
 
 **Routes (authoritative paths)**
 
 | Method | Path | Role |
 |--------|------|------|
-| POST | `/api/unified/chat` | Multi-turn chat; default `max_tokens = 1200`; default system prompt for concise social copy. |
-| POST | `/api/unified/generate` | One-shot generation from `prompt` + optional `platform`, `contentType`, `options`; `max_tokens: 1024`. |
+| POST | `/api/unified/chat` | Multi-turn chat: **Anthropic** (full `messages` each request) **or** **OpenAI** (stateful conversation). Body: `provider`, `messages`, `system`, `model`, `resetOpenAiConversation`. |
+| POST | `/api/unified/generate` | One-shot generation from `prompt` + optional `platform`, `contentType`, `options`; Anthropic `max_tokens: 1024`. |
 
 **Implementation**
 
-- `src/app/api/unified/chat/route.ts` — debits **`chatMessageCost(800)`** unified credits on success.
+- `src/app/api/unified/chat/route.ts` — debits **`chatMessageCost(800)`** unified credits on success (both providers).
 - `src/app/api/unified/generate/route.ts` — debits **`chatMessageCost(1000)`**; logs analytics **`content_generation`** with model, lengths, cost.
 
 **Auth:** NextAuth session required → **`401`** if unauthenticated.
@@ -66,6 +76,14 @@ So debits use **fixed estimates** (800 / 1000), not necessarily actual token usa
 | **Persistence** | Sharp WebP by default → **`public/uploads/{userId}/generated/`** or **`R2_*`** public URL when configured |
 | **Async** | **`inngest.send({ name: "unified/image.generated", ... })`** after DB write; handler in `src/inngest/functions/unified-image.ts` |
 | **UI** | **Create** tab → “Image (DALL·E 3)” card |
+
+### 1c) Unified image **edit** + **speech-to-text** — OpenAI
+
+| Item | Detail |
+|------|--------|
+| **Image edit** | `POST /api/unified/images/edit` — `multipart`: `image`, `prompt`, optional `mask`, optional `model` (default `gpt-image-1.5`). Credits: **`gptImageEditCreditCost()`** (20). Provider enum **`GPT_IMAGE`** on `UnifiedGeneratedImage`. |
+| **Transcription** | `POST /api/unified/audio/transcribe` — `multipart` field **`file`**; default model **`whisper-1`**. Output text is **moderated**; debits **`chatMessageCost(200)`** credits. |
+| **Moderation** | `moderateImagePrompt` / `moderateOpenAIText` in `src/lib/image-gen/moderation.ts` |
 
 ---
 
@@ -114,7 +132,7 @@ So debits use **fixed estimates** (800 / 1000), not necessarily actual token usa
 
 ## One-line summary
 
-**Unified Studio uses Anthropic Messages (`claude-sonnet-4-20250514`) behind `/api/unified/chat` and `/api/unified/generate` with plan limits + unified credits; legacy flows use OpenAI `gpt-4o-mini`; shared Upstash rate limit helper exists but is not applied to unified AI routes today.**
+**Unified Studio uses Anthropic Messages *or* OpenAI Responses + Conversations behind `/api/unified/chat`, Anthropic for `/api/unified/generate`, OpenAI for DALL·E 3 / GPT Image edit / Whisper transcribe; plan limits + unified credits apply; legacy dashboard flows use OpenAI `gpt-4o-mini`; shared Upstash rate limit helper exists but is not applied to unified AI routes today.**
 
 ---
 

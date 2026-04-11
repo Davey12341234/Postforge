@@ -40,6 +40,14 @@ npx prisma migrate resolve --applied 20260410120000_init_unified_studio
 
 This records the migration as applied **without** running SQL. Only do this if the live schema already matches `schema.prisma`.
 
+## Migration order (Postgres)
+
+Migrations apply in **lexicographic folder name order**. The enum `UnifiedImageProvider` is created in **`20260411120000_add_unified_generated_images`**. Do not reference that type in an **earlier** timestamped migration (e.g. `20260410140000` only adds `openaiChatConversationId`; `GPT_IMAGE` is added in **`20260412000000_add_gpt_image_enum_value`**).
+
+## Legacy DB: init “applied” but unified tables missing
+
+If `_prisma_migrations` shows `20260410120000_init_unified_studio` as finished but **`unified_studio_profiles` (and other unified tables) do not exist**, the history was baselined incorrectly. Recovery: run **`npx prisma db push`** (adds tables to match `schema.prisma`), remove duplicate/broken rows for failed migrations in `_prisma_migrations` if needed, then **`prisma migrate resolve --applied`** for each migration folder so history matches reality, and verify with **`prisma migrate status`**.
+
 ## New migration after schema edits
 
 In an interactive terminal (with `DATABASE_URL`):

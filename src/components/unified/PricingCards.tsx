@@ -68,11 +68,13 @@ export default function PricingCards() {
       if (!res.ok) {
         throw new Error(data.error ?? "Checkout failed");
       }
-      if (data.url) {
+      if (data.url && typeof data.url === "string") {
         window.location.href = data.url;
         return;
       }
-      throw new Error("No checkout URL returned");
+      throw new Error(
+        "No checkout URL returned. Set STRIPE_SECRET_KEY and STRIPE_PRICE_* for this plan.",
+      );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Checkout error");
     } finally {

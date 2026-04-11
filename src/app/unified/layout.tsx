@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -46,12 +46,15 @@ export const metadata: Metadata = {
     canonical: "/unified",
   },
   manifest: "/unified-manifest.json",
-  themeColor: "#6366f1",
   appleWebApp: {
     capable: true,
     title: "AI Studio",
     statusBarStyle: "black-translucent",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#6366f1",
 };
 
 export default async function UnifiedLayout({

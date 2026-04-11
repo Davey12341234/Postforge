@@ -3,6 +3,9 @@
   "version": "0.1.1",
   "private": true,
   "packageManager": "npm@10.9.2",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -12,6 +15,8 @@
     "verify:deploy": "node scripts/verify-deployment.mjs",
     "check:migrations": "node scripts/check-migration-bom.mjs",
     "lint": "eslint",
+    "ci": "npm run lint && npm run check:migrations && npx tsc --noEmit && npm test",
+    "ci:full": "npm run ci && npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "stripe:sync-railway": "railway run -- node scripts/stripe-sync-railway.mjs"

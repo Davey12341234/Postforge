@@ -25,6 +25,63 @@ export type PersistGeneratedImageResult = {
  * Download OpenAI image URL → optional WebP (sharp) → R2 if configured, else
  * `public/uploads/{userId}/generated/`.
  */
+/**
+ * Persist raw image bytes (e.g. GPT Image edit returning `b64_json`) like {@link persistGeneratedImage}.
+ */
+export async function persistGeneratedImageBuffer(options: {
+  userId: string;
+  imageId: string;
+  buffer: Buffer;
+}): Promise<PersistGeneratedImageResult> {
+  let buf = options.buffer;
+  let format = "png";
+  let ext = "png";
+
+  try {
+    const sharp = (await import("sharp")).default;
+    buf = Buffer.from(await sharp(buf).webp({ quality: 85 }).toBuffer());
+    format = "webp";
+    ext = "webp";
+  } catch (e) {
+    console.warn("sharp WebP skipped, keeping PNG:", e);
+  }
+
+  const bucket = process.env.R2_BUCKET;
+  const publicBase = process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
+  const client = getR2Client();
+
+  if (client && bucket && publicBase) {
+    const key = `unified-generated/${options.userId}/${options.imageId}.${ext}`;
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: new Uint8Array(buf),
+        ContentType: format === "webp" ? "image/webp" : "image/png",
+      }),
+    );
+    return {
+      publicUrl: `${publicBase}/${key}`,
+      format,
+      bytes: buf.length,
+    };
+  }
+
+  const uploadsDir = path.join(
+    process.cwd(),
+    "public",
+    "uploads",
+    options.userId,
+    "generated",
+  );
+  await mkdir(uploadsDir, { recursive: true });
+  const filename = `${options.imageId}.${ext}`;
+  const filepath = path.join(uploadsDir, filename);
+  await writeFile(filepath, buf);
+  const relativeUrl = `/uploads/${options.userId}/generated/${filename}`;
+  return { publicUrl: relativeUrl, format, bytes: buf.length };
+}
+
 export async function persistGeneratedImage(options: {
   userId: string;
   imageId: string;

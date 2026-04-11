@@ -140,9 +140,14 @@ const UNIFIED_API = {
       if (!res.ok) {
         throw UnifiedAPIError.fromResponse(res.status, data);
       }
-      if (data.url) {
-        window.location.href = data.url;
+      if (!data.url || typeof data.url !== "string") {
+        throw new UnifiedAPIError(
+          "No checkout URL returned. Check Stripe keys and STRIPE_PRICE_* price IDs.",
+          res.status,
+          data,
+        );
       }
+      window.location.href = data.url;
       return data;
     },
   },
@@ -257,21 +262,37 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export type PricingModalTier =
+  | "FREE"
+  | "PRO"
+  | "BUSINESS"
+  | "ENTERPRISE";
+
 function PricingModal({
   open,
   onClose,
   currentTier,
   onPick,
+  loadingTier,
 }: {
   open: boolean;
   onClose: () => void;
   currentTier: string;
-  onPick: (tier: "FREE" | "PRO" | "ENTERPRISE") => void;
+  onPick: (tier: PricingModalTier) => void;
+  /** While set, plan buttons are disabled (checkout redirect in progress). */
+  loadingTier: PricingModalTier | null;
 }) {
   if (!open) return null;
-  const plans = [
+  const plans: Array<{
+    id: PricingModalTier;
+    name: string;
+    price: string;
+    sub: string;
+    badge: string;
+    popular: boolean;
+  }> = [
     {
-      id: "FREE" as const,
+      id: "FREE",
       name: "Free",
       price: "$0",
       sub: "100 credits / mo",
@@ -279,25 +300,43 @@ function PricingModal({
       popular: false,
     },
     {
-      id: "PRO" as const,
+      id: "PRO",
       name: "Pro",
-      price: "$19",
-      sub: "per month · 2K credits",
+      price: "$29",
+      sub: "per month · higher limits",
       badge: "Most popular",
       popular: true,
     },
     {
-      id: "ENTERPRISE" as const,
-      name: "Enterprise",
+      id: "BUSINESS",
+      name: "Business",
       price: "$99",
-      sub: "per month · white-glove",
-      badge: "Teams",
+      sub: "per month · team-ready",
+      badge: "Growing teams",
+      popular: false,
+    },
+    {
+      id: "ENTERPRISE",
+      name: "Enterprise",
+      price: "Custom",
+      sub: "SLA & security · contact sales",
+      badge: "Scale",
       popular: false,
     },
   ];
   return (
-    <div className="ucs-modal-back" role="dialog" aria-modal="true">
-      <div className="ucs-modal">
+    <div
+      className="ucs-modal-back"
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="ucs-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div
           style={{
             display: "flex",
@@ -328,6 +367,7 @@ function PricingModal({
             <button
               key={p.id}
               type="button"
+              disabled={loadingTier !== null}
               onClick={() => void onPick(p.id)}
               style={{
                 textAlign: "left",
@@ -340,8 +380,9 @@ function PricingModal({
                 background: p.popular
                   ? "rgba(236,72,153,0.08)"
                   : "rgba(255,255,255,0.03)",
-                cursor: "pointer",
+                cursor: loadingTier !== null ? "wait" : "pointer",
                 color: "#fafafa",
+                opacity: loadingTier !== null && loadingTier !== p.id ? 0.55 : 1,
               }}
             >
               <div
@@ -354,6 +395,9 @@ function PricingModal({
                 <span style={{ fontWeight: 700 }}>{p.name}</span>
                 {currentTier === p.id && (
                   <span style={{ fontSize: 11, color: "#86efac" }}>Current</span>
+                )}
+                {loadingTier === p.id && (
+                  <span style={{ fontSize: 11, color: "#a78bfa" }}>Redirecting…</span>
                 )}
               </div>
               <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4 }}>
@@ -369,7 +413,15 @@ function PricingModal({
           ))}
         </div>
         <p style={{ fontSize: 12, color: "#71717a", marginTop: 14 }}>
-          Pro / Enterprise open Stripe Checkout when keys and price IDs are configured.
+          Paid plans open Stripe Checkout when{" "}
+          <code style={{ fontSize: 11 }}>STRIPE_SECRET_KEY</code> and{" "}
+          <code style={{ fontSize: 11 }}>STRIPE_PRICE_*</code> match each tier. Enterprise
+          still needs a price ID in Stripe (or use Business).
+        </p>
+        <p style={{ fontSize: 12, color: "#71717a", marginTop: 8 }}>
+          <Link href="/unified/pricing" style={{ color: "#a78bfa" }} onClick={onClose}>
+            Full pricing page →
+          </Link>
         </p>
       </div>
     </div>
@@ -377,7 +429,6 @@ function PricingModal({
 }
 
 export default function UnifiedStudioClient({
-  userId: _userId,
   userEmail,
 }: {
   userId: string;
@@ -386,6 +437,8 @@ export default function UnifiedStudioClient({
   const [tab, setTab] = useState<TabId>("home");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showPricing, setShowPricing] = useState(false);
+  const [checkoutLoadingTier, setCheckoutLoadingTier] =
+    useState<PricingModalTier | null>(null);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [upgradePromptType, setUpgradePromptType] =
     useState<UpgradePromptType>("generation_limit");
@@ -403,6 +456,7 @@ export default function UnifiedStudioClient({
   ]);
   const [input, setInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [transcribeLoading, setTranscribeLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
@@ -414,6 +468,8 @@ export default function UnifiedStudioClient({
     maxLength: 500,
     includeHashtags: true,
     includeEmojis: true,
+    /** `anthropic` (default) or `openai` — OpenAI uses Responses API + Conversations. */
+    chatProvider: "anthropic",
   });
   const [analyticsData, setAnalyticsData] = useState<AnalyticsPayload | null>(
     null,
@@ -424,6 +480,12 @@ export default function UnifiedStudioClient({
   const [genContentType, setGenContentType] = useState("post");
   const [genOutput, setGenOutput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [imgEditPrompt, setImgEditPrompt] = useState("");
+  const [imgEditLoading, setImgEditLoading] = useState(false);
+  const imgEditSourceRef = useRef<HTMLInputElement>(null);
+  const imgEditMaskRef = useRef<HTMLInputElement>(null);
+  const audioTranscribeRef = useRef<HTMLInputElement>(null);
+
   const [imgPrompt, setImgPrompt] = useState("");
   const [imgSize, setImgSize] = useState<
     "1024x1024" | "1792x1024" | "1024x1792"
@@ -599,6 +661,36 @@ export default function UnifiedStudioClient({
     ? xpProgressInLevel(progress.profile.xpTotal)
     : xpProgressInLevel(0);
 
+  const chatProvider =
+    userSettings.chatProvider === "openai" ? "openai" : "anthropic";
+
+  const resetOpenAiThread = async () => {
+    if (chatProvider !== "openai") return;
+    try {
+      const res = await fetch("/api/unified/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [],
+          provider: "openai",
+          resetOpenAiConversation: true,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Reset failed");
+      setMessages([
+        {
+          role: "assistant",
+          content:
+            "Started a fresh OpenAI thread (Responses + Conversations). Ask away!",
+        },
+      ]);
+      showToast("OpenAI conversation reset", "ok");
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : "Reset failed", "error");
+    }
+  };
+
   const sendChat = async () => {
     const t = input.trim();
     if (!t || chatLoading) return;
@@ -615,6 +707,7 @@ export default function UnifiedStudioClient({
             role: x.role,
             content: x.content,
           })),
+          provider: chatProvider,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
@@ -818,6 +911,101 @@ export default function UnifiedStudioClient({
     }
   };
 
+  const handleImageEdit = async () => {
+    const p = imgEditPrompt.trim();
+    const src = imgEditSourceRef.current?.files?.[0];
+    if (!p) {
+      showToast("Enter an edit prompt", "warn");
+      return;
+    }
+    if (!src) {
+      showToast("Choose a source image", "warn");
+      return;
+    }
+    setImgEditLoading(true);
+    setImgResultUrl(null);
+    try {
+      const form = new FormData();
+      form.append("prompt", p);
+      form.append("image", src);
+      const mask = imgEditMaskRef.current?.files?.[0];
+      if (mask) form.append("mask", mask);
+      const res = await fetch("/api/unified/images/edit", {
+        method: "POST",
+        body: form,
+      });
+      const data = (await res.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
+      if (!res.ok) {
+        throw UnifiedAPIError.fromResponse(res.status, data);
+      }
+      const img = data.image as
+        | { absoluteUrl?: string; publicUrl?: string }
+        | undefined;
+      const url = String(img?.absoluteUrl ?? img?.publicUrl ?? "");
+      if (url) setImgResultUrl(url);
+      showToast("Image edited", "ok");
+      await loadProgress();
+    } catch (e: unknown) {
+      if (isUnifiedAPIError(e)) {
+        if (e.status === 402 && e.code === "LIMIT_REACHED") {
+          setUpgradePromptType("generation_limit");
+          setShowUpgradePrompt(true);
+          return;
+        }
+        if (e.status === 402) {
+          setUpgradePromptType("credits");
+          setShowUpgradePrompt(true);
+          showToast(e.message || "Insufficient credits", "warn");
+          return;
+        }
+        showToast(e.message, "error");
+        return;
+      }
+      showToast(
+        e instanceof Error ? e.message : "Image edit failed",
+        "error",
+      );
+    } finally {
+      setImgEditLoading(false);
+    }
+  };
+
+  const handleAudioFileForTranscribe = async (file: File | undefined) => {
+    if (!file || transcribeLoading) return;
+    setTranscribeLoading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/unified/audio/transcribe", {
+        method: "POST",
+        body: form,
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        text?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(data.error ?? "Transcription failed");
+      }
+      const text = data.text?.trim() ?? "";
+      if (text) {
+        setInput((prev) => (prev ? `${prev}\n${text}` : text));
+        showToast("Transcription added to the chat box", "ok");
+      } else {
+        showToast("No speech detected", "warn");
+      }
+      await loadProgress();
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : "Transcription failed", "error");
+    } finally {
+      setTranscribeLoading(false);
+      if (audioTranscribeRef.current) audioTranscribeRef.current.value = "";
+    }
+  };
+
   const saveAsDraft = async () => {
     const last = [...messages].reverse().find((m) => m.role === "assistant");
     const caption = last?.content ?? "";
@@ -943,12 +1131,18 @@ export default function UnifiedStudioClient({
     setPublishCaption("");
   };
 
-  const onPickPlan = async (tier: "FREE" | "PRO" | "ENTERPRISE") => {
+  const onPickPlan = async (tier: PricingModalTier) => {
     if (tier === "FREE") {
       setShowPricing(false);
       return;
     }
-    const planId = tier === "PRO" ? "pro" : "enterprise";
+    const planId =
+      tier === "PRO"
+        ? "pro"
+        : tier === "BUSINESS"
+          ? "business"
+          : "enterprise";
+    setCheckoutLoadingTier(tier);
     try {
       showToast("Opening Stripe checkout…", "ok");
       await UNIFIED_API.checkout.createSession(planId);
@@ -958,6 +1152,8 @@ export default function UnifiedStudioClient({
         return;
       }
       showToast(e instanceof Error ? e.message : "Checkout failed", "error");
+    } finally {
+      setCheckoutLoadingTier(null);
     }
   };
 
@@ -1358,6 +1554,45 @@ export default function UnifiedStudioClient({
                   {imgLoading ? "Generating…" : "Generate image"}
                 </button>
               </div>
+              <p
+                className="ucs-h2"
+                style={{ marginTop: 16, marginBottom: 6, fontSize: 15 }}
+              >
+                Edit image (GPT Image)
+              </p>
+              <p style={{ fontSize: 12, color: "#71717a", marginTop: 0 }}>
+                <code style={{ fontSize: 11 }}>/api/unified/images/edit</code> —
+                PNG/WebP/JPG source; optional PNG mask (transparent = edit region).
+                20 credits.
+              </p>
+              <input
+                ref={imgEditSourceRef}
+                type="file"
+                accept="image/png,image/webp,image/jpeg"
+                style={{ fontSize: 12, marginBottom: 8 }}
+              />
+              <input
+                ref={imgEditMaskRef}
+                type="file"
+                accept="image/png"
+                style={{ fontSize: 12, marginBottom: 8 }}
+              />
+              <textarea
+                className="ucs-textarea"
+                placeholder="Describe the edit (e.g. add soft studio lighting)…"
+                value={imgEditPrompt}
+                onChange={(e) => setImgEditPrompt(e.target.value)}
+                style={{ minHeight: 64 }}
+              />
+              <button
+                type="button"
+                className="ucs-btn ucs-btn-primary"
+                style={{ marginTop: 8 }}
+                disabled={imgEditLoading}
+                onClick={() => void handleImageEdit()}
+              >
+                {imgEditLoading ? "Editing…" : "Apply edit"}
+              </button>
               {imgResultUrl ? (
                 <div style={{ marginTop: 12 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1440,6 +1675,35 @@ export default function UnifiedStudioClient({
                     <option value="japanese">Japanese</option>
                   </select>
                 </label>
+                <label
+                  style={{
+                    fontSize: 12,
+                    color: "#a1a1aa",
+                    gridColumn: "1 / -1",
+                  }}
+                >
+                  Chat AI backend
+                  <select
+                    className="ucs-input"
+                    style={{ width: "100%", marginTop: 4 }}
+                    value={
+                      userSettings.chatProvider === "openai"
+                        ? "openai"
+                        : "anthropic"
+                    }
+                    onChange={(e) =>
+                      setUserSettings((s) => ({
+                        ...s,
+                        chatProvider: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="anthropic">Anthropic (Claude)</option>
+                    <option value="openai">
+                      OpenAI (Responses + Conversations)
+                    </option>
+                  </select>
+                </label>
               </div>
               <label
                 style={{
@@ -1476,6 +1740,41 @@ export default function UnifiedStudioClient({
 
             <div className="ucs-card">
               <p className="ucs-h2">Conversational AI</p>
+              <p style={{ fontSize: 12, color: "#71717a", marginTop: 0 }}>
+                {chatProvider === "openai"
+                  ? "OpenAI: stateful server-side thread (Conversations). Reset clears your remote thread."
+                  : "Anthropic Messages API (history sent each request)."}
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  marginBottom: 10,
+                }}
+              >
+                {chatProvider === "openai" ? (
+                  <button
+                    type="button"
+                    className="ucs-btn ucs-btn-ghost"
+                    onClick={() => void resetOpenAiThread()}
+                  >
+                    Reset OpenAI thread
+                  </button>
+                ) : null}
+                <input
+                  ref={audioTranscribeRef}
+                  type="file"
+                  accept="audio/*"
+                  style={{ fontSize: 12, maxWidth: "100%" }}
+                  onChange={(e) =>
+                    void handleAudioFileForTranscribe(e.target.files?.[0])
+                  }
+                />
+                <span style={{ fontSize: 11, color: "#71717a" }}>
+                  {transcribeLoading ? "Transcribing…" : "Whisper → fills chat box"}
+                </span>
+              </div>
               <div
                 style={{
                   display: "flex",
@@ -1814,7 +2113,11 @@ export default function UnifiedStudioClient({
           © {new Date().getFullYear()} Unified Content Studio. All rights reserved.
         </p>
         <p style={{ margin: "8px 0 0", fontSize: 11 }}>
-          Powered by AI · Secure checkout via Stripe
+          Powered by AI ·{" "}
+          <Link href="/unified/pricing" style={{ color: "#a78bfa" }}>
+            Pricing & checkout
+          </Link>{" "}
+          via Stripe
         </p>
       </footer>
 
@@ -1863,6 +2166,7 @@ export default function UnifiedStudioClient({
         onClose={() => setShowPricing(false)}
         currentTier={progress?.profile.subscriptionTier ?? "FREE"}
         onPick={onPickPlan}
+        loadingTier={checkoutLoadingTier}
       />
     </>
   );

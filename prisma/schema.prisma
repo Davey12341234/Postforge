@@ -295,6 +295,7 @@ enum UnifiedRetentionCampaignType {
 
 enum UnifiedImageProvider {
   DALLE3
+  GPT_IMAGE
 }
 
 enum UnifiedImageStatus {
@@ -315,6 +316,9 @@ model UnifiedStudioProfile {
 
   subscriptionTier UnifiedSubscriptionTier @default(FREE)
   unifiedCredits Int                     @default(100)
+
+  /// OpenAI Conversations API id for stateful /api/unified/chat (Responses API).
+  openaiChatConversationId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

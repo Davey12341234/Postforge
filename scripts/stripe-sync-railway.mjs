@@ -13,12 +13,16 @@ import { execSync } from "node:child_process";
 const BASE = "https://api.stripe.com/v1";
 
 function publicAppUrl() {
-  const d =
-    process.env.RAILWAY_PUBLIC_DOMAIN ||
-    process.env.NEXTAUTH_URL?.replace(/\/$/, "") ||
-    "postforge-production-ce34.up.railway.app";
-  if (d.startsWith("http")) return d.replace(/\/$/, "");
-  return `https://${d.replace(/\/$/, "")}`;
+  const raw =
+    process.env.RAILWAY_PUBLIC_DOMAIN?.trim() ||
+    process.env.NEXTAUTH_URL?.replace(/\/$/, "").trim();
+  if (!raw) {
+    throw new Error(
+      "Set NEXTAUTH_URL (https://your-app.up.railway.app) or RAILWAY_PUBLIC_DOMAIN on the Railway service before running this script. Example: railway run -- node scripts/stripe-sync-railway.mjs",
+    );
+  }
+  if (raw.startsWith("http")) return raw.replace(/\/$/, "");
+  return `https://${raw.replace(/\/$/, "")}`;
 }
 
 const PUBLIC_APP = publicAppUrl();

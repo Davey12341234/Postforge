@@ -51,10 +51,12 @@ export default function DraftReviewModal({
   const [caption, setCaption] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Sync caption when switching drafts or when caption changes upstream (narrow deps).
   useEffect(() => {
     if (!draft) return;
     setCaption(draft.caption);
     setIsEditing(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft?.id, draft?.caption]);
 
   useEffect(() => {

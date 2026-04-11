@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
         runType: "BATCH_GENERATE",
         estimatedTokens,
       },
-      async (_runId) => {
+      async () => {
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [
