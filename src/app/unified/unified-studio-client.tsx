@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import UpgradePrompt from "@/components/unified/UpgradePrompt";
 import type { UpgradePromptType } from "@/components/unified/UpgradePrompt";
@@ -730,6 +731,21 @@ export default function UnifiedStudioClient({
     showToast("Thread loaded into conversational chat", "ok");
   }, [genThread, scrollConversationIntoView, showToast]);
 
+  /** Loads draft text into the chat input and switches to Create (used by latest-draft button and ?draft= deep links). */
+  const importDraftCaptionIntoChat = useCallback(
+    (caption: string, toastMsg: string) => {
+      setTab("create");
+      setInput((prev) => {
+        const p = prev.trim();
+        const block = `Please improve this draft:\n\n---\n${caption}\n---`;
+        return p ? `${p}\n\n${block}` : block;
+      });
+      scrollConversationIntoView();
+      showToast(toastMsg, "ok");
+    },
+    [scrollConversationIntoView, showToast],
+  );
+
   const loadLatestCloudDraftIntoChat = useCallback(async () => {
     try {
       const { drafts: list } = await UNIFIED_API.drafts.list();
@@ -740,18 +756,55 @@ export default function UnifiedStudioClient({
         );
         return;
       }
-      const text = list[0].caption;
-      setInput((prev) => {
-        const p = prev.trim();
-        const block = `Please improve this draft:\n\n---\n${text}\n---`;
-        return p ? `${p}\n\n${block}` : block;
-      });
-      scrollConversationIntoView();
-      showToast("Latest cloud draft added to your message — press Send.", "ok");
+      importDraftCaptionIntoChat(
+        list[0].caption,
+        "Latest cloud draft added to your message — press Send.",
+      );
     } catch {
       showToast("Could not load drafts", "error");
     }
-  }, [scrollConversationIntoView, showToast]);
+  }, [importDraftCaptionIntoChat, showToast]);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const draftQueryId = searchParams.get("draft")?.trim() ?? "";
+
+  useEffect(() => {
+    if (!draftQueryId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/unified/drafts/${encodeURIComponent(draftQueryId)}`,
+        );
+        const data = (await res.json().catch(() => ({}))) as {
+          caption?: string;
+          error?: string;
+        };
+        if (!res.ok) {
+          if (!cancelled) {
+            showToast(data.error ?? "Draft not found", "error");
+            router.replace("/unified", { scroll: false });
+          }
+          return;
+        }
+        if (cancelled || !data.caption) return;
+        importDraftCaptionIntoChat(
+          data.caption,
+          "Draft loaded from link — press Send.",
+        );
+        router.replace("/unified", { scroll: false });
+      } catch {
+        if (!cancelled) {
+          showToast("Could not load draft", "error");
+          router.replace("/unified", { scroll: false });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [draftQueryId, router, importDraftCaptionIntoChat, showToast]);
 
   const clearConversationalChat = useCallback(() => {
     setMessages([{ role: "assistant", content: CHAT_WELCOME_TEXT }]);
@@ -2108,20 +2161,59 @@ export default function UnifiedStudioClient({
                       justifyContent: "space-between",
                       alignItems: "flex-start",
                       gap: 8,
+                      flexWrap: "wrap",
                     }}
                   >
                     <span style={{ fontSize: 11, color: "#a1a1aa" }}>
                       {d.platform} · {d.source === "cloud" ? "☁️" : "📁"}{" "}
                       {d.source} · {new Date(d.at).toLocaleString()}
                     </span>
-                    <button
-                      type="button"
-                      className="ucs-btn ucs-btn-danger"
-                      style={{ padding: "0.35rem 0.6rem", fontSize: 12 }}
-                      onClick={() => void removeDraft(d)}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 6,
+                        alignItems: "center",
+                      }}
                     >
-                      Remove
-                    </button>
+                      {d.source === "cloud" ? (
+                        <>
+                          <Link
+                            href={`/unified?draft=${encodeURIComponent(d.id)}`}
+                            className="ucs-btn ucs-btn-ghost"
+                            style={{
+                              fontSize: 12,
+                              padding: "0.35rem 0.6rem",
+                              textDecoration: "none",
+                            }}
+                          >
+                            Open in chat
+                          </Link>
+                          <button
+                            type="button"
+                            className="ucs-btn ucs-btn-ghost"
+                            style={{ fontSize: 12, padding: "0.35rem 0.6rem" }}
+                            onClick={() => {
+                              const url = `${typeof window !== "undefined" ? window.location.origin : ""}/unified?draft=${encodeURIComponent(d.id)}`;
+                              void navigator.clipboard.writeText(url).then(
+                                () => showToast("Link copied", "ok"),
+                                () => showToast("Copy failed", "error"),
+                              );
+                            }}
+                          >
+                            Copy link
+                          </button>
+                        </>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="ucs-btn ucs-btn-danger"
+                        style={{ padding: "0.35rem 0.6rem", fontSize: 12 }}
+                        onClick={() => void removeDraft(d)}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                   <p style={{ fontSize: 14, lineHeight: 1.55, marginTop: 8 }}>
                     {d.caption}
