@@ -22,8 +22,8 @@ Railway injects **`DATABASE_URL`** when you add the PostgreSQL plugin — do not
 | **`STRIPE_PUBLISHABLE_KEY`** | If client reads it | Often `pk_live_...` — only add `NEXT_PUBLIC_` prefix if you expose publishable key in browser code |
 | **`STRIPE_WEBHOOK_SECRET`** | Yes | `whsec_...` for the endpoint whose URL matches **`NEXTAUTH_URL`** domain |
 | **`STRIPE_PRICE_PRO`** | Yes | `price_...` from Stripe Dashboard → Products → Prices |
-| **`STRIPE_PRICE_BUSINESS`** | Yes* | *Required if you offer Business checkout |
-| **`STRIPE_PRICE_ENTERPRISE`** | Yes* | *Required if you offer Enterprise checkout |
+| **`STRIPE_PRICE_BUSINESS`** | Yes | Same — **`npm run deploy:check` requires all three**; add real Business price or a placeholder `price_...` if that tier is not sold yet |
+| **`STRIPE_PRICE_ENTERPRISE`** | Yes | Same for Enterprise |
 | **`ADMIN_REVENUE_SECRET`** | Recommended | Protects `GET /api/admin/revenue` |
 | **`OPENAI_API_KEY`** | **Recommended** | DALL·E / GPT Image edit, Whisper transcribe, **OpenAI chat** (`UNIFIED_CHAT_PROVIDER=openai`). Unified **text generate** and default **Anthropic chat** work with Anthropic only. |
 | **`APP_URL`** | Recommended | Same public `https://` origin as `NEXTAUTH_URL` when the app builds absolute URLs for uploads. |

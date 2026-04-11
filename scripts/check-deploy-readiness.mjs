@@ -8,6 +8,7 @@
  *
  * Or pass a file:
  *   node scripts/check-deploy-readiness.mjs --file=.env.production.local
+ *   node scripts/check-deploy-readiness.mjs --file path/to.env
  */
 
 import { readFileSync, existsSync } from "fs";
@@ -50,8 +51,11 @@ function main() {
   const args = process.argv.slice(2);
   let fileArg = null;
   for (let i = 0; i < args.length; i++) {
-    if (args[i].startsWith("--file=")) {
-      fileArg = args[i].slice("--file=".length);
+    const a = args[i];
+    if (a === "--file" && args[i + 1]) {
+      fileArg = args[++i];
+    } else if (a.startsWith("--file=")) {
+      fileArg = a.slice("--file=".length);
     }
   }
 

@@ -4,7 +4,7 @@
 
 **Repo:** `postforge` (Next.js App Router). Primary surface: **`/unified`**.
 
-**Companion docs:** [`AI-RAILWAY-ENV-HANDOFF.md`](./AI-RAILWAY-ENV-HANDOFF.md), [`PRODUCTION-DEPLOYMENT.md`](./PRODUCTION-DEPLOYMENT.md), [`AI-HANDOFF-DIAGNOSTIC.md`](./AI-HANDOFF-DIAGNOSTIC.md), [`AI-CAPABILITIES-HANDOFF.md`](./AI-CAPABILITIES-HANDOFF.md).
+**Companion docs:** [`AI-HANDOFF-SECOND-REVIEW.md`](./AI-HANDOFF-SECOND-REVIEW.md) (short brief for another agent), [`AI-RAILWAY-ENV-HANDOFF.md`](./AI-RAILWAY-ENV-HANDOFF.md), [`PRODUCTION-DEPLOYMENT.md`](./PRODUCTION-DEPLOYMENT.md), [`AI-HANDOFF-DIAGNOSTIC.md`](./AI-HANDOFF-DIAGNOSTIC.md), [`AI-CAPABILITIES-HANDOFF.md`](./AI-CAPABILITIES-HANDOFF.md).
 
 ---
 
@@ -34,7 +34,10 @@
 
 ## 3. Environment (production)
 
-Authoritative list: **`scripts/required-env.production.json`**.  
+Authoritative list: **`scripts/required-env.production.json`** — **`required`** keys must pass **`npm run deploy:check`**; **`recommended`** (`OPENAI_API_KEY`, `APP_URL`) produce **warnings** only if unset.
+
+**All three** `STRIPE_PRICE_*` vars are **required** by the checker (even if you only sell one tier — use real or placeholder Stripe prices per `notes` in that JSON).
+
 Stripe **Price IDs** in Railway must match what Stripe sends on subscriptions or **plan resolution fails** until `customer.subscription.updated` applies limits from metadata/row.
 
 Do **not** commit secrets. Use **`deploy/secrets.preview.env.example`** + **`npm run deploy:check`** before deploy.

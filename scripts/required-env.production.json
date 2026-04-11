@@ -20,7 +20,7 @@
     "DATABASE_URL": "Postgres URL, or on Railway web service: ${{ Postgres.DATABASE_URL }}",
     "NEXTAUTH_URL": "https://your-app.up.railway.app — no trailing slash; not YOUR_DOMAIN_HERE",
     "NEXTAUTH_SECRET": "Random string (e.g. openssl rand -base64 32), not GENERATE_WITH_...",
-    "STRIPE_PRICE_*": "Stripe Dashboard → Products → Price ID (price_...)",
+    "STRIPE_PRICE_*": "Stripe Dashboard → Products → Price ID (price_...). deploy:check requires all three; if you only sell one tier, create placeholder prices or duplicate IDs per Stripe rules.",
     "OPENAI_API_KEY": "DALL·E / GPT Image / Whisper / OpenAI chat path; set if you use those features",
     "APP_URL": "Same public origin as NEXTAUTH_URL — used for absolute URLs to uploads in production"
   }
