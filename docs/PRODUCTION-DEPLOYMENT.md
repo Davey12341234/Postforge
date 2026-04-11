@@ -30,7 +30,7 @@ Railway injects **`DATABASE_URL`** when you add the PostgreSQL plugin — do not
 | **`UNIFIED_CHAT_PROVIDER`** | Optional | `anthropic` (default) or `openai` — requires matching API key configured. |
 | **`NODE_ENV`** | Optional | Railway often sets `production` automatically |
 
-**Validate before deploy:** copy Railway variables into `deploy/secrets.preview.env` (see `deploy/secrets.preview.env.example`), then run **`npm run deploy:check`**. After deploy, **`npm run verify:deploy https://your-domain.com`** for HTTP smoke checks.
+**Validate before deploy:** copy Railway variables into a KEY=value file and run **`npm run deploy:check`**. Prefer `deploy/secrets.preview.env` (see `deploy/secrets.preview.env.example`); if your editor hides gitignored folders, use **`%USERPROFILE%\.postforge-deploy-check.env`** or **`DEPLOY_CHECK_FILE`** — see **`deploy/WHERE-TO-PUT-SECRETS.txt`**. After deploy, **`npm run verify:deploy https://your-domain.com`** for HTTP smoke checks.
 
 ---
 

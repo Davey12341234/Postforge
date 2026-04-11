@@ -9,13 +9,30 @@
  * Or pass a file:
  *   node scripts/check-deploy-readiness.mjs --file=.env.production.local
  *   node scripts/check-deploy-readiness.mjs --file path/to.env
+ *
+ * If your editor hides gitignored paths, use either:
+ *   - set DEPLOY_CHECK_FILE to an absolute path (any folder), or
+ *   - put secrets in  %USERPROFILE%\.postforge-deploy-check.env  (Windows)
+ *     or  ~/.postforge-deploy-check.env  (macOS/Linux) — outside the repo, easy to open.
  */
 
 import { readFileSync, existsSync } from "fs";
+import { homedir } from "os";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/** Resolve a path for reading; relative paths are from cwd. */
+function resolveEnvFilePath(p) {
+  if (!p || typeof p !== "string") return null;
+  const t = p.trim();
+  if (!t) return null;
+  if (t.startsWith("/") || /^[A-Za-z]:[\\/]/.test(t)) {
+    return t;
+  }
+  return join(process.cwd(), t);
+}
 
 function parseEnvFile(content) {
   const out = {};
@@ -59,8 +76,16 @@ function main() {
     }
   }
 
+  const envFromVar =
+    process.env.DEPLOY_CHECK_FILE ||
+    process.env.POSTFORGE_DEPLOY_CHECK_FILE ||
+    process.env.POSTFORGE_SECRETS_FILE ||
+    "";
+
   const candidates = [
+    envFromVar.trim() || null,
     fileArg,
+    join(homedir(), ".postforge-deploy-check.env"),
     join(process.cwd(), "deploy", "secrets.preview.env"),
     join(process.cwd(), ".env.production.local"),
   ].filter(Boolean);
@@ -68,8 +93,8 @@ function main() {
   let pathUsed = null;
   let env = {};
   for (const p of candidates) {
-    const full = p.startsWith("/") || /^[A-Za-z]:\\/.test(p) ? p : join(process.cwd(), p);
-    if (existsSync(full)) {
+    const full = resolveEnvFilePath(p);
+    if (full && existsSync(full)) {
       pathUsed = full;
       env = parseEnvFile(readFileSync(full, "utf8"));
       break;
@@ -129,14 +154,16 @@ function main() {
 
   console.log("\n=== PostForge — deploy readiness check ===\n");
   if (!pathUsed) {
+    const homeFile = join(homedir(), ".postforge-deploy-check.env");
     console.log("No env file found.\n");
-    console.log("Do one of the following:\n");
+    console.log("Editors often hide gitignored files (e.g. deploy/secrets). Pick one:\n");
     console.log(
-      "  1) Create  deploy/secrets.preview.env  (copy-paste KEY=value from Railway, one per line)",
+      `  1) Create  ${homeFile}  (not in repo — easy to open) with KEY=value lines from Railway`,
     );
-    console.log("  2) Or use  .env.production.local  with the same format");
-    console.log("  3) Or run:  node scripts/check-deploy-readiness.mjs --file=path/to/env\n");
-    console.log("Required keys are listed in: scripts/required-env.production.json\n");
+    console.log("  2) Set env  DEPLOY_CHECK_FILE=C:\\absolute\\path\\railway.env  then npm run deploy:check");
+    console.log("  3) Create  deploy/secrets.preview.env  or  .env.production.local  in the repo");
+    console.log("  4) Or run:  node scripts/check-deploy-readiness.mjs --file C:\\path\\railway.env\n");
+    console.log("Required keys: scripts/required-env.production.json\n");
     process.exit(1);
   }
 

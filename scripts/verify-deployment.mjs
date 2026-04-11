@@ -7,6 +7,7 @@
  */
 
 import { existsSync } from "fs";
+import { homedir } from "os";
 import { spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -33,24 +34,34 @@ function w(msg) {
 
 console.log("\n=== PostForge — verify deployment ===\n");
 
-// 1) deploy:check if secrets file exists
+// 1) deploy:check if secrets file exists (repo, home, or DEPLOY_CHECK_FILE)
 const secrets = join(root, "deploy", "secrets.preview.env");
 const prodLocal = join(root, ".env.production.local");
+const homeSecrets = join(homedir(), ".postforge-deploy-check.env");
+const deployCheckFile = process.env.DEPLOY_CHECK_FILE?.trim();
 const checkScript = join(root, "scripts", "check-deploy-readiness.mjs");
-if (existsSync(secrets) || existsSync(prodLocal)) {
+const hasSecretsFile =
+  (deployCheckFile && existsSync(deployCheckFile)) ||
+  existsSync(secrets) ||
+  existsSync(prodLocal) ||
+  existsSync(homeSecrets);
+if (hasSecretsFile) {
   const r = spawnSync(process.execPath, [checkScript], {
     cwd: root,
     encoding: "utf8",
     stdio: "pipe",
+    env: process.env,
   });
   if (r.status === 0) {
     ok("deploy:check (secrets file)");
   } else {
-    w("deploy:check failed or incomplete — fix deploy/secrets.preview.env");
+    w("deploy:check failed or incomplete — fix your env file (see deploy/WHERE-TO-PUT-SECRETS.txt)");
     console.log(r.stdout || r.stderr || "");
   }
 } else {
-  w("No deploy/secrets.preview.env or .env.production.local — run npm run deploy:check after creating one");
+  w(
+    "No secrets file found — use %USERPROFILE%\\.postforge-deploy-check.env, DEPLOY_CHECK_FILE, deploy/secrets.preview.env, or .env.production.local (see deploy/WHERE-TO-PUT-SECRETS.txt)",
+  );
 }
 
 // 2) migration SQL must not have UTF-8 BOM (PostgreSQL rejects it)
