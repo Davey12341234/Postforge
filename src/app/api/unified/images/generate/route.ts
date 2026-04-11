@@ -9,7 +9,11 @@ import { absolutePublicUrl, persistGeneratedImage } from "@/lib/image-gen/persis
 import { inngest } from "@/lib/inngest";
 import { mergeStyleHint } from "@/lib/image-gen/prompt";
 import { imageGenerateBodySchema } from "@/lib/image-gen/types";
-import { checkUsageLimits } from "@/lib/unified-limits";
+import {
+  canUseMediaStudio,
+  checkUsageLimits,
+  getUserPlanKey,
+} from "@/lib/unified-limits";
 import { getOrCreateUnifiedProfile } from "@/lib/unified-profile";
 
 function parseDimensions(size: string): { width: number; height: number } {
@@ -41,6 +45,21 @@ export async function POST(req: NextRequest) {
     const mod = await moderateImagePrompt(mergedPrompt);
     if (!mod.ok) {
       return NextResponse.json({ error: mod.reason }, { status: 400 });
+    }
+
+    const planKey = await getUserPlanKey(session.user.id);
+    if (!canUseMediaStudio(planKey)) {
+      return NextResponse.json(
+        {
+          error:
+            "Image generation (DALL·E) is available on Pro, Business, and Enterprise.",
+          code: "FEATURE_REQUIRES_UPGRADE",
+          feature: "media_studio",
+          plan: planKey,
+          upgradeUrl: "/unified/pricing",
+        },
+        { status: 402 },
+      );
     }
 
     const limits = await checkUsageLimits(session.user.id);

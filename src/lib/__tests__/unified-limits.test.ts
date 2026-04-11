@@ -32,15 +32,20 @@ describe("getPlanLimits", () => {
     });
   });
 
-  it("enforces bounded caps for pro and sentinel -1 for business unlimited fields", () => {
+  it("tiers scale Pro → Business (high caps) → Enterprise (unlimited fields)", () => {
     const pro = getPlanLimits("pro");
-    expect(pro.generations).toBe(500);
-    expect(pro.drafts).toBe(500);
+    expect(pro.credits).toBe(2500);
+    expect(pro.generations).toBe(800);
+    expect(pro.drafts).toBe(800);
 
     const biz = getPlanLimits("business");
-    expect(biz.credits).toBe(-1);
-    expect(biz.generations).toBe(-1);
+    expect(biz.credits).toBe(15000);
+    expect(biz.generations).toBe(5000);
     expect(biz.teamMembers).toBe(25);
+
+    const ent = getPlanLimits("enterprise");
+    expect(ent.credits).toBe(-1);
+    expect(ent.generations).toBe(-1);
   });
 });
 
@@ -87,9 +92,9 @@ describe("checkUsageLimits", () => {
 
     vi.mocked(prisma.unifiedSubscription.findUnique).mockResolvedValue({
       plan: "pro",
-      monthlyCreditsLimit: 1000,
-      aiGenerationsLimit: 500,
-      draftStorageLimit: 500,
+      monthlyCreditsLimit: 2500,
+      aiGenerationsLimit: 800,
+      draftStorageLimit: 800,
       currentPeriodStart: new Date(Date.now() - 86400000),
       currentPeriodEnd: null,
     } as never);
@@ -100,7 +105,7 @@ describe("checkUsageLimits", () => {
     const r = await checkUsageLimits("user-2");
     expect(r.canGenerate).toBe(true);
     expect(r.canSaveDraft).toBe(true);
-    expect(r.limits.maxGenerations).toBe(500);
+    expect(r.limits.maxGenerations).toBe(800);
   });
 
   it("treats negative max generations as unlimited (business)", async () => {

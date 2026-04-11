@@ -7,7 +7,11 @@ import { absolutePublicUrl, persistGeneratedImageBuffer } from "@/lib/image-gen/
 import { getOpenAIClient } from "@/lib/openai-responses";
 import { prisma } from "@/lib/prisma";
 import { inngest } from "@/lib/inngest";
-import { checkUsageLimits } from "@/lib/unified-limits";
+import {
+  canUseMediaStudio,
+  checkUsageLimits,
+  getUserPlanKey,
+} from "@/lib/unified-limits";
 import { getOrCreateUnifiedProfile } from "@/lib/unified-profile";
 import { toFile } from "openai";
 
@@ -56,6 +60,21 @@ export async function POST(req: NextRequest) {
     const mod = await moderateImagePrompt(prompt);
     if (!mod.ok) {
       return NextResponse.json({ error: mod.reason }, { status: 400 });
+    }
+
+    const planKey = await getUserPlanKey(session.user.id);
+    if (!canUseMediaStudio(planKey)) {
+      return NextResponse.json(
+        {
+          error:
+            "GPT image editing is available on Pro, Business, and Enterprise.",
+          code: "FEATURE_REQUIRES_UPGRADE",
+          feature: "media_studio",
+          plan: planKey,
+          upgradeUrl: "/unified/pricing",
+        },
+        { status: 402 },
+      );
     }
 
     const limits = await checkUsageLimits(session.user.id);

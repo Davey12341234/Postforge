@@ -83,12 +83,17 @@ describe("mapPlanToTier / applyPlanLimitsToSubscriptionData", () => {
     expect(mapPlanToTier("nope")).toBe("FREE");
   });
 
-  it("uses large sentinel limits when plan is unlimited", () => {
+  it("uses finite caps for business and sentinels for enterprise", () => {
     const b = applyPlanLimitsToSubscriptionData("business");
-    expect(b.monthlyCreditsLimit).toBe(999999);
-    expect(b.aiGenerationsLimit).toBe(999999);
+    expect(b.monthlyCreditsLimit).toBe(15000);
+    expect(b.aiGenerationsLimit).toBe(5000);
+
+    const e = applyPlanLimitsToSubscriptionData("enterprise");
+    expect(e.monthlyCreditsLimit).toBe(999999);
+    expect(e.aiGenerationsLimit).toBe(999999);
+
     const p = applyPlanLimitsToSubscriptionData("pro");
-    expect(p.aiGenerationsLimit).toBe(500);
+    expect(p.aiGenerationsLimit).toBe(800);
   });
 });
 

@@ -3,7 +3,11 @@ import { auth } from "@/lib/auth";
 import { moderateOpenAIText } from "@/lib/image-gen/moderation";
 import { getOpenAIClient, extractResponsesOutputText } from "@/lib/openai-responses";
 import { prisma } from "@/lib/prisma";
-import { checkUsageLimits } from "@/lib/unified-limits";
+import {
+  canUseOpenAiChat,
+  checkUsageLimits,
+  getUserPlanKey,
+} from "@/lib/unified-limits";
 import { applyXpAndLevel, getOrCreateUnifiedProfile } from "@/lib/unified-profile";
 import { chatMessageCost } from "@/lib/unified-revenue";
 
@@ -102,6 +106,20 @@ export async function POST(req: NextRequest) {
     }
 
     if (provider === "openai") {
+      const planKey = await getUserPlanKey(session.user.id);
+      if (!canUseOpenAiChat(planKey)) {
+        return NextResponse.json(
+          {
+            error: "OpenAI chat is available on Pro, Business, and Enterprise.",
+            code: "FEATURE_REQUIRES_UPGRADE",
+            feature: "openai_chat",
+            plan: planKey,
+            upgradeUrl: "/unified/pricing",
+          },
+          { status: 402 },
+        );
+      }
+
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) {
         return NextResponse.json(

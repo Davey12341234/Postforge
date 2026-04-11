@@ -7,6 +7,10 @@ import type { UnifiedSubscriptionTier } from "@prisma/client";
 import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { getPlanLimits } from "@/lib/unified-limits";
+import {
+  extractSubscriptionPriceId,
+  resolvePlanFromStripePriceId,
+} from "@/lib/unified-stripe-plan";
 
 export function mapPlanToTier(plan: string): UnifiedSubscriptionTier {
   switch (plan.toLowerCase()) {
@@ -29,6 +33,19 @@ export function applyPlanLimitsToSubscriptionData(plan: string) {
     draftStorageLimit: L.drafts < 0 ? 999999 : L.drafts,
     teamMembersLimit: L.teamMembers < 0 ? 999999 : L.teamMembers,
   };
+}
+
+/** Sets unified credit pool to this plan’s monthly allowance (upgrade/downgrade / webhook). */
+export async function refreshProfileCreditsForPlan(
+  profileId: string,
+  plan: string,
+): Promise<void> {
+  const L = getPlanLimits(plan);
+  const pool = L.credits < 0 ? 999_999 : L.credits;
+  await prisma.unifiedStudioProfile.update({
+    where: { id: profileId },
+    data: { unifiedCredits: pool },
+  });
 }
 
 export async function processCheckoutSessionCompleted(
@@ -79,6 +96,8 @@ export async function processCheckoutSessionCompleted(
     data: { subscriptionTier: mapPlanToTier(plan) },
   });
 
+  await refreshProfileCreditsForPlan(profileId, plan);
+
   await prisma.unifiedAnalyticsEvent.create({
     data: {
       profileId,
@@ -105,13 +124,31 @@ export async function processCustomerSubscriptionChange(
   if (!row) return;
 
   const active = sub.status === "active" || sub.status === "trialing";
-  const plan = row.plan || (active ? "pro" : "free");
+  const priceId = extractSubscriptionPriceId(sub);
+  const resolvedFromStripe = resolvePlanFromStripePriceId(priceId);
+
+  let plan: string;
+  if (!active) {
+    plan = "free";
+  } else if (resolvedFromStripe) {
+    plan = resolvedFromStripe;
+  } else if (row.plan && row.plan !== "free") {
+    plan = row.plan;
+  } else {
+    plan = "pro";
+  }
+
+  const lim = applyPlanLimitsToSubscriptionData(plan);
+  const prevPlan = row.plan;
 
   await prisma.unifiedSubscription.update({
     where: { id: row.id },
     data: {
       stripeSubscriptionId: sub.id,
+      stripePriceId: priceId ?? row.stripePriceId,
+      plan,
       status: sub.status === "canceled" ? "canceled" : sub.status,
+      ...lim,
       currentPeriodStart: sub.current_period_start
         ? new Date(sub.current_period_start * 1000)
         : null,
@@ -128,11 +165,15 @@ export async function processCustomerSubscriptionChange(
       where: { id: row.profileId },
       data: { subscriptionTier: "FREE" },
     });
+    await refreshProfileCreditsForPlan(row.profileId, "free");
   } else {
     await prisma.unifiedStudioProfile.update({
       where: { id: row.profileId },
       data: { subscriptionTier: mapPlanToTier(plan) },
     });
+    if (plan !== prevPlan) {
+      await refreshProfileCreditsForPlan(row.profileId, plan);
+    }
   }
 
   await prisma.unifiedAnalyticsEvent.create({
@@ -142,6 +183,8 @@ export async function processCustomerSubscriptionChange(
       properties: {
         status: sub.status,
         subscriptionId: sub.id,
+        plan,
+        priceId: priceId ?? null,
       },
     },
   });
@@ -190,6 +233,12 @@ export async function processInvoicePaid(
       metadata: { invoiceId: invoice.id },
     },
   });
+
+  // Renewals only — checkout.session.completed + first invoice already grant credits.
+  const reason = invoice.billing_reason;
+  if (reason === "subscription_cycle" && sub.plan && sub.plan !== "free") {
+    await refreshProfileCreditsForPlan(sub.profileId, sub.plan);
+  }
 }
 
 export async function processInvoicePaymentFailed(

@@ -219,7 +219,10 @@ const UNIFIED_API = {
     },
   },
   generateContent: async (body: {
-    prompt: string;
+    /** Single-turn */
+    prompt?: string;
+    /** Multi-turn (structured generate & refine) */
+    messages?: Array<{ role: "user" | "assistant"; content: string }>;
     platform?: string;
     contentType?: string;
     options?: {
@@ -476,9 +479,12 @@ export default function UnifiedStudioClient({
   );
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
   const [genPrompt, setGenPrompt] = useState("");
+  /** User/assistant turns for structured generate (same Claude path, multi-turn). */
+  const [genThread, setGenThread] = useState<
+    Array<{ role: "user" | "assistant"; content: string }>
+  >([]);
   const [genPlatform, setGenPlatform] = useState("instagram");
   const [genContentType, setGenContentType] = useState("post");
-  const [genOutput, setGenOutput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [imgEditPrompt, setImgEditPrompt] = useState("");
   const [imgEditLoading, setImgEditLoading] = useState(false);
@@ -661,8 +667,14 @@ export default function UnifiedStudioClient({
     ? xpProgressInLevel(progress.profile.xpTotal)
     : xpProgressInLevel(0);
 
+  /** OpenAI chat is a paid feature; free tier always uses Anthropic in requests. */
+  const openAiChatUnlocked =
+    (progress?.profile.subscriptionTier ?? "FREE") !== "FREE";
+
   const chatProvider =
-    userSettings.chatProvider === "openai" ? "openai" : "anthropic";
+    openAiChatUnlocked && userSettings.chatProvider === "openai"
+      ? "openai"
+      : "anthropic";
 
   const resetOpenAiThread = async () => {
     if (chatProvider !== "openai") return;
@@ -719,6 +731,11 @@ export default function UnifiedStudioClient({
         if (data.code === "LIMIT_REACHED") {
           setUpgradePromptType("generation_limit");
           setShowUpgradePrompt(true);
+        } else if (data.code === "FEATURE_REQUIRES_UPGRADE") {
+          setUpgradePromptType("feature_gate");
+          setShowUpgradePrompt(true);
+          setShowPricing(true);
+          showToast(String(data.error ?? "Upgrade required"), "warn");
         } else {
           setUpgradePromptType("credits");
           setShowUpgradePrompt(true);
@@ -748,7 +765,7 @@ export default function UnifiedStudioClient({
   const handleGenerateContent = async () => {
     let prompt = genPrompt.trim();
     if (!prompt) {
-      showToast("Please enter a prompt", "warn");
+      showToast("Enter a prompt or a follow-up to refine the draft.", "warn");
       return;
     }
     const lang = String(userSettings.language ?? "english");
@@ -756,7 +773,6 @@ export default function UnifiedStudioClient({
       prompt = `(Write in ${lang}.)\n\n${prompt}`;
     }
     setIsGenerating(true);
-    setGenOutput("");
     try {
       const tone =
         typeof userSettings.tone === "string"
@@ -768,8 +784,12 @@ export default function UnifiedStudioClient({
           : 500;
       const includeHashtags = userSettings.includeHashtags !== false;
       const includeEmojis = userSettings.includeEmojis !== false;
+
+      const messages: Array<{ role: "user" | "assistant"; content: string }> =
+        [...genThread, { role: "user", content: prompt }];
+
       const result = await UNIFIED_API.generateContent({
-        prompt,
+        messages,
         platform: genPlatform,
         contentType: genContentType,
         options: {
@@ -779,8 +799,16 @@ export default function UnifiedStudioClient({
           includeEmojis,
         },
       });
-      setGenOutput(result.content);
-      showToast("Content generated!", "ok");
+      setGenThread((prev) => [
+        ...prev,
+        { role: "user", content: prompt },
+        { role: "assistant", content: result.content },
+      ]);
+      setGenPrompt("");
+      showToast(
+        genThread.length === 0 ? "Content generated!" : "Draft updated!",
+        "ok",
+      );
       await loadProgress();
       const autoSave =
         userSettings.autoSaveDrafts !== false &&
@@ -795,7 +823,8 @@ export default function UnifiedStudioClient({
             metadata: {
               generatedAt: new Date().toISOString(),
               model: result.usage?.model,
-              prompt,
+              prompt: prompt.slice(0, 500),
+              threadTurns: messages.length,
             },
           });
           await loadCloudDrafts();
@@ -813,6 +842,13 @@ export default function UnifiedStudioClient({
         if (e.status === 402 && e.code === "LIMIT_REACHED") {
           setUpgradePromptType("generation_limit");
           setShowUpgradePrompt(true);
+          return;
+        }
+        if (e.status === 402 && e.code === "FEATURE_REQUIRES_UPGRADE") {
+          setUpgradePromptType("feature_gate");
+          setShowUpgradePrompt(true);
+          setShowPricing(true);
+          showToast(e.message || "This feature requires a paid plan.", "warn");
           return;
         }
         if (e.status === 402) {
@@ -889,6 +925,13 @@ export default function UnifiedStudioClient({
           setShowUpgradePrompt(true);
           return;
         }
+        if (e.status === 402 && e.code === "FEATURE_REQUIRES_UPGRADE") {
+          setUpgradePromptType("feature_gate");
+          setShowUpgradePrompt(true);
+          setShowPricing(true);
+          showToast(e.message || "This feature requires a paid plan.", "warn");
+          return;
+        }
         if (e.status === 402) {
           setUpgradePromptType("credits");
           setShowUpgradePrompt(true);
@@ -955,6 +998,13 @@ export default function UnifiedStudioClient({
           setShowUpgradePrompt(true);
           return;
         }
+        if (e.status === 402 && e.code === "FEATURE_REQUIRES_UPGRADE") {
+          setUpgradePromptType("feature_gate");
+          setShowUpgradePrompt(true);
+          setShowPricing(true);
+          showToast(e.message || "This feature requires a paid plan.", "warn");
+          return;
+        }
         if (e.status === 402) {
           setUpgradePromptType("credits");
           setShowUpgradePrompt(true);
@@ -986,8 +1036,16 @@ export default function UnifiedStudioClient({
       const data = (await res.json().catch(() => ({}))) as {
         text?: string;
         error?: string;
+        code?: string;
       };
       if (!res.ok) {
+        if (res.status === 402 && data.code === "FEATURE_REQUIRES_UPGRADE") {
+          setUpgradePromptType("feature_gate");
+          setShowUpgradePrompt(true);
+          setShowPricing(true);
+          showToast(String(data.error ?? "Upgrade required"), "warn");
+          return;
+        }
         throw new Error(data.error ?? "Transcription failed");
       }
       const text = data.text?.trim() ?? "";
@@ -1412,11 +1470,14 @@ export default function UnifiedStudioClient({
         {tab === "create" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div className="ucs-card">
-              <p className="ucs-h2">One-shot generate</p>
+              <p className="ucs-h2">Structured generate &amp; refine</p>
               <p style={{ fontSize: 13, color: "#a1a1aa", marginTop: 0 }}>
-                Uses <code style={{ fontSize: 12 }}>/api/unified/generate</code>{" "}
-                (structured prompt). Chat below still uses{" "}
-                <code style={{ fontSize: 12 }}>/api/unified/chat</code>.
+                Same Claude model as before, but you can{" "}
+                <strong style={{ color: "#e4e4e7" }}>reply back and forth</strong>{" "}
+                to tighten hooks, length, or CTAs. Uses{" "}
+                <code style={{ fontSize: 12 }}>/api/unified/generate</code> with a
+                message thread. Free-form chat is still{" "}
+                <code style={{ fontSize: 12 }}>/api/unified/chat</code> below.
               </p>
               <div
                 style={{
@@ -1455,9 +1516,56 @@ export default function UnifiedStudioClient({
                   </select>
                 </label>
               </div>
+              {genThread.length > 0 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    marginBottom: 10,
+                    maxHeight: 280,
+                    overflowY: "auto",
+                  }}
+                >
+                  {genThread.map((m, i) => (
+                    <div
+                      key={`${i}-${m.role}`}
+                      style={{
+                        padding: 10,
+                        borderRadius: 10,
+                        background:
+                          m.role === "user"
+                            ? "rgba(99,102,241,0.12)"
+                            : "rgba(0,0,0,0.35)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        fontSize: 13,
+                        lineHeight: 1.55,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 10,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                          color: "#71717a",
+                          marginBottom: 4,
+                        }}
+                      >
+                        {m.role === "user" ? "You" : "Generated draft"}
+                      </div>
+                      {m.content}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               <textarea
                 className="ucs-textarea"
-                placeholder="Describe what you want (tone, topic, CTA)…"
+                placeholder={
+                  genThread.length === 0
+                    ? "Describe what you want (tone, topic, CTA)…"
+                    : "Follow up: shorter, different hook, add hashtags, etc."
+                }
                 value={genPrompt}
                 onChange={(e) => setGenPrompt(e.target.value)}
                 style={{ minHeight: 100 }}
@@ -1469,25 +1577,27 @@ export default function UnifiedStudioClient({
                   disabled={isGenerating}
                   onClick={() => void handleGenerateContent()}
                 >
-                  {isGenerating ? "Generating…" : "Generate"}
+                  {isGenerating
+                    ? "Working…"
+                    : genThread.length === 0
+                      ? "Generate"
+                      : "Send follow-up"}
                 </button>
+                {genThread.length > 0 ? (
+                  <button
+                    type="button"
+                    className="ucs-btn ucs-btn-ghost"
+                    disabled={isGenerating}
+                    onClick={() => {
+                      setGenThread([]);
+                      setGenPrompt("");
+                      showToast("Conversation cleared", "ok");
+                    }}
+                  >
+                    Clear conversation
+                  </button>
+                ) : null}
               </div>
-              {genOutput ? (
-                <div
-                  style={{
-                    marginTop: 12,
-                    padding: 12,
-                    borderRadius: 12,
-                    background: "rgba(0,0,0,0.35)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    fontSize: 14,
-                    lineHeight: 1.55,
-                    whiteSpace: "pre-wrap",
-                  }}
-                >
-                  {genOutput}
-                </div>
-              ) : null}
             </div>
 
             <div className="ucs-card">
@@ -1686,11 +1796,7 @@ export default function UnifiedStudioClient({
                   <select
                     className="ucs-input"
                     style={{ width: "100%", marginTop: 4 }}
-                    value={
-                      userSettings.chatProvider === "openai"
-                        ? "openai"
-                        : "anthropic"
-                    }
+                    value={chatProvider === "openai" ? "openai" : "anthropic"}
                     onChange={(e) =>
                       setUserSettings((s) => ({
                         ...s,
@@ -1699,8 +1805,8 @@ export default function UnifiedStudioClient({
                     }
                   >
                     <option value="anthropic">Anthropic (Claude)</option>
-                    <option value="openai">
-                      OpenAI (Responses + Conversations)
+                    <option value="openai" disabled={!openAiChatUnlocked}>
+                      OpenAI (Responses + Conversations) — Pro+
                     </option>
                   </select>
                 </label>

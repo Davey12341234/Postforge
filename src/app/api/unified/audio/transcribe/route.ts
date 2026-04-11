@@ -3,7 +3,11 @@ import { auth } from "@/lib/auth";
 import { moderateOpenAIText } from "@/lib/image-gen/moderation";
 import { getOpenAIClient } from "@/lib/openai-responses";
 import { prisma } from "@/lib/prisma";
-import { checkUsageLimits } from "@/lib/unified-limits";
+import {
+  canUseMediaStudio,
+  checkUsageLimits,
+  getUserPlanKey,
+} from "@/lib/unified-limits";
 import { getOrCreateUnifiedProfile } from "@/lib/unified-profile";
 import { chatMessageCost } from "@/lib/unified-revenue";
 import { toFile } from "openai";
@@ -21,6 +25,21 @@ export async function POST(req: NextRequest) {
     const fileEntry = form.get("file");
     if (!(fileEntry instanceof Blob) || fileEntry.size === 0) {
       return NextResponse.json({ error: "file is required" }, { status: 400 });
+    }
+
+    const planKey = await getUserPlanKey(session.user.id);
+    if (!canUseMediaStudio(planKey)) {
+      return NextResponse.json(
+        {
+          error:
+            "Voice transcription is available on Pro, Business, and Enterprise.",
+          code: "FEATURE_REQUIRES_UPGRADE",
+          feature: "media_studio",
+          plan: planKey,
+          upgradeUrl: "/unified/pricing",
+        },
+        { status: 402 },
+      );
     }
 
     const limits = await checkUsageLimits(session.user.id);

@@ -6,19 +6,66 @@ import { checkUsageLimits } from "@/lib/unified-limits";
 import { getOrCreateUnifiedProfile } from "@/lib/unified-profile";
 import { chatMessageCost } from "@/lib/unified-revenue";
 
-const bodySchema = z.object({
-  prompt: z.string().min(1).max(8000),
-  platform: z.string().max(64).optional(),
-  contentType: z.string().max(64).optional(),
-  options: z
-    .object({
-      tone: z.string().max(64).optional(),
-      maxLength: z.number().int().positive().max(32000).optional(),
-      includeHashtags: z.boolean().optional(),
-      includeEmojis: z.boolean().optional(),
-    })
-    .optional(),
+const threadMsgSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(32000),
 });
+
+const bodySchema = z
+  .object({
+    /** Single-turn (legacy): one user message. */
+    prompt: z.string().min(1).max(8000).optional(),
+    /** Multi-turn: full Anthropic message list; must start with user and end with user. */
+    messages: z.array(threadMsgSchema).max(40).optional(),
+    platform: z.string().max(64).optional(),
+    contentType: z.string().max(64).optional(),
+    options: z
+      .object({
+        tone: z.string().max(64).optional(),
+        maxLength: z.number().int().positive().max(32000).optional(),
+        includeHashtags: z.boolean().optional(),
+        includeEmojis: z.boolean().optional(),
+      })
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    const hasPrompt = Boolean(data.prompt?.trim());
+    const hasMsgs = (data.messages?.length ?? 0) > 0;
+    if (!hasPrompt && !hasMsgs) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide prompt or messages",
+        path: ["prompt"],
+      });
+    }
+    if (hasMsgs && data.messages) {
+      const m = data.messages;
+      if (m[0].role !== "user") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Thread must start with a user message",
+          path: ["messages", 0, "role"],
+        });
+      }
+      if (m[m.length - 1].role !== "user") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Last message must be from the user",
+          path: ["messages", m.length - 1, "role"],
+        });
+      }
+      for (let i = 0; i < m.length - 1; i++) {
+        if (m[i].role === m[i + 1].role) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Messages must alternate user and assistant",
+            path: ["messages", i],
+          });
+          break;
+        }
+      }
+    }
+  });
 
 function extractAnthropicText(data: unknown): string {
   if (!data || typeof data !== "object") return "";
@@ -67,7 +114,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { prompt, platform, contentType, options } = parsed.data;
+    const { prompt, messages: threadMessages, platform, contentType, options } =
+      parsed.data;
+
+    const anthropicMessages: Array<{ role: "user" | "assistant"; content: string }> =
+      threadMessages && threadMessages.length > 0
+        ? threadMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          }))
+        : [{ role: "user", content: prompt! }];
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -96,7 +152,11 @@ export async function POST(req: NextRequest) {
     }
 
     const profile = await getOrCreateUnifiedProfile(session.user.id);
-    const cost = chatMessageCost(1000);
+    const inputChars = anthropicMessages.reduce(
+      (n, m) => n + m.content.length,
+      0,
+    );
+    const cost = chatMessageCost(400 + Math.min(12000, Math.floor(inputChars / 3)));
     if (profile.unifiedCredits < cost) {
       return NextResponse.json(
         { error: "Insufficient unified credits", code: "INSUFFICIENT_CREDITS" },
@@ -118,7 +178,7 @@ export async function POST(req: NextRequest) {
         model,
         max_tokens: 1024,
         system: systemPrompt,
-        messages: [{ role: "user", content: prompt }],
+        messages: anthropicMessages,
       }),
     });
 
@@ -157,7 +217,8 @@ export async function POST(req: NextRequest) {
         properties: {
           platform: platform ?? null,
           contentType: contentType ?? null,
-          promptLength: prompt.length,
+          promptLength: inputChars,
+          turns: anthropicMessages.length,
           contentLength: generatedContent.length,
           cost,
           model,

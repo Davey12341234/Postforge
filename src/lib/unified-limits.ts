@@ -46,10 +46,14 @@ export function getPlanLimits(plan: string): {
   teamMembers: number;
 } {
   const p = plan.toLowerCase();
-  const limits: Record<string, { credits: number; generations: number; drafts: number; teamMembers: number }> = {
+  /** Three paid tiers: Pro < Business < Enterprise (caps and unlimited). */
+  const limits: Record<
+    string,
+    { credits: number; generations: number; drafts: number; teamMembers: number }
+  > = {
     free: { credits: 100, generations: 50, drafts: 20, teamMembers: 1 },
-    pro: { credits: 1000, generations: 500, drafts: 500, teamMembers: 5 },
-    business: { credits: -1, generations: -1, drafts: -1, teamMembers: 25 },
+    pro: { credits: 2500, generations: 800, drafts: 800, teamMembers: 5 },
+    business: { credits: 15000, generations: 5000, drafts: 5000, teamMembers: 25 },
     enterprise: { credits: -1, generations: -1, drafts: -1, teamMembers: -1 },
   };
   return limits[p] ?? limits.free;
@@ -65,15 +69,57 @@ export function getPlanConfig(plan: string): {
   const base = getPlanLimits(plan);
   const p = plan.toLowerCase();
   const features: Record<string, string[]> = {
-    free: ["basic_ai", "drafts_local"],
-    pro: ["advanced_ai", "priority_queue", "analytics_basic", "everything_in_free"],
-    business: ["team_workspace", "sso", "analytics_advanced", "everything_in_pro"],
-    enterprise: ["everything_plus", "sla", "dedicated_support", "custom_contract"],
+    free: ["anthropic_ai", "base_chat", "base_generate", "drafts_local"],
+    pro: [
+      "anthropic_ai",
+      "openai_chat",
+      "media_studio",
+      "analytics_basic",
+      "advanced_ai",
+      "priority_queue",
+    ],
+    business: [
+      "anthropic_ai",
+      "openai_chat",
+      "media_studio",
+      "analytics_advanced",
+      "team_workspace",
+      "sso",
+    ],
+    enterprise: [
+      "anthropic_ai",
+      "openai_chat",
+      "media_studio",
+      "analytics_advanced",
+      "team_workspace",
+      "sso",
+      "sla",
+      "dedicated_support",
+    ],
   };
   return {
     ...base,
     features: features[p] ?? features.free,
   };
+}
+
+/** Effective plan slug for API enforcement (subscription row beats profile tier). */
+export async function getUserPlanKey(userId: string): Promise<string> {
+  const profile = await getOrCreateUnifiedProfile(userId);
+  const sub = await prisma.unifiedSubscription.findUnique({
+    where: { profileId: profile.id },
+  });
+  return sub?.plan?.toLowerCase() ?? tierToPlanKey(profile.subscriptionTier);
+}
+
+/** OpenAI chat (Responses API) — Pro, Business, Enterprise only. */
+export function canUseOpenAiChat(plan: string): boolean {
+  return isFeatureEnabled(plan, "openai_chat");
+}
+
+/** DALL·E, GPT Image edit, Whisper — Pro+ */
+export function canUseMediaStudio(plan: string): boolean {
+  return isFeatureEnabled(plan, "media_studio");
 }
 
 export async function checkUsageLimits(userId: string): Promise<UsageLimitsResult> {
@@ -102,7 +148,13 @@ export async function checkUsageLimits(userId: string): Promise<UsageLimitsResul
     prisma.unifiedAnalyticsEvent.count({
       where: {
         profileId: profile.id,
-        eventName: { in: ["content_generation", "image_generation"] },
+        eventName: {
+          in: [
+            "content_generation",
+            "image_generation",
+            "unified_chat_message",
+          ],
+        },
         timestamp: { gte: periodStart },
       },
     }),
