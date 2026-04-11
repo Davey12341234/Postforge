@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useMemo, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import type { Prisma } from "@prisma/client";
 import DraftReviewModal from "./draft-review-modal";
 import NotificationBell from "./notification-bell";
@@ -74,6 +80,11 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const [drafts, setDrafts] = useState(initialDrafts || []);
   const [modalDraftId, setModalDraftId] = useState<string | null>(null);
   const [modalBusy, setModalBusy] = useState<ModalBusy>("none");
+  /** Prevents double-submit on list Regenerate; avoids 404 when first request already replaced the draft. */
+  const [regeneratingDraftId, setRegeneratingDraftId] = useState<string | null>(
+    null,
+  );
+  const regenerateLockedRef = useRef(false);
 
   const modalDraft = useMemo(
     () => drafts.find((d) => d.id === modalDraftId) ?? null,
@@ -201,6 +212,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   };
 
   const regenerateDraft = async (draftId: string, fromModal: boolean) => {
+    if (regenerateLockedRef.current) return;
+    regenerateLockedRef.current = true;
+    setRegeneratingDraftId(draftId);
     if (fromModal) setModalBusy("regenerate");
     try {
       const res = await fetch("/api/regenerate-draft", {
@@ -213,13 +227,20 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         setIsPaywallOpen(true);
         return;
       }
+      if (res.status === 404) {
+        setDrafts((prev) => prev.filter((d) => d.id !== draftId));
+        router.refresh();
+        return;
+      }
       if (!res.ok) {
-        console.error("Regenerate failed");
+        console.error("Regenerate failed", res.status);
         return;
       }
       if (fromModal) closeModal();
       router.refresh();
     } finally {
+      regenerateLockedRef.current = false;
+      setRegeneratingDraftId(null);
       if (fromModal) setModalBusy("none");
     }
   };
@@ -532,9 +553,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                       <button
                         type="button"
                         onClick={() => void regenerateDraft(draft.id, false)}
-                        className="flex-1 min-w-[100px] rounded-lg border border-orange-500/40 bg-orange-950/30 py-2 text-center text-xs font-semibold text-orange-200 transition-colors hover:bg-orange-950/50"
+                        disabled={regeneratingDraftId !== null}
+                        className="flex-1 min-w-[100px] rounded-lg border border-orange-500/40 bg-orange-950/30 py-2 text-center text-xs font-semibold text-orange-200 transition-colors hover:bg-orange-950/50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        Regenerate
+                        {regeneratingDraftId === draft.id
+                          ? "Regenerating…"
+                          : "Regenerate"}
                       </button>
                       <button
                         type="button"
