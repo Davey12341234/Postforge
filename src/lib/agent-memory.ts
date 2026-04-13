@@ -10,6 +10,8 @@ export type AgentMemory = {
   ongoingTasks: string[];
   topics: string[];
   technicalLevel: "beginner" | "intermediate" | "advanced" | "unknown";
+  /** Seven-question companion intake (local), injected into memory prompt when present. */
+  companionIntake?: string;
   updatedAt: number;
 };
 
@@ -41,6 +43,15 @@ export function saveMemory(m: AgentMemory): void {
   } catch {
     // ignore
   }
+}
+
+/** Persist structured answers from the blocking intro questionnaire into memory prompt context. */
+export function setCompanionIntakeFromQuestionnaire(questions: string[], answers: string[]): void {
+  const m = loadMemory();
+  const block = questions
+    .map((q, i) => `${i + 1}. ${q}\n→ ${(answers[i] ?? "").trim()}`)
+    .join("\n\n");
+  saveMemory({ ...m, companionIntake: block });
 }
 
 function guessTechnicalLevel(text: string): AgentMemory["technicalLevel"] {
@@ -92,6 +103,9 @@ function compactBlock(label: string, lines: string[], maxChars: number): string 
 export function generateMemoryPrompt(m: AgentMemory): string {
   const block = [
     "User memory (persistent, local):",
+    m.companionIntake
+      ? `Early connection intake (answered before first chat; honor tone, stakes, and success criteria):\n${m.companionIntake}`
+      : "",
     m.preferences.length ? `Preferences: ${m.preferences.join("; ")}` : "",
     m.styleNotes.length ? `Style: ${m.styleNotes.join("; ")}` : "",
     m.ongoingTasks.length ? `Ongoing tasks: ${m.ongoingTasks.join("; ")}` : "",
