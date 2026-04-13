@@ -1,16 +1,47 @@
 @import "tailwindcss";
+/* Skip large non-app trees so Tailwind scans less (faster dev/build, smaller CSS input scan). */
+@source not "../../_archive";
+@source not "../../games";
+@import "highlight.js/styles/github-dark.css";
 
-@keyframes modal-enter {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+:root {
+  color-scheme: dark;
 }
 
-.modal-enter {
-  animation: modal-enter 0.22s ease-out;
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-zinc-950 text-zinc-100 antialiased;
+}
+
+html {
+  font-size: calc(14px * var(--babygpt-font-scale, 1));
+}
+
+html.babygpt-appearance-light body {
+  @apply bg-zinc-100 text-zinc-900;
+}
+
+html.babygpt-appearance-oled body {
+  @apply bg-black text-zinc-100;
+}
+
+/* Header icon buttons: light shell */
+html.babygpt-appearance-light .babygpt-app-root header .babygpt-header-btn {
+  @apply bg-white text-zinc-900 ring-zinc-300 hover:bg-zinc-100;
+}
+
+.babygpt-markdown pre {
+  @apply overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/80 p-3 text-sm;
+}
+
+.babygpt-markdown code {
+  @apply rounded bg-zinc-800 px-1 py-0.5 text-[0.9em];
+}
+
+.babygpt-markdown pre code {
+  @apply bg-transparent p-0;
 }
