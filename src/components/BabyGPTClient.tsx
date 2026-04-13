@@ -5,6 +5,7 @@ import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import {
+  clearCompanionIntake,
   generateMemoryPrompt,
   loadMemory,
   saveMemory,
@@ -12,7 +13,11 @@ import {
   updateMemoryFromConversation,
 } from "@/lib/agent-memory";
 import { INTRO_SEVEN_QUESTIONS } from "@/lib/companion-onboarding";
-import { isIntroIntakeComplete, saveIntroIntake } from "@/lib/onboarding-intake-storage";
+import {
+  clearIntroIntake,
+  isIntroIntakeComplete,
+  saveIntroIntake,
+} from "@/lib/onboarding-intake-storage";
 import { startHeartbeat } from "@/lib/heartbeat";
 import { addReminder, parseReminderFromMessage } from "@/lib/reminders";
 import {
@@ -123,6 +128,8 @@ export default function BabyGPTClient() {
   const streamAbortRef = useRef<AbortController | null>(null);
   const [toasts, setToasts] = useState<Array<{ id: string; title: string; body: string; draft: string; open: boolean }>>([]);
   const [introGateOpen, setIntroGateOpen] = useState(false);
+  /** Mirrors local questionnaire + memory; drives Welcome copy and Settings redo. */
+  const [introIntakeDone, setIntroIntakeDone] = useState(false);
   const [credits, setCredits] = useState<CreditsStateV1 | null>(null);
   /** Server wallet + login gate (when BABYGPT_APP_PASSWORD is set). */
   const [serverCredits, setServerCredits] = useState(false);
@@ -144,7 +151,9 @@ export default function BabyGPTClient() {
   }, []);
 
   useEffect(() => {
-    setIntroGateOpen(!isIntroIntakeComplete());
+    const done = isIntroIntakeComplete();
+    setIntroGateOpen(!done);
+    setIntroIntakeDone(done);
   }, []);
 
   useEffect(() => {
@@ -867,6 +876,15 @@ export default function BabyGPTClient() {
     saveIntroIntake(answers);
     setCompanionIntakeFromQuestionnaire(INTRO_SEVEN_QUESTIONS, answers);
     setIntroGateOpen(false);
+    setIntroIntakeDone(true);
+  }, []);
+
+  const redoConnectionQuestionnaire = useCallback(() => {
+    clearIntroIntake();
+    clearCompanionIntake();
+    setIntroIntakeDone(false);
+    setIntroGateOpen(true);
+    setSettingsOpen(false);
   }, []);
 
   const regenerateLastResponse = useCallback(() => {
@@ -1079,6 +1097,7 @@ export default function BabyGPTClient() {
             streamingAssistantId={streamingAssistantId}
             plan={credits ? PLANS[credits.planId] : PLANS.free}
             onPickTemplate={applyPowerTemplate}
+            introIntakeComplete={introIntakeDone}
             onInsertComposerText={(text, how) => {
               if (how === "prefixFirst") {
                 setChatDraft((d) => {
@@ -1260,6 +1279,8 @@ export default function BabyGPTClient() {
           applyUiPreferences(p);
           setUiPrefs(p);
         }}
+        introIntakeComplete={introIntakeDone}
+        onRedoConnectionQuestionnaire={redoConnectionQuestionnaire}
       />
       {timeCapsuleReveal ? (
         <TimeCapsuleReveal
