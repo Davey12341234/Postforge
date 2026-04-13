@@ -53,3 +53,13 @@ export function saveIntroIntake(answers: string[]): void {
     // ignore
   }
 }
+
+/** Clears saved questionnaire answers so the blocking modal can run again (e.g. from Settings). */
+export function clearIntroIntake(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    // ignore
+  }
+}

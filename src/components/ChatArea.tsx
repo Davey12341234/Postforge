@@ -18,6 +18,7 @@ export function ChatArea({
   plan,
   onPickTemplate,
   onInsertComposerText,
+  introIntakeComplete,
 }: {
   messages: ChatMessage[];
   empty: boolean;
@@ -30,6 +31,8 @@ export function ChatArea({
   onPickTemplate: (t: PowerTemplate) => void;
   /** replace = set draft; prefixFirst = put text at start of composer (for mode prefixes). */
   onInsertComposerText: (text: string, how?: "replace" | "prefixFirst") => void;
+  /** False until the blocking connection questionnaire has been completed in this browser. */
+  introIntakeComplete?: boolean;
 }) {
   const endRef = useRef<HTMLDivElement | null>(null);
   const lastContent = messages.at(-1)?.content ?? "";
@@ -48,6 +51,7 @@ export function ChatArea({
           plan={plan}
           onPickTemplate={onPickTemplate}
           onInsertComposerText={onInsertComposerText}
+          introIntakeComplete={introIntakeComplete}
         />
       </div>
     );

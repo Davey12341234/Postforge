@@ -20,11 +20,17 @@ export function SettingsPanel({
   open,
   onClose,
   onPreferencesSaved,
+  introIntakeComplete,
+  onRedoConnectionQuestionnaire,
 }: {
   open: boolean;
   onClose: () => void;
   /** Called after user saves so parent can re-apply theme/font. */
   onPreferencesSaved: (p: UiPreferences) => void;
+  /** When true, user may redo the blocking seven-question connection flow from Settings. */
+  introIntakeComplete?: boolean;
+  /** Clears saved intake and reopens the questionnaire modal. */
+  onRedoConnectionQuestionnaire?: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useDialogA11y(open, ref, onClose);
@@ -101,6 +107,23 @@ export function SettingsPanel({
               </select>
             </label>
           </section>
+
+          {introIntakeComplete && onRedoConnectionQuestionnaire ? (
+            <section>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Connection</h3>
+              <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+                You completed the seven-question intake at first launch. Redo clears those answers and the
+                companion-intake block in local memory, then walks you through again before you can chat.
+              </p>
+              <button
+                type="button"
+                onClick={onRedoConnectionQuestionnaire}
+                className="mt-2 rounded-lg bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700"
+              >
+                Redo connection questionnaire
+              </button>
+            </section>
+          ) : null}
 
           <section>
             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Notifications</h3>

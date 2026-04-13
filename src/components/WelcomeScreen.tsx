@@ -22,6 +22,7 @@ export function WelcomeScreen({
   plan,
   onPickTemplate,
   onInsertComposerText,
+  introIntakeComplete = false,
 }: {
   onOpenPlans: () => void;
   onOpenSearch: () => void;
@@ -31,6 +32,8 @@ export function WelcomeScreen({
   onPickTemplate: (t: PowerTemplate) => void;
   /** Prefill composer: full questions replace draft; mode prefixes go first. */
   onInsertComposerText: (text: string, how?: "replace" | "prefixFirst") => void;
+  /** True after the blocking seven-question intake has been completed (this browser). */
+  introIntakeComplete?: boolean;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 py-10">
@@ -72,11 +75,24 @@ export function WelcomeScreen({
       <section className="w-full rounded-2xl border border-cyan-900/40 bg-gradient-to-b from-cyan-950/20 to-zinc-950/40 p-4 ring-1 ring-cyan-900/30">
         <h2 className="text-sm font-semibold text-cyan-100/95">Companion — start here</h2>
         <p className="mt-2 text-xs leading-relaxed text-zinc-400">{COMPANION_WELCOME_LEAD}</p>
+        {introIntakeComplete ? (
+          <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+            You already completed the connection questionnaire at first launch; your answers live in local memory
+            for this browser. The list below is optional reference if you want to paste a prompt into chat or
+            revisit the same themes — redo the full flow anytime from Settings.
+          </p>
+        ) : null}
 
         <div className="mt-4 space-y-3">
-          <details open className="group rounded-xl border border-zinc-800 bg-zinc-950/60">
+          <details
+            open={!introIntakeComplete}
+            className="group rounded-xl border border-zinc-800 bg-zinc-950/60"
+          >
             <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-zinc-200 [&::-webkit-details-marker]:hidden">
-              <span className="mr-2 text-cyan-500/90">▼</span>7 questions to connect & understand you
+              <span className="mr-2 text-cyan-500/90">▼</span>
+              {introIntakeComplete
+                ? "7 intro questions (optional — copy into chat if useful)"
+                : "7 questions to connect & understand you"}
             </summary>
             <ol className="list-decimal space-y-2 px-3 pb-3 pl-8 text-[11px] leading-relaxed text-zinc-400">
               {INTRO_SEVEN_QUESTIONS.map((q, i) => (

@@ -54,6 +54,12 @@ export function setCompanionIntakeFromQuestionnaire(questions: string[], answers
   saveMemory({ ...m, companionIntake: block });
 }
 
+/** Removes questionnaire-derived intake from local memory (pair with `clearIntroIntake`). */
+export function clearCompanionIntake(): void {
+  const m = loadMemory();
+  saveMemory({ ...m, companionIntake: undefined });
+}
+
 function guessTechnicalLevel(text: string): AgentMemory["technicalLevel"] {
   const t = text.toLowerCase();
   const adv =
