@@ -2,6 +2,14 @@
 
 Canonical copy for design and implementation. This document is **not** fully wired in the shipped UI yet; see `docs/BabyGPT-App-Diagnostic.md` for code vs spec gaps.
 
+**Also in repo (searchable from Plans → FAQ via `src/lib/billing-faq.ts`):**
+
+- **Seven intro questions (rapport):** why here, goals together, tried/conditioned patterns, what sucks, urgency, who’s affected, preferred tone — entry `intro-seven-connect`.
+- **Five message prefixes:** `Fact search:`, `Clarity mode:`, `Discover mode:`, `Precision mode:`, `Perspective mode:` — entry `five-message-prefixes` (Fact search + clarity/discover/precision + perspective as the fifth style).
+- **Seven journey questions (mountaintop arc):** separate track — entry `onboarding-seven-ordered`.
+
+Launch handoff with the same copy: `docs/FINAL-LAUNCH-COPY.md`.
+
 ---
 
 ## Onboarding flow — improvements
