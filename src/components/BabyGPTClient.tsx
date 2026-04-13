@@ -8,8 +8,11 @@ import {
   generateMemoryPrompt,
   loadMemory,
   saveMemory,
+  setCompanionIntakeFromQuestionnaire,
   updateMemoryFromConversation,
 } from "@/lib/agent-memory";
+import { INTRO_SEVEN_QUESTIONS } from "@/lib/companion-onboarding";
+import { isIntroIntakeComplete, saveIntroIntake } from "@/lib/onboarding-intake-storage";
 import { startHeartbeat } from "@/lib/heartbeat";
 import { addReminder, parseReminderFromMessage } from "@/lib/reminders";
 import {
@@ -67,6 +70,7 @@ import { SkillsPanel } from "./SkillsPanel";
 import { SettingsPanel } from "./SettingsPanel";
 import { SubscriptionModal, type StripeBillingInfo } from "./SubscriptionModal";
 import { TimeCapsuleReveal } from "./TimeCapsuleReveal";
+import { OnboardingIntakeModal } from "./OnboardingIntakeModal";
 
 const CONV_KEY = lsKey("conversations");
 const ACTIVE_KEY = lsKey("active_conversation_id");
@@ -118,6 +122,7 @@ export default function BabyGPTClient() {
   /** Aborts in-flight chat SSE when starting a new send or clicking Stop. */
   const streamAbortRef = useRef<AbortController | null>(null);
   const [toasts, setToasts] = useState<Array<{ id: string; title: string; body: string; draft: string; open: boolean }>>([]);
+  const [introGateOpen, setIntroGateOpen] = useState(false);
   const [credits, setCredits] = useState<CreditsStateV1 | null>(null);
   /** Server wallet + login gate (when BABYGPT_APP_PASSWORD is set). */
   const [serverCredits, setServerCredits] = useState(false);
@@ -136,6 +141,10 @@ export default function BabyGPTClient() {
     const p = loadUiPreferences();
     applyUiPreferences(p);
     setUiPrefs(p);
+  }, []);
+
+  useEffect(() => {
+    setIntroGateOpen(!isIntroIntakeComplete());
   }, []);
 
   useEffect(() => {
@@ -454,6 +463,11 @@ export default function BabyGPTClient() {
       const regenerate = options?.regenerate === true;
       const trimmed = text.trim();
       if (!regenerate && !trimmed) return;
+
+      if (!isIntroIntakeComplete()) {
+        setBanner("Finish the connection questionnaire to start chatting.");
+        return;
+      }
 
       if (!credits) {
         setBanner("Loading credits… try again in a moment.");
@@ -849,6 +863,12 @@ export default function BabyGPTClient() {
     ],
   );
 
+  const onIntroIntakeComplete = useCallback((answers: string[]) => {
+    saveIntroIntake(answers);
+    setCompanionIntakeFromQuestionnaire(INTRO_SEVEN_QUESTIONS, answers);
+    setIntroGateOpen(false);
+  }, []);
+
   const regenerateLastResponse = useCallback(() => {
     void sendMessage("", { regenerate: true });
   }, [sendMessage]);
@@ -874,6 +894,9 @@ export default function BabyGPTClient() {
 
   return (
     <div className={`babygpt-app-root flex h-[100dvh] w-full flex-col ${appRootBgClass(appearance)}`}>
+      {introGateOpen ? (
+        <OnboardingIntakeModal appearance={appearance} onComplete={onIntroIntakeComplete} />
+      ) : null}
       {showBillingBanner && billingAlert ? (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-900/45 bg-amber-950/35 px-4 py-2">
           <p className="min-w-0 text-xs text-amber-100/95">{billingAlert.message}</p>
@@ -1072,11 +1095,11 @@ export default function BabyGPTClient() {
               assistantText={lastAssistantText}
               lastUserText={lastUserBubble}
               onAction={runSmartAction}
-              disabled={busy || !credits}
+              disabled={busy || !credits || introGateOpen}
             />
           ) : null}
           <ChatInput
-            disabled={busy || !credits}
+            disabled={busy || !credits || introGateOpen}
             value={chatDraft}
             onValueChange={setChatDraft}
             onSend={sendMessage}
