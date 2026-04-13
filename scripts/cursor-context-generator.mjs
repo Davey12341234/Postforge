@@ -54,13 +54,6 @@ function h2(text) {
     children: [new TextRun(sanitizeDocxText(text))],
   });
 }
-function h3(text) {
-  return new Paragraph({
-    heading: HeadingLevel.HEADING_3,
-    spacing: { before: 160, after: 80 },
-    children: [new TextRun(sanitizeDocxText(text))],
-  });
-}
 function p(text, opts = {}) {
   return new Paragraph({
     spacing: { after: 120 },
