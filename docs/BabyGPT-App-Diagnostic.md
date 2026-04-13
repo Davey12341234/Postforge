@@ -81,11 +81,11 @@ Static: `/checkout/return` — return page after Stripe.
 
 ---
 
-## 7. Product FAQ / Plans modal
+## 7. Billing FAQ / companion onboarding
 
-- Copy lives in `src/lib/billing-faq.ts` (billing + product onboarding/path **summaries** for search).
-- Full narrative: `docs/BabyGPT-Onboarding-Paths-Spec.md`.
-- **Removed:** all "Spark" mis-labels from FAQ and API prompts.
+- **Stripe & subscription FAQ only:** `src/lib/billing-faq.ts` — chips in **Plans** modal + `/api/billing/support` search.
+- **Life-coach / companion copy (intro & journey questions, mode prefixes):** `src/lib/companion-onboarding.ts` — shown on **WelcomeScreen** when the chat is empty.
+- Long-form product notes: `docs/BabyGPT-Onboarding-Paths-Spec.md`.
 
 ---
 

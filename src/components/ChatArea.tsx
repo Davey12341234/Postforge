@@ -17,6 +17,7 @@ export function ChatArea({
   streamingAssistantId,
   plan,
   onPickTemplate,
+  onInsertComposerText,
 }: {
   messages: ChatMessage[];
   empty: boolean;
@@ -27,6 +28,8 @@ export function ChatArea({
   streamingAssistantId?: string | null;
   plan: PlanDefinition;
   onPickTemplate: (t: PowerTemplate) => void;
+  /** replace = set draft; prefixFirst = put text at start of composer (for mode prefixes). */
+  onInsertComposerText: (text: string, how?: "replace" | "prefixFirst") => void;
 }) {
   const endRef = useRef<HTMLDivElement | null>(null);
   const lastContent = messages.at(-1)?.content ?? "";
@@ -44,6 +47,7 @@ export function ChatArea({
           onJumpToQuantum={onJumpToQuantum}
           plan={plan}
           onPickTemplate={onPickTemplate}
+          onInsertComposerText={onInsertComposerText}
         />
       </div>
     );

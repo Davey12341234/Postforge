@@ -4,6 +4,13 @@ import Image from "next/image";
 import { QUANTUM_FEATURES } from "@/lib/types";
 import type { PlanDefinition } from "@/lib/plans";
 import type { PowerTemplate } from "@/lib/instant-templates";
+import {
+  COMPANION_WELCOME_LEAD,
+  CORE_CONTROLS_SUMMARY,
+  INTRO_SEVEN_QUESTIONS,
+  JOURNEY_SEVEN_QUESTIONS,
+  MESSAGE_MODE_PREFIXES,
+} from "@/lib/companion-onboarding";
 import { BlochSphere } from "./BlochSphere";
 import { ConversationTopology } from "./ConversationTopology";
 import { InstantTemplates } from "./InstantTemplates";
@@ -14,6 +21,7 @@ export function WelcomeScreen({
   onJumpToQuantum,
   plan,
   onPickTemplate,
+  onInsertComposerText,
 }: {
   onOpenPlans: () => void;
   onOpenSearch: () => void;
@@ -21,6 +29,8 @@ export function WelcomeScreen({
   onJumpToQuantum: () => void;
   plan: PlanDefinition;
   onPickTemplate: (t: PowerTemplate) => void;
+  /** Prefill composer: full questions replace draft; mode prefixes go first. */
+  onInsertComposerText: (text: string, how?: "replace" | "prefixFirst") => void;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 py-10">
@@ -58,6 +68,73 @@ export function WelcomeScreen({
           </div>
         </div>
       </div>
+
+      <section className="w-full rounded-2xl border border-cyan-900/40 bg-gradient-to-b from-cyan-950/20 to-zinc-950/40 p-4 ring-1 ring-cyan-900/30">
+        <h2 className="text-sm font-semibold text-cyan-100/95">Companion — start here</h2>
+        <p className="mt-2 text-xs leading-relaxed text-zinc-400">{COMPANION_WELCOME_LEAD}</p>
+
+        <div className="mt-4 space-y-3">
+          <details open className="group rounded-xl border border-zinc-800 bg-zinc-950/60">
+            <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-zinc-200 [&::-webkit-details-marker]:hidden">
+              <span className="mr-2 text-cyan-500/90">▼</span>7 questions to connect & understand you
+            </summary>
+            <ol className="list-decimal space-y-2 px-3 pb-3 pl-8 text-[11px] leading-relaxed text-zinc-400">
+              {INTRO_SEVEN_QUESTIONS.map((q, i) => (
+                <li key={i} className="pl-1">
+                  <span>{q}</span>
+                  <button
+                    type="button"
+                    onClick={() => onInsertComposerText(`${q} `, "replace")}
+                    className="ml-2 shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-cyan-300/90 ring-1 ring-zinc-700 hover:bg-zinc-700"
+                  >
+                    Use in chat
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </details>
+
+          <details className="group rounded-xl border border-zinc-800 bg-zinc-950/60">
+            <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-zinc-200 [&::-webkit-details-marker]:hidden">
+              <span className="mr-2 text-zinc-500">▶</span>7 journey questions (vision & direction)
+            </summary>
+            <ol className="list-decimal space-y-2 px-3 pb-3 pl-8 text-[11px] leading-relaxed text-zinc-400">
+              {JOURNEY_SEVEN_QUESTIONS.map((q, i) => (
+                <li key={i} className="pl-1">
+                  <span>{q}</span>
+                  <button
+                    type="button"
+                    onClick={() => onInsertComposerText(`${q} `, "replace")}
+                    className="ml-2 shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-cyan-300/90 ring-1 ring-zinc-700 hover:bg-zinc-700"
+                  >
+                    Use in chat
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </details>
+        </div>
+
+        <div className="mt-4">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Message modes</div>
+          <p className="mt-1 text-[10px] text-zinc-600">Tap to insert at the start of your next message.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {MESSAGE_MODE_PREFIXES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                title={m.hint}
+                onClick={() => onInsertComposerText(`${m.prefix} `, "prefixFirst")}
+                className="rounded-full bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 hover:ring-cyan-800/50"
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="mt-3 text-[10px] leading-snug text-zinc-600">{CORE_CONTROLS_SUMMARY}</p>
+      </section>
 
       <InstantTemplates plan={plan} onPick={onPickTemplate} />
 

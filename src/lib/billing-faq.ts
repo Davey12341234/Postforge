@@ -1,6 +1,6 @@
 export type FaqEntry = { id: string; keywords: string[]; title: string; body: string };
 
-/** Static FAQ chunks for semantic-style matching (token overlap; no vector DB). */
+/** Stripe / subscription FAQ only — life-coach onboarding lives in src/lib/companion-onboarding.ts + WelcomeScreen. */
 export const BILLING_FAQ: FaqEntry[] = [
   {
     id: "cancel",
@@ -62,202 +62,9 @@ export const BILLING_FAQ: FaqEntry[] = [
     title: "Team plan",
     body: "Team is a subscription tier in this app with higher monthly credits and model access. It is still a single shared login unless you build multi-user accounts. Seat-based billing would require additional Stripe products and app logic.",
   },
-  {
-    id: "onboarding-chase-hughes",
-    keywords: [
-      "chase",
-      "hughes",
-      "huges",
-      "method",
-      "inspired",
-      "framework",
-      "elicitation",
-      "onboarding",
-      "letter",
-      "mountaintop",
-    ],
-    title: "Chase Hughes–inspired onboarding (product direction)",
-    body:
-      "BabyGPT uses two question tracks in the product spec: (A) seven intro questions aimed at connecting and understanding the user—why they’re here, what’s been tried, what sucks, urgency, who’s affected, tone; see “Seven intro questions (connect & understand).” (B) seven journey questions (mountaintop arc) for vision and letter—see that FAQ entry. Full narrative: docs/BabyGPT-Onboarding-Paths-Spec.md. Shipped UI may still be a general chat until the wizard is built.",
-  },
-  {
-    id: "intro-seven-connect",
-    keywords: [
-      "intro",
-      "connect",
-      "rapport",
-      "understanding",
-      "why",
-      "here",
-      "urgency",
-      "tone",
-      "suck",
-      "stuck",
-      "tried",
-      "affected",
-      "conditioned",
-      "patterns",
-      "seven",
-      "7",
-      "questions",
-    ],
-    title: "Seven intro questions (connect & understand you)",
-    body:
-      "Use these first to ground in the person before heavy strategy. (1) Why are you here right now — what made you open this chat? (2) What are you hoping we’ll figure out together; what would “this helped” look like? (3) What have you already tried, and what patterns feel conditioned or repeated? (4) What sucks the most about how things stand — where’s it stuck or heavy? (5) How urgent is this: deadlines, stakes, or pressure if nothing changes? (6) Who else is affected by how this turns out (team, family, customers, future you)? (7) How should I talk with you — preferred tone and format: direct vs gentle, brief vs deep, examples vs steps? Paste into the composer or use Plans → FAQ to retrieve this block.",
-  },
-  {
-    id: "five-message-prefixes",
-    keywords: [
-      "fact",
-      "search",
-      "clarity",
-      "discover",
-      "precision",
-      "perspective",
-      "prefix",
-      "mode",
-      "styles",
-      "style",
-      "message",
-      "pace",
-      "plans",
-    ],
-    title: "Five prefixes for search & modes (Fact search, Clarity, Discover, Precision, Perspective)",
-    body:
-      "Lead any message with one line so the model stays in character. (1) Fact search: — “Fact search:” then the topic: prioritize verifiable info, sources, dates, and say when something is uncertain. (2) Clarity mode: — mirror terms, remove ambiguity, confirm understanding before advice. (3) Discover mode: — widen options and unknowns; no premature single answer. (4) Precision mode: — force decisions, criteria, constraints, one next step. (5) Perspective mode: — stakeholders, tradeoffs, who gains/loses, alternate frames. Use in chat or paste into Plans → AI billing FAQ search. Building dedicated Fact search / mode toggles in-product is separate from this copy.",
-  },
-  {
-    id: "onboarding-seven-ordered",
-    keywords: [
-      "seven",
-      "7",
-      "questions",
-      "order",
-      "mountaintop",
-      "perfect",
-      "day",
-      "habit",
-      "forget",
-      "help",
-      "flow",
-      "journey",
-      "vision",
-    ],
-    title: "Seven journey questions (mountaintop arc — letter / vision)",
-    body:
-      "Deeper arc after intro connect questions when you’re ready for vision work. (1) What's one thing you're really hoping I can help you with? (2) What's your mountaintop — that big thing you're ultimately working toward? (3) If you woke up tomorrow and your life was exactly how you want it, what would that perfect day look like? (4) What are the things you love doing so much that time just disappears? (5) What's the one habit you know would change everything if you actually stuck with it? (6) When you're finally on that mountaintop, what does a perfect day there actually feel like? (7) What's one thing about you that I should never forget? Principle: Q2 is the commitment question (mountaintop early). See docs/BabyGPT-Onboarding-Paths-Spec.md for dropout notes.",
-  },
-  {
-    id: "onboarding-opening-hooks",
-    keywords: ["opening", "hook", "opener", "curiosity", "value", "edge", "generic"],
-    title: "Onboarding opening line — sharper hooks",
-    body:
-      "Problems with a generic warm opener: it doesn't earn 7 deep questions; 'most people' can sound preachy; vague futures lack urgency. Test variants: curiosity gap ('7 questions — most people can't answer Q3 honestly'); value upfront (letter from future you, 2 minutes, keep forever); anti-marketing (sign up vs 7 questions that change your week); direct (7 quick questions, then never again). Best openers: specific reward, named cost, reason to start now. Full table in docs/BabyGPT-Onboarding-Paths-Spec.md.",
-  },
-  {
-    id: "onboarding-reactions",
-    keywords: ["reaction", "warm", "mirror", "validate", "survey", "twist"],
-    title: "Micro-reactions after each answer",
-    body:
-      "Avoid hollow praise. Each reaction should mirror their words, reveal a layer they didn't state, and tee up the next question. Examples: Q1 → name their thread; Q2 → 'that's a coordinate'; Q3 → 'notice what's missing — that's the gap'; Q4 → 'fuel gauge' for flow activities; Q5 → barrier to doing the habit; Q6 → 'finish line'; Q7 → 'written in ink.' Full good/bad table in the spec doc.",
-  },
-  {
-    id: "onboarding-skip-letter",
-    keywords: ["skip", "bounce", "enough", "letter", "conversion", "q3", "q4"],
-    title: "Skip option — still get the letter",
-    body:
-      "After Q3 or Q4, offer: 'That's enough for me to start. We can go deeper anytime.' If they choose it, still generate the Letter from partial answers (less specific, still emotional). Don't let users exit onboarding with nothing—letter is the conversion artifact.",
-  },
-  {
-    id: "paths-six-quick-fire",
-    keywords: [
-      "paths",
-      "path",
-      "quick",
-      "fire",
-      "deep",
-      "talk",
-      "future",
-      "self",
-      "mirror",
-      "clarity",
-      "anchor",
-      "daily",
-    ],
-    title: "Six paths (incl. Quick Fire)",
-    body:
-      "Quick Fire — fast answers, no ceremony, many times daily ('I need a thing'). Deep Talk — full context, 1–2x daily. Future Self — talk to achieved-you, weekly. Life Mirror — mood reflection, daily. Clarity Engine — decisions, weekly. Daily Anchor — short check-in + habit, daily. Quick Fire prevents losing trivial tasks to other chat apps; it can still use light context (e.g. mountaintop) when relevant.",
-  },
-  {
-    id: "daily-anchor-spec",
-    keywords: ["streak", "mood", "emoji", "forgiveness", "pattern", "weekly"],
-    title: "Daily Anchor — beyond streaks",
-    body:
-      "Use 5 emoji for mood (not 10). Add one-sentence AI tie to mountaintop. Show streak subtly; after 7 days show weekly mood pattern. If they miss a day, pause streak with gentle nudge—don't punish. Value the check-in itself, not only the counter.",
-  },
-  {
-    id: "future-self-ritual",
-    keywords: ["ritual", "time", "capsule", "archive", "mountaintop", "animation"],
-    title: "Future Self — ritual design",
-    body:
-      "Differentiate from normal chat: entry transition; Future Self opens first using context; tone is perspective ('what I wish I'd known') not commands; optional time capsules (30/90/365 days); end each session with a paragraph saved to a 'Letters from the Mountaintop' archive so value compounds.",
-  },
-  {
-    id: "clarity-four-cards",
-    keywords: ["decision", "cards", "spread", "mirror", "scale", "consequence", "anchor", "101010"],
-    title: "Clarity Engine — 4-card spread",
-    body:
-      "Named framework: Mirror (what does mountaintop say about this?), Scale (gain/loss), Consequence (10 min / 10 mo / 10 yr per option), Anchor (what would the person you're becoming choose?). Teaches a repeatable habit—not vague 'help me choose.'",
-  },
-  {
-    id: "life-mirror-safety",
-    keywords: ["safety", "crisis", "therapy", "spiral", "reflect", "redirect", "resource"],
-    title: "Life Mirror — safety guardrails",
-    body:
-      "Reflect → Redirect → Resource. Validate, then agency ('one small thing today'), then resources if distress cues. Don't diagnose; position as thinking partner. Weekly summaries bias to growth. Crisis/self-harm language triggers warm, non-robotic escalation with resources.",
-  },
-  {
-    id: "realignment-ninety",
-    keywords: ["realignment", "90", "days", "evolve", "profile", "changed"],
-    title: "90-day realignment",
-    body:
-      "Onboarding answers shouldn't freeze forever. Every ~90 days or on theme shift, offer 3 questions: mountaintop still true? what changed? anything new to never forget? Keeps the AI a mirror of who you're becoming, not a museum.",
-  },
-  {
-    id: "ten-improvements-summary",
-    keywords: ["improvements", "roadmap", "retention", "dropout", "conversion"],
-    title: "Ten onboarding/path improvements (index)",
-    body:
-      "(1) Sharper opener (2) Reorder Qs — mountaintop Q2 (3) Reactions that reveal (4) Skip + letter (5) Quick Fire path (6) Daily Anchor depth (7) Future Self ritual (8) Clarity 4-card (9) Life Mirror safety (10) Realignment. Details: docs/BabyGPT-Onboarding-Paths-Spec.md.",
-  },
-  {
-    id: "five-core-features",
-    keywords: [
-      "five",
-      "5",
-      "features",
-      "deep",
-      "think",
-      "thinking",
-      "focus",
-      "template",
-      "templates",
-      "power",
-      "schrodinger",
-      "agent",
-      "quantum",
-      "kolmogorov",
-      "holographic",
-      "dna",
-      "adiabatic",
-    ],
-    title: "Five core controls (Thinking, templates, Schrödinger, Agent, Quantum)",
-    body:
-      "(1) Thinking — chain-of-thought when supported; thinking canvas. (2) Power templates — one tap sets model + toggles. (3) Schrödinger — dual-model race (Pro+). (4) Agent — tool loop (plan-gated). (5) Quantum — Kolmogorov, Holographic, DNA, Adiabatic in the Quantum menu.",
-  },
 ];
 
-/** Short prompts shown as chips — match FAQ keywords for search. */
+/** Chips for Plans modal — subscription and payment help only. */
 export const BILLING_SUGGESTED_QUESTIONS: string[] = [
   "How do I cancel my subscription?",
   "Why was I charged?",
@@ -265,13 +72,7 @@ export const BILLING_SUGGESTED_QUESTIONS: string[] = [
   "How do credits work?",
   "How do I change my plan?",
   "Is tax included?",
-  "What are the seven intro questions to connect and understand me?",
-  "What are Fact search, Clarity, Discover, Precision, and Perspective modes?",
-  "What are the seven journey questions about the mountaintop?",
-  "What are the six paths including Quick Fire?",
-  "How does skip after question 3 or 4 still give the letter?",
-  "What is the Chase Hughes–inspired onboarding framework?",
-  "How do Thinking, Power templates, and Quantum work together?",
+  "How is my data stored?",
 ];
 
 function tokenize(s: string): Set<string> {
@@ -284,7 +85,7 @@ function tokenize(s: string): Set<string> {
   );
 }
 
-/** Returns top FAQ entries by simple overlap score (deterministic, fast). */
+/** Returns top billing FAQ entries by simple overlap score (deterministic, fast). */
 export function matchBillingFaq(query: string, limit = 4): FaqEntry[] {
   const q = tokenize(query);
   if (q.size === 0) return BILLING_FAQ.slice(0, limit);

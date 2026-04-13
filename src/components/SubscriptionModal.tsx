@@ -135,43 +135,50 @@ export function SubscriptionModal({
           </div>
         </div>
 
-        {stripeMode ? (
-          <div className="border-b border-zinc-900 bg-zinc-950/90 px-5 py-3">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Price breakdown (USD)</div>
-            <div className="mt-2 overflow-x-auto">
-              <table className="w-full min-w-[320px] text-left text-[11px] text-zinc-400">
-                <thead>
-                  <tr className="border-b border-zinc-800 text-zinc-500">
-                    <th className="py-1.5 pr-2 font-medium">Plan</th>
-                    <th className="py-1.5 pr-2 font-medium">List price</th>
-                    <th className="py-1.5 font-medium">Credits / month</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(Object.keys(PLANS) as PlanId[]).map((id) => {
-                    const p = PLANS[id];
-                    return (
-                      <tr key={id} className="border-b border-zinc-800/80 last:border-0">
-                        <td className="py-2 pr-2 text-zinc-200">{p.label}</td>
-                        <td className="py-2 pr-2 font-mono text-emerald-300/95">{formatPlanMoneyHeadline(id)}</td>
-                        <td className="py-2 font-mono text-zinc-300">{p.monthlyCredits.toLocaleString()}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-2 text-[10px] text-zinc-600">
-              Subscription charges are processed by Stripe. Per-message credits are drawn from your wallet after each
-              successful reply (see composer preview).
-            </p>
-            <p className="mt-2 text-[10px] text-zinc-500">
-              Reference only (US consumer, changes often): ChatGPT Plus is commonly around $20/mo from OpenAI — not a
-              feature comparison. Your list prices come from{" "}
-              <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span>.
-            </p>
+        <div className="border-b border-zinc-900 bg-zinc-950/90 px-5 py-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Price breakdown (USD)</div>
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full min-w-[320px] text-left text-[11px] text-zinc-400">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-500">
+                  <th className="py-1.5 pr-2 font-medium">Plan</th>
+                  <th className="py-1.5 pr-2 font-medium">List price</th>
+                  <th className="py-1.5 font-medium">Credits / month</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(Object.keys(PLANS) as PlanId[]).map((id) => {
+                  const p = PLANS[id];
+                  return (
+                    <tr key={id} className="border-b border-zinc-800/80 last:border-0">
+                      <td className="py-2 pr-2 text-zinc-200">{p.label}</td>
+                      <td className="py-2 pr-2 font-mono text-emerald-300/95">{formatPlanMoneyHeadline(id)}</td>
+                      <td className="py-2 font-mono text-zinc-300">{p.monthlyCredits.toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ) : null}
+          <p className="mt-2 text-[10px] text-zinc-600">
+            {stripeMode ? (
+              <>
+                Subscription charges are processed by Stripe. Per-message credits are drawn from your wallet after each
+                successful reply (see composer preview).
+              </>
+            ) : (
+              <>
+                List prices default to $12 / $24 / $69 per month when{" "}
+                <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span> is not set — override to
+                match your Stripe recurring prices.
+              </>
+            )}
+          </p>
+          <p className="mt-2 text-[10px] text-zinc-500">
+            Reference only: ChatGPT Plus is often ~$20/mo — not a feature comparison. Set{" "}
+            <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span> for exact public list prices.
+          </p>
+        </div>
 
         <div className="border-b border-zinc-900 bg-zinc-950/80 px-5 py-3">
           <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-400">
@@ -302,10 +309,11 @@ export function SubscriptionModal({
         </div>
 
         <div className="border-t border-zinc-900 bg-zinc-950/90 px-5 py-4">
-          <div className="text-xs font-semibold text-zinc-200">Common billing questions</div>
+          <div className="text-xs font-semibold text-zinc-200">Billing & subscription help</div>
           <p className="mt-1 text-[11px] leading-snug text-zinc-500">
-            Tap a topic for an instant answer (built into the app). For AI-paraphrased help, use Search FAQ below. For
-            amounts tied to your Stripe account, sign in and use Ask copilot.
+            Topics below are about payments, credits, and your plan — not life-coach onboarding (that lives on the home
+            screen when you have no messages). For AI-paraphrased help, use Search FAQ. For Stripe-specific account
+            details when signed in, use Ask copilot.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {BILLING_FAQ.map((e) => (

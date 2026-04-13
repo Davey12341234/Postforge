@@ -25,8 +25,20 @@ describe("plan-pricing-display", () => {
     expect(planPriceConfigured("starter")).toBe(true);
   });
 
-  it("missing env shows checkout fallback for paid", () => {
-    expect(formatPlanMoneyHeadline("pro")).toBe("Price on checkout");
+  it("missing env uses built-in list defaults for display", () => {
+    expect(getMonthlyUsdCents("starter")).toBe(1200);
+    expect(formatPlanMoneyHeadline("starter")).toBe("$12/mo");
+    expect(getMonthlyUsdCents("pro")).toBe(2400);
+    expect(formatPlanMoneyHeadline("pro")).toBe("$24/mo");
+    expect(getMonthlyUsdCents("team")).toBe(6900);
+    expect(formatPlanMoneyHeadline("team")).toBe("$69/mo");
     expect(planPriceConfigured("pro")).toBe(false);
+  });
+
+  it("env overrides defaults", () => {
+    vi.stubEnv("NEXT_PUBLIC_PLAN_PRICE_PRO_USD", "29");
+    expect(getMonthlyUsdCents("pro")).toBe(2900);
+    expect(formatPlanMoneyHeadline("pro")).toBe("$29/mo");
+    expect(planPriceConfigured("pro")).toBe(true);
   });
 });

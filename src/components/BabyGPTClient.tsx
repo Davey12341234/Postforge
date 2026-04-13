@@ -1056,6 +1056,16 @@ export default function BabyGPTClient() {
             streamingAssistantId={streamingAssistantId}
             plan={credits ? PLANS[credits.planId] : PLANS.free}
             onPickTemplate={applyPowerTemplate}
+            onInsertComposerText={(text, how) => {
+              if (how === "prefixFirst") {
+                setChatDraft((d) => {
+                  const cur = d.trim();
+                  return cur ? `${text}${cur}` : text;
+                });
+              } else {
+                setChatDraft(text);
+              }
+            }}
           />
           {active && active.messages.length > 0 && lastAssistantText && !busy ? (
             <SmartActions

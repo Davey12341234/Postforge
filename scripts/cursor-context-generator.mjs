@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Generates docs/BabyGPT-Cursor-Context.docx — architecture, API map, storage keys,
- * button/interaction map, known issues, file tree, and full source under src/ (+ key config files).
+ * button/interaction map, known issues, Cursor handoff (continuity, commands, warnings),
+ * file tree, and full source under src/ (+ key config files).
  *
  * Usage: node scripts/cursor-context-generator.mjs
  * Requires: npm install (devDependency docx)
@@ -102,7 +103,8 @@ BabyGPTClient.tsx
 
 SubscriptionModal.tsx
 - "Manage billing" / "Close"; per-plan "Subscribe with Stripe" / "Use this plan" / portal for Free downgrade.
-- AI billing: Ask copilot → POST /api/billing/copilot; Search FAQ → POST /api/billing/support; Translate → POST /api/billing/translate.
+- Billing & subscription FAQ chips + suggested prompts (Stripe/credits only — src/lib/billing-faq.ts).
+- AI billing: Ask copilot → POST /api/billing/copilot; Search billing FAQ → POST /api/billing/support; Translate → POST /api/billing/translate.
 
 Sidebar.tsx
 - Tabs Chats / Memory; "New chat"; select conversation; delete conversation.
@@ -116,8 +118,9 @@ CommunityPanel.tsx
 SearchOverlay.tsx
 - Close; pick conversation → onPick.
 
-WelcomeScreen.tsx (empty state)
-- Open plans, open search, jump to quantum bar.
+WelcomeScreen.tsx (empty chat — first visit)
+- Companion card: intro 7 + journey 7 questions (Use in chat → composer); five mode prefixes (Fact search, Clarity, Discover, Precision, Perspective) from src/lib/companion-onboarding.ts.
+- Open plans, open search, jump to quantum bar; Power templates; quantum showcase below.
 
 QuantumControls.tsx
 - Model / thinking / Schrödinger / agent / quantum toggles; upgrade → onRequestUpgrade.
@@ -139,6 +142,9 @@ PostCard.tsx
 
 InstantTemplates.tsx
 - Template pick → onPick.
+
+SettingsPanel.tsx
+- Close; font scale / appearance / notifications; time capsule list + add/remove.
 `.trim();
 
 const STORAGE_KEYS_DOC = `
@@ -151,6 +157,10 @@ Resolved keys in shipped code:
 - babygpt_agent_memory_v1 — agent memory blob (agent-memory.ts)
 - babygpt_skills_v1 — custom skills (skills.ts)
 - babygpt_reminders_v1 — reminders list (reminders.ts)
+- babygpt_ui_prefs_v1 — UiPreferences: fontScale, appearance, notificationsEnabled (ui-preferences.ts)
+- babygpt_time_capsule_v1 — scheduled messages (time-capsule.ts; UI in SettingsPanel)
+
+Cookie (not localStorage): babygpt_token — session JWT when gate enabled.
 
 Server files (not localStorage): .data/wallet.json, .data/billing.json when gate + Stripe features are used.
 `.trim();
@@ -162,11 +172,58 @@ Verified for this repository (BabyGPT / postforge):
 • Server wallet and billing JSON under .data/ are single-tenant — not suitable for multi-user production without redesign.
 • Next.js may warn that "middleware" file convention is deprecated in favor of "proxy" — follow Next.js upgrade guidance when upgrading.
 • Stripe webhook must include events the handler uses (e.g. invoice.paid, invoice.payment_failed) for billing alerts.
+• Chat / API routes have no built-in per-IP rate limiting — add if exposing publicly.
 
-Template / other-app issues (NOT found in active src/):
-The following were listed in an external template and do NOT apply to the current BabyGPT codebase:
-— Font size setting saved but not applied; darkMode / notifications toggles; Time capsule UI; Future Self auto-greet.
-No matching settings modules or features exist under src/ for those items.
+UI notes: Font scale is applied via CSS variable --babygpt-font-scale on document root (see globals.css + ui-preferences applyUiPreferencesToDom). SettingsPanel includes time-capsule CRUD. Life-coach copy lives in companion-onboarding.ts + WelcomeScreen; billing FAQ is Stripe-only (billing-faq.ts). Full Clarity Engine / realignment product notes: docs/BabyGPT-Onboarding-Paths-Spec.md.
+`.trim();
+
+/** Continuity block for Cursor — merge with sprint notes; regenerate updates timestamp only. */
+const CURSOR_HANDOFF_DOC = `
+CURRENT STATE — Quality gates (run before release)
+• TypeScript: next build runs tsc (npm run build).
+• ESLint: npm run lint
+• Tests: npm run test (vitest)
+• Dev: npm run dev (port 3000)
+• Billing env: npm run verify:billing | npm run finish:billing
+
+ARCHITECTURE SNAPSHOT — Complete tree and every source file appear in Sections 10–11 of this document. Types: src/lib/types.ts and feature modules (plans, skills, credits, etc.). Storage keys: Section 6 above.
+
+RECENT FIXES & QA (examples — extend in your tracker)
+• SubscriptionModal: static billing FAQ + search available without server wallet; life-coach content removed from Plans — moved to WelcomeScreen.
+• src/lib/companion-onboarding.ts: intro 7, journey 7, MESSAGE_MODE_PREFIXES; billing-faq.ts is Stripe/subscription only.
+• API: /api/billing/support and /translate optional auth when BABYGPT_APP_PASSWORD unset; support prompt is billing-only.
+• SettingsPanel: refresh-on-open uses startTransition for ESLint react-hooks rule.
+• cursor-context-generator: removed unused h3 helper.
+(Document additional PR-level bug list in your changelog if you keep one.)
+
+TEN IMPROVEMENTS (product — see docs for detail)
+Verified as documented in docs/BabyGPT-Onboarding-Paths-Spec.md + docs/FINAL-LAUNCH-COPY.md: sharper opener, question reorder, micro-reactions, skip+letter, Quick Fire path, Daily Anchor ideas, Future Self ritual spec, Clarity 4-card spread, Life Mirror safety, 90-day realignment. Implementation in UI varies by item — see docs/BabyGPT-App-Diagnostic.md for code vs spec.
+
+KEY TECHNICAL DETAILS
+• localStorage: full key list in Section 6 (includes ui_prefs_v1, time_capsule_v1).
+• CSS: --babygpt-font-scale applied on :root; globals.css uses calc(14px * var(--babygpt-font-scale, 1)).
+• AI SDK: z-ai-web-dev-sdk used from server Route Handlers only (chat, agent, schrodinger, billing LLM helpers); OpenAI fallback where configured.
+• Time capsule: src/lib/time-capsule.ts (list/add/remove); SettingsPanel surfaces list + form.
+• Companion onboarding: src/lib/companion-onboarding.ts + WelcomeScreen. Clarity / realignment as full product: docs/BabyGPT-Onboarding-Paths-Spec.md — not a separate route yet.
+
+KNOWN WARNINGS (non-blocking)
+• Middleware → "proxy" migration warning from Next.js 16.
+• Dependency on LLM provider availability; no request queue.
+• Stripe / gate misconfiguration shows degraded Plans modal — use finish:billing.
+
+SUGGESTED NEXT STEPS (priority)
+High: Stripe live keys on Vercel Production (docs/FINAL-LAUNCH-COPY.md); webhook URL correctness.
+Medium: Welcome screen already surfaces questions + mode prefixes; optional dedicated Fact search / mode toggles in header; rate limiting on /api/chat.
+Nice: Multi-tenant wallet; durable community store; embeddings for billing FAQ search.
+
+QUICK REFERENCE COMMANDS
+npm run dev          # local dev (localhost:3000)
+npm run build        # production build + TypeScript
+npm run lint         # eslint
+npm run test         # vitest
+npm run context:docx # regenerate this document
+npm run verify:billing
+npm run finish:billing
 `.trim();
 
 async function collectSourceFiles() {
@@ -246,18 +303,20 @@ function buildMarkdownHeader(pkg, treeLines) {
     md += `- ${line}\n`;
   }
   md += `\n## 4. Component map (summary)\n\n`;
-  md += `Main shell: BabyGPTClient orchestrates Sidebar, ChatArea, ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.\n\n`;
+  md += `Main shell: BabyGPTClient orchestrates Sidebar, ChatArea (WelcomeScreen when empty), ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.\n\n`;
   md += `## 5. Button & interaction map\n\n`;
   md += mdFenced("text", BUTTON_AND_INTERACTION_MAP);
   md += `## 6. Storage & data model\n\n`;
   md += mdFenced("text", STORAGE_KEYS_DOC);
   md += `## 7. Path / feature configuration\n\n`;
-  md += `Plans & models: src/lib/plans.ts, model-tier.ts, usage-cost.ts. Stripe: stripe-config, stripe-sync, server-billing. Quantum/skills: QuantumControls, skills.ts, built-in-skills.ts.\n\n`;
+  md += `Plans & models: src/lib/plans.ts, model-tier.ts, usage-cost.ts. Stripe: stripe-config, stripe-sync, server-billing. Billing FAQ only: src/lib/billing-faq.ts. Life-coach / companion onboarding: src/lib/companion-onboarding.ts + WelcomeScreen (empty chat). Quantum/skills: QuantumControls, skills.ts, built-in-skills.ts.\n\n`;
   md += `## 8. Known issues & follow-ups\n\n`;
   md += mdFenced("text", KNOWN_ISSUES_DOC);
-  md += `## 9. File structure (trimmed, no _archive)\n\n`;
+  md += `## 9. Cursor handoff & continuity\n\n`;
+  md += mdFenced("text", CURSOR_HANDOFF_DOC);
+  md += `## 10. File structure (trimmed, no _archive)\n\n`;
   md += mdFenced("text", treeLines.slice(0, 400).join("\n") + (treeLines.length > 400 ? `\n… truncated (${treeLines.length} lines total).` : ""));
-  md += `## 10. Complete source listing\n\n`;
+  md += `## 11. Complete source listing\n\n`;
   return md;
 }
 
@@ -297,10 +356,10 @@ async function main() {
   children.push(h1("4. Component map (summary)"));
   children.push(
     p(
-      "Main shell: BabyGPTClient orchestrates Sidebar, ChatArea, ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.",
+      "Main shell: BabyGPTClient orchestrates Sidebar, ChatArea (WelcomeScreen when no messages), ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.",
     ),
   );
-  children.push(p("See Section 9 for every file path under src/."));
+  children.push(p("See Section 10 for the file tree and Section 11 for full source under src/."));
 
   children.push(h1("5. Button & interaction map"));
   children.push(p(BUTTON_AND_INTERACTION_MAP));
@@ -311,13 +370,21 @@ async function main() {
   children.push(h1("7. Path / feature configuration"));
   children.push(p("Plans & models: src/lib/plans.ts, model-tier.ts, usage-cost.ts."));
   children.push(p("Stripe: src/lib/stripe-config.ts, stripe-sync.ts, server-billing.ts."));
+  children.push(p("Billing FAQ (Plans modal): src/lib/billing-faq.ts — subscription and payment topics only."));
+  children.push(p("Companion onboarding (empty chat): src/lib/companion-onboarding.ts — intro/journey questions and mode prefixes on WelcomeScreen."));
   children.push(p("Quantum / skills: QuantumControls, src/lib/skills.ts, built-in skills in src/lib/built-in-skills.ts."));
   children.push(p("System prompts for chat are composed in route handlers and lib (memory, skills, quantum)."));
 
   children.push(h1("8. Known issues & follow-ups"));
   children.push(p(KNOWN_ISSUES_DOC));
 
-  children.push(h1("9. File structure (trimmed, no _archive)"));
+  children.push(h1("9. Cursor handoff & continuity"));
+  for (const block of CURSOR_HANDOFF_DOC.split(/\n\n+/)) {
+    const t = block.trim();
+    if (t) children.push(p(t));
+  }
+
+  children.push(h1("10. File structure (trimmed, no _archive)"));
   for (const line of treeLines.slice(0, 400)) {
     children.push(p(line, { size: 20 }));
   }
@@ -325,7 +392,7 @@ async function main() {
     children.push(p(`… truncated (${treeLines.length} lines total).`));
   }
 
-  children.push(h1("10. Complete source listing"));
+  children.push(h1("11. Complete source listing"));
   children.push(
     p(
       `The following ${files.length} files are included verbatim (lines beyond ${MAX_LINES_PER_FILE} per file are truncated).`,
