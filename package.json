@@ -1,55 +1,50 @@
 {
-  "name": "postforge",
-  "version": "0.1.1",
+  "name": "babygpt",
+  "version": "0.1.0",
   "private": true,
   "packageManager": "npm@10.9.2",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
-    "start": "next start --hostname 0.0.0.0",
-    "start:production": "node scripts/railway-deploy-migrate.mjs && next start --hostname 0.0.0.0",
-    "deploy:check": "node scripts/check-deploy-readiness.mjs",
-    "verify:deploy": "node scripts/verify-deployment.mjs",
-    "check:migrations": "node scripts/check-migration-bom.mjs",
+    "dev": "kill-port 3000 && next dev --hostname localhost --port 3000",
+    "dev:raw": "next dev",
+    "build": "next build",
+    "start": "next start",
     "lint": "eslint",
-    "ci": "npm run lint && npm run check:migrations && npx tsc --noEmit && npm test",
-    "ci:full": "npm run ci && npm run build",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "stripe:sync-railway": "railway run -- node scripts/stripe-sync-railway.mjs"
+    "verify:billing": "node scripts/check-billing-env.cjs",
+    "finish:billing": "node scripts/finish-billing-setup.cjs",
+    "context:docx": "node scripts/cursor-context-generator.mjs",
+    "context:review": "node scripts/generate-review.cjs",
+    "vercel:env:prod": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set-babygpt-vercel-prod-env.ps1"
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.11.1",
-    "@aws-sdk/client-s3": "^3.1029.0",
-    "@prisma/client": "^5.22.0",
-    "@upstash/ratelimit": "^2.0.7",
-    "@upstash/redis": "^1.35.8",
-    "inngest": "^4.2.0",
+    "highlight.js": "^11.11.1",
+    "jose": "^6.2.2",
     "next": "16.2.2",
-    "next-auth": "^5.0.0-beta.30",
-    "openai": "^6.33.0",
-    "pino": "^10.1.0",
-    "pino-pretty": "^13.1.3",
-    "prisma": "^5.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "sharp": "^0.34.5",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
     "stripe": "^17.7.0",
-    "zod": "^4.3.6"
+    "uuid": "^11.1.0",
+    "z-ai-web-dev-sdk": "^0.0.17"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@types/uuid": "^10.0.0",
+    "docx": "^9.6.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "kill-port": "^2.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.3"
+    "vitest": "^3.2.4"
   }
 }

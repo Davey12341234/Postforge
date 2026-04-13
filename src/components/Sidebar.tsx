@@ -1,0 +1,181 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { AgentMemory } from "@/lib/agent-memory";
+import { loadMemory, saveMemory } from "@/lib/agent-memory";
+import type { Conversation } from "@/lib/types";
+import type { UiPreferences } from "@/lib/ui-preferences";
+
+type Tab = "chats" | "memory";
+
+export function Sidebar({
+  conversations,
+  activeId,
+  onNew,
+  onSelect,
+  onDelete,
+  appearance = "dark",
+}: {
+  conversations: Conversation[];
+  activeId: string | null;
+  onNew: () => void;
+  onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
+  appearance?: UiPreferences["appearance"];
+}) {
+  const [tab, setTab] = useState<Tab>("chats");
+  const [memory, setMemory] = useState<AgentMemory | null>(null);
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- hydrate memory editor from localStorage */
+    setMemory(loadMemory());
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
+  useEffect(() => {
+    if (!memory) return;
+    saveMemory(memory);
+  }, [memory]);
+
+  const shell =
+    appearance === "light"
+      ? "border-zinc-200 bg-white/95"
+      : appearance === "oled"
+        ? "border-zinc-800 bg-black/50"
+        : "border-zinc-900 bg-zinc-950/40";
+  const hairline =
+    appearance === "light" ? "border-zinc-200" : appearance === "oled" ? "border-zinc-800" : "border-zinc-900";
+  const tabActive =
+    appearance === "light"
+      ? "bg-zinc-200 text-zinc-900 ring-1 ring-zinc-300"
+      : "bg-zinc-900 text-zinc-100 ring-1 ring-zinc-800";
+  const tabIdle = appearance === "light" ? "text-zinc-500" : "text-zinc-500";
+  const rowHover = appearance === "light" ? "hover:bg-zinc-100" : "hover:bg-zinc-900/60";
+  const rowActive =
+    appearance === "light"
+      ? "bg-zinc-200 text-zinc-900 ring-1 ring-zinc-300"
+      : "bg-zinc-900 text-zinc-100 ring-1 ring-zinc-800";
+  const rowText = appearance === "light" ? "text-zinc-800" : "text-zinc-300";
+
+  return (
+    <aside className={`flex h-full w-[300px] shrink-0 flex-col border-r ${shell}`}>
+      <div className={`flex border-b ${hairline} p-2`}>
+        <button
+          type="button"
+          className={`flex-1 rounded-xl px-2 py-2 text-xs font-semibold ${tab === "chats" ? tabActive : tabIdle}`}
+          onClick={() => setTab("chats")}
+        >
+          Chats
+        </button>
+        <button
+          type="button"
+          className={`flex-1 rounded-xl px-2 py-2 text-xs font-semibold ${tab === "memory" ? tabActive : tabIdle}`}
+          onClick={() => setTab("memory")}
+        >
+          Memory
+        </button>
+      </div>
+
+      {tab === "chats" ? (
+        <>
+          <div className={`border-b ${hairline} p-3`}>
+            <button
+              type="button"
+              onClick={onNew}
+              className="w-full rounded-xl bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-950 hover:bg-white"
+            >
+              New chat
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto p-2">
+            {conversations.map((c) => (
+              <div key={c.id} className="group mb-1 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onSelect(c.id)}
+                  className={`min-w-0 flex-1 truncate rounded-xl px-3 py-2 text-left text-sm ${
+                    c.id === activeId ? rowActive : `${rowText} ${rowHover}`
+                  }`}
+                >
+                  {c.title || "Untitled"}
+                </button>
+                <button
+                  type="button"
+                  title="Delete"
+                  className={`hidden rounded-lg px-2 py-1 text-xs group-hover:inline ${
+                    appearance === "light"
+                      ? "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+                      : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
+                  }`}
+                  onClick={() => onDelete(c.id)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="flex-1 overflow-auto p-3 text-sm">
+          {!memory ? (
+            <div className="text-xs text-zinc-500">Loading…</div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-zinc-500">
+                Persistent memory (local). Injected into system prompts alongside DNA-style routing.
+              </p>
+              <label className="block text-xs text-zinc-400">
+                Preferences (one per line)
+                <textarea
+                  className="mt-1 w-full rounded-xl bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 ring-1 ring-zinc-800"
+                  rows={3}
+                  value={memory.preferences.join("\n")}
+                  onChange={(e) =>
+                    setMemory({
+                      ...memory,
+                      preferences: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                    })
+                  }
+                />
+              </label>
+              <label className="block text-xs text-zinc-400">
+                Style notes
+                <textarea
+                  className="mt-1 w-full rounded-xl bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 ring-1 ring-zinc-800"
+                  rows={3}
+                  value={memory.styleNotes.join("\n")}
+                  onChange={(e) =>
+                    setMemory({
+                      ...memory,
+                      styleNotes: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                    })
+                  }
+                />
+              </label>
+              <label className="block text-xs text-zinc-400">
+                Ongoing tasks
+                <textarea
+                  className="mt-1 w-full rounded-xl bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 ring-1 ring-zinc-800"
+                  rows={3}
+                  value={memory.ongoingTasks.join("\n")}
+                  onChange={(e) =>
+                    setMemory({
+                      ...memory,
+                      ongoingTasks: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                    })
+                  }
+                />
+              </label>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div
+        className={`border-t ${hairline} p-3 text-[11px] ${appearance === "light" ? "text-zinc-600" : "text-zinc-600"}`}
+      >
+        History uses <span className={appearance === "light" ? "text-zinc-500" : "text-zinc-400"}>babygpt_</span> keys
+      </div>
+    </aside>
+  );
+}

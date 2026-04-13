@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BabyGPT system manifest",
+  "description": "Handoff snapshot for external systems. Canonical values live in TypeScript sources listed under source_of_truth.",
+  "app": {
+    "name": "babygpt",
+    "package": "babygpt",
+    "node": ">=20"
+  },
+  "source_of_truth": {
+    "plans_and_tiers": "src/lib/plans.ts",
+    "credit_formula": "src/lib/usage-cost.ts",
+    "credit_persistence_client": "src/lib/credits-store.ts",
+    "credit_persistence_server": "src/lib/server-wallet.ts",
+    "chat_api_guards": "src/lib/chat-route-guard.ts",
+    "session_and_auth_helpers": "src/lib/session-server.ts",
+    "gate_and_data_dir": "src/lib/server-config.ts",
+    "billing_file": "src/lib/server-billing.ts",
+    "stripe_env_and_price_map": "src/lib/stripe-config.ts",
+    "stripe_subscription_sync": "src/lib/stripe-sync.ts",
+    "llm_resolution": "src/lib/llm-resolve.ts",
+    "env_template": ".env.local.example",
+    "http_middleware": "src/middleware.ts"
+  },
+  "npm_scripts": {
+    "dev": "kill-port 3000 && next dev --hostname 127.0.0.1 --port 3000",
+    "build": "next build",
+    "lint": "eslint",
+    "test": "vitest run",
+    "start": "next start"
+  },
+  "ci": {
+    "workflow": ".github/workflows/ci.yml",
+    "steps": ["npm ci", "npm run lint", "npm run test", "npm run build"]
+  },
+  "environment_variables": [
+    {
+      "name": "Z_AI_API_KEY",
+      "required_for": "Primary GLM / Z.AI provider"
+    },
+    {
+      "name": "Z_AI_BASE_URL",
+      "required_for": "Optional Z.AI API base override"
+    },
+    {
+      "name": "OPENAI_API_KEY",
+      "required_for": "Fallback when Z.AI client cannot be constructed"
+    },
+    {
+      "name": "BABYGPT_APP_PASSWORD",
+      "required_for": "Optional deploy gate: shared password → JWT session at /login"
+    },
+    {
+      "name": "BABYGPT_SESSION_SECRET",
+      "required_for": "Required when BABYGPT_APP_PASSWORD is set (signs babygpt_token cookie)"
+    },
+    {
+      "name": "BABYGPT_API_SECRET",
+      "required_for": "Optional Bearer token for scripts calling APIs without a browser cookie"
+    },
+    {
+      "name": "NEXT_PUBLIC_APP_URL",
+      "required_for": "Stripe Checkout/Portal success and return URLs (no trailing slash)"
+    },
+    {
+      "name": "STRIPE_SECRET_KEY",
+      "required_for": "Stripe API (Checkout, Portal, webhooks client)"
+    },
+    {
+      "name": "STRIPE_WEBHOOK_SECRET",
+      "required_for": "Verifies POST /api/stripe/webhook"
+    },
+    {
+      "name": "STRIPE_PRICE_STARTER",
+      "required_for": "Stripe Price ID for Starter subscription"
+    },
+    {
+      "name": "STRIPE_PRICE_PRO",
+      "required_for": "Stripe Price ID for Pro subscription"
+    },
+    {
+      "name": "STRIPE_PRICE_TEAM",
+      "required_for": "Stripe Price ID for Team subscription"
+    }
+  ],
+  "api_routes": [
+    { "path": "/api/chat", "methods": ["POST"], "note": "SSE; guardChatSend when gate on" },
+    { "path": "/api/chat/agent", "methods": ["POST"], "note": "guardChatSend when gate on" },
+    { "path": "/api/chat/schrodinger", "methods": ["POST"], "note": "guardChatSend when gate on" },
+    { "path": "/api/community", "methods": ["GET", "POST"], "note": "guardApi when gate on" },
+    { "path": "/api/community/debate", "methods": ["POST"], "note": "guardDebate when gate on" },
+    { "path": "/api/credits", "methods": ["GET", "POST"], "note": "Server wallet + Stripe flags when gate on" },
+    { "path": "/api/auth/login", "methods": ["POST"] },
+    { "path": "/api/auth/logout", "methods": ["POST"] },
+    { "path": "/api/stripe/checkout", "methods": ["POST"] },
+    { "path": "/api/stripe/portal", "methods": ["POST"] },
+    { "path": "/api/stripe/finalize", "methods": ["POST"] },
+    { "path": "/api/stripe/webhook", "methods": ["POST"], "note": "Stripe-Signature only; no JWT" }
+  ],
+  "pages": ["/", "/login", "/checkout/return"],
+  "localStorage": {
+    "prefix": "babygpt_",
+    "keys": [
+      "babygpt_conversations",
+      "babygpt_active_conversation_id",
+      "babygpt_credits_v1"
+    ],
+    "note": "Used when BABYGPT_APP_PASSWORD is unset. Additional babygpt_* keys for memory, skills, reminders, etc."
+  },
+  "server_persistence": {
+    "directory_env": "BABYGPT_DATA_DIR",
+    "default_relative": ".data",
+    "files": ["wallet.json", "billing.json"],
+    "note": "Ephemeral disk on many serverless hosts; use durable storage for multi-instance production."
+  },
+  "plan_ids": ["free", "starter", "pro", "team"],
+  "pricing_constants": {
+    "first_visit_credit_bonus": 120,
+    "community_debate_cost": 6,
+    "monthly_credits_by_plan": {
+      "free": 400,
+      "starter": 4000,
+      "pro": 25000,
+      "team": 80000
+    }
+  },
+  "production_risks": [
+    "Without BABYGPT_APP_PASSWORD, chat and community APIs accept unauthenticated requests; credits are client-side only.",
+    "With gate on, server wallet + plan enforcement apply per request (see chat-route-guard); still single shared wallet per deploy, not per-user accounts.",
+    "Stripe maps Price IDs to planId via env; webhook must be registered on the production URL.",
+    "Filesystem wallet/billing under .data/ is not suitable for horizontally scaled serverless without a shared volume or database."
+  ],
+  "verification_commands": ["npm install", "npm run lint", "npm run test", "npm run build"],
+  "human_documentation": "docs/BABYGPT-LAUNCH-HANDOFF.md"
+}

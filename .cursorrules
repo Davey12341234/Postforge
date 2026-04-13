@@ -1,0 +1,19 @@
+# BabyGPT
+
+This repository is **BabyGPT**, a ChatGPT-style Next.js app. It is **not** PostForge.
+
+## Product rules
+
+- Single page route: `/` plus API routes under `/api/*`.
+- No Prisma, Stripe, server auth sessions, or databases. Community posts are in-memory on the server process.
+- Client persistence uses `localStorage` only, with keys prefixed `babygpt_`.
+- Call `z-ai-web-dev-sdk` **only** in Route Handlers / server code — never import it in client components.
+
+## Configuration
+
+- Set `Z_AI_BASE_URL` and `Z_AI_API_KEY` in `.env.local` for local development.
+
+## Verification
+
+- Title: "BabyGPT — AI Chat Assistant"
+- Dark UI, robot logo, quantum controls, community panel, streaming chat when API keys are valid.
