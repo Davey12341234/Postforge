@@ -29,3 +29,5 @@ See `docs/HANDOFF-AI-NEXT-REVIEW.md` (architecture, Stripe / Plans modal behavio
 **Finish billing setup:** `npm run finish:billing` (then `npm run vercel:env:prod` on Windows when keys are complete).
 
 **Cursor handoff doc:** `npm run context:docx` writes `docs/BabyGPT-Cursor-Context.docx` and **`docs/BabyGPT-Cursor-Context.md`** (same content; use `.md` if Word won’t open the docx). `npm run context:review` writes `docs/cursor-review-snapshot.json`.
+
+**Onboarding / paths product spec (not fully implemented in UI):** `docs/BabyGPT-Onboarding-Paths-Spec.md`. **Full app diagnostic (compact paste):** `docs/BabyGPT-App-Diagnostic.md`.

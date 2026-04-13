@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
 import {
@@ -36,8 +36,10 @@ export function SettingsPanel({
 
   useEffect(() => {
     if (!open) return;
-    setPrefs(loadUiPreferences());
-    setCapsules(listTimeCapsules());
+    startTransition(() => {
+      setPrefs(loadUiPreferences());
+      setCapsules(listTimeCapsules());
+    });
   }, [open]);
 
   if (!open) return null;
