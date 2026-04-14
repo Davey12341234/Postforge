@@ -49,6 +49,13 @@ export async function POST(req: NextRequest) {
     model,
     thinking: thinking === "on",
     mode: "chat",
+    quantum: quantum
+      ? {
+          kolmogorov: Boolean(quantum.kolmogorov),
+          holographic: Boolean(quantum.holographic),
+          dna: Boolean(quantum.dna),
+        }
+      : undefined,
   });
   if (gated) {
     return gated;

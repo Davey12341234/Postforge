@@ -69,11 +69,25 @@ export function describeCost(input: SendCostInput, credits: number): string {
   return `${credits} credits (${bits.join(" · ")})`;
 }
 
+/**
+ * Plan gate for a chat send (client + server wallet). Includes quantum toggles and Schrödinger’s second model.
+ */
+export type ChatSendPlanCheck = Omit<SendCostInput, "debate"> & {
+  quantum?: { kolmogorov?: boolean; holographic?: boolean; dna?: boolean };
+  /** Second racer model — must be on-plan when mode is `schrodinger`. */
+  secondaryModel?: ModelTier;
+};
+
 /** Whether the current plan permits this combination (before credits). */
-export function planPermitsSend(plan: PlanDefinition, input: Omit<SendCostInput, "debate">): boolean {
+export function planPermitsSend(plan: PlanDefinition, input: ChatSendPlanCheck): boolean {
   if (!plan.allowedModels.includes(input.model)) return false;
   if (input.thinking && !plan.features.thinking) return false;
   if (input.mode === "agent" && !plan.features.agent) return false;
   if (input.mode === "schrodinger" && !plan.features.schrodinger) return false;
+  const q = input.quantum;
+  if (q?.kolmogorov && !plan.features.kolmogorov) return false;
+  if (q?.holographic && !plan.features.holographic) return false;
+  if (q?.dna && !plan.features.dna) return false;
+  if (input.secondaryModel != null && !plan.allowedModels.includes(input.secondaryModel)) return false;
   return true;
 }

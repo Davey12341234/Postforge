@@ -28,7 +28,9 @@ import {
 import type { Skill } from "@/lib/skill-model";
 import { lsKey } from "@/lib/storage";
 import { skillSystemPrompt, suggestSkillForMessage } from "@/lib/skills";
-import type { ChatMessage, Conversation, ModelTier } from "@/lib/types";
+import { filesToChatAttachments } from "@/lib/file-attachments";
+import { speakAssistantMessage } from "@/lib/speech-synthesis";
+import type { ChatAttachment, ChatMessage, Conversation, ModelTier } from "@/lib/types";
 import {
   adjustBalance,
   creditMonthKey,
@@ -56,6 +58,7 @@ import {
 } from "@/lib/ui-preferences";
 import { PLANS, planAllowsModel, type PlanId, type PlanDefinition } from "@/lib/plans";
 import { schrodingerPair } from "@/lib/schrodinger-pair";
+import { uiDiag } from "@/lib/ui-diagnostics";
 import {
   describeCost,
   estimateSendCredits,
@@ -123,6 +126,9 @@ export default function BabyGPTClient() {
   const [skillHint, setSkillHint] = useState<Skill | null>(null);
   /** Composer text — drives skills, mood, and templates */
   const [chatDraft, setChatDraft] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [readAloud, setReadAloud] = useState(false);
+  const readAloudRef = useRef(false);
   const [streamingAssistantId, setStreamingAssistantId] = useState<string | null>(null);
   /** Aborts in-flight chat SSE when starting a new send or clicking Stop. */
   const streamAbortRef = useRef<AbortController | null>(null);
@@ -193,6 +199,27 @@ export default function BabyGPTClient() {
   useEffect(() => {
     setConversations(loadConvos());
     setActiveId(localStorage.getItem(ACTIVE_KEY));
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("babygpt_read_aloud") === "1") setReadAloud(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    readAloudRef.current = readAloud;
+  }, [readAloud]);
+
+  const setReadAloudPersist = useCallback((v: boolean) => {
+    setReadAloud(v);
+    try {
+      localStorage.setItem("babygpt_read_aloud", v ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -477,7 +504,7 @@ export default function BabyGPTClient() {
     async (text: string, options?: { regenerate?: boolean }) => {
       const regenerate = options?.regenerate === true;
       const trimmed = text.trim();
-      if (!regenerate && !trimmed) return;
+      if (!regenerate && !trimmed && pendingFiles.length === 0) return;
 
       if (!isIntroIntakeComplete()) {
         setBanner("Finish the connection questionnaire to start chatting.");
@@ -492,19 +519,57 @@ export default function BabyGPTClient() {
       const planDef = PLANS[credits.planId];
       const useSchrodinger = schrodinger && !agentMode;
       const mode: SendMode = agentMode ? "agent" : useSchrodinger ? "schrodinger" : "chat";
-      const costInput = { model, thinking, mode };
+      const schPair = schrodingerPair(model, planDef.allowedModels);
+      const costInput = {
+        model,
+        thinking,
+        mode,
+        quantum: {
+          kolmogorov: quantum.kolmogorov,
+          holographic: quantum.holographic,
+          dna: quantum.dna,
+        },
+        secondaryModel: useSchrodinger ? schPair.modelB : undefined,
+      };
       if (!planPermitsSend(planDef, costInput)) {
+        uiDiag("send.planGate", "fail", {
+          planId: planDef.id,
+          model,
+          mode,
+          quantum: costInput.quantum,
+          secondaryModel: costInput.secondaryModel,
+        });
         setBanner(
-          `Not included on ${planDef.label}: adjust model or modes, or open Plans to upgrade.`,
+          `Not included on ${planDef.label}: adjust model, modes, or quantum toggles — or open Plans to upgrade.`,
         );
         return;
       }
-      const cost = estimateSendCredits(costInput);
+      uiDiag("send.planGate", "ok", {
+        planId: planDef.id,
+        model,
+        mode,
+        quantum: costInput.quantum,
+        secondaryModel: costInput.secondaryModel,
+      });
+      const costCore = { model, thinking, mode };
+      const cost = estimateSendCredits(costCore);
       if (credits.balance < cost) {
+        uiDiag("send.credits", "fail", { need: cost, balance: credits.balance });
         setBanner(
-          `Need ${cost} credits for this send (${describeCost(costInput, cost)}). Balance: ${credits.balance}. Open Plans.`,
+          `Need ${cost} credits for this send (${describeCost(costCore, cost)}). Balance: ${credits.balance}. Open Plans.`,
         );
         return;
+      }
+
+      let loadedAttachments: ChatAttachment[] | undefined;
+      if (!regenerate && pendingFiles.length > 0) {
+        const conv = await filesToChatAttachments(pendingFiles, { modelTier: model });
+        if (!conv.ok) {
+          setBanner(conv.error);
+          return;
+        }
+        loadedAttachments = conv.attachments;
+        setPendingFiles([]);
       }
 
       let reminderForBanner: ReturnType<typeof parseReminderFromMessage> = null;
@@ -588,8 +653,9 @@ export default function BabyGPTClient() {
         const userMsg: ChatMessage = {
           id: uuidv4(),
           role: "user",
-          content: trimmed,
+          content: trimmed || (loadedAttachments?.length ? "📎 Attached files" : ""),
           createdAt: Date.now(),
+          attachments: loadedAttachments,
         };
 
         const base: Conversation =
@@ -637,34 +703,54 @@ export default function BabyGPTClient() {
       const payloadMessages = withUser.messages.map((m) => ({
         role: m.role,
         content: m.content,
+        attachments: m.attachments,
       }));
 
-      const endpoint = useSchrodinger
-        ? "/api/chat/schrodinger"
-        : agentMode
-          ? "/api/chat/agent"
-          : "/api/chat";
+      const useGemini = withUser.messages.some(
+        (m) => m.role === "user" && (m.attachments?.length ?? 0) > 0,
+      );
 
-      const schPair = schrodingerPair(model, PLANS[credits.planId].allowedModels);
-      const body = useSchrodinger
+      if (useGemini && (agentMode || useSchrodinger)) {
+        setBusy(false);
+        streamAbortRef.current = null;
+        setBanner("File attachments use Gemini — turn off Agent and Schrödinger for this chat.");
+        return;
+      }
+
+      const endpoint = useGemini
+        ? "/api/chat/gemini"
+        : useSchrodinger
+          ? "/api/chat/schrodinger"
+          : agentMode
+            ? "/api/chat/agent"
+            : "/api/chat";
+
+      const body = useGemini
         ? JSON.stringify({
             messages: payloadMessages,
-            modelA: schPair.modelA,
-            modelB: schPair.modelB,
-          })
-        : JSON.stringify({
-            messages: payloadMessages,
             model,
-            thinking: thinking ? "on" : "off",
             memoryPrompt,
             skillPrompt: skillPrompt || undefined,
-            quantum: {
-              kolmogorov: quantum.kolmogorov,
-              holographic: quantum.holographic,
-              dna: quantum.dna,
-              adiabatic: quantum.adiabatic,
-            },
-          });
+          })
+        : useSchrodinger
+          ? JSON.stringify({
+              messages: payloadMessages,
+              modelA: schPair.modelA,
+              modelB: schPair.modelB,
+            })
+          : JSON.stringify({
+              messages: payloadMessages,
+              model,
+              thinking: thinking ? "on" : "off",
+              memoryPrompt,
+              skillPrompt: skillPrompt || undefined,
+              quantum: {
+                kolmogorov: quantum.kolmogorov,
+                holographic: quantum.holographic,
+                dna: quantum.dna,
+                adiabatic: quantum.adiabatic,
+              },
+            });
 
       let res: Response;
       try {
@@ -679,9 +765,11 @@ export default function BabyGPTClient() {
         setStreamingAssistantId(null);
         streamAbortRef.current = null;
         if (e instanceof DOMException && e.name === "AbortError") {
+          uiDiag("send.fetch", "skip", { reason: "abort" });
           setBanner("Generation stopped.");
           return;
         }
+        uiDiag("send.fetch", "fail", { error: String(e) });
         setBanner("Network error — check your connection and try again.");
         return;
       }
@@ -691,11 +779,13 @@ export default function BabyGPTClient() {
 
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
+        uiDiag("send.http", "fail", { endpoint, status: res.status, error: err.error });
         setBanner(formatChatError(res.status, err.error));
         setBusy(false);
         streamAbortRef.current = null;
         return;
       }
+      uiDiag("send.http", "ok", { endpoint, status: res.status });
 
       const reader = res.body?.getReader();
       if (!reader) {
@@ -711,6 +801,7 @@ export default function BabyGPTClient() {
       let buffer = "";
       let acc = "";
       let thinkingAcc = "";
+      let streamCompleted = false;
 
       try {
         while (true) {
@@ -851,6 +942,8 @@ export default function BabyGPTClient() {
             });
           })();
         }
+
+        streamCompleted = true;
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") {
           setBanner("Generation stopped.");
@@ -858,6 +951,9 @@ export default function BabyGPTClient() {
           setBanner("Stream interrupted — try again.");
         }
       } finally {
+        if (streamCompleted && readAloudRef.current && acc.trim()) {
+          speakAssistantMessage(assistantId, acc);
+        }
         setBusy(false);
         setStreamingAssistantId(null);
         streamAbortRef.current = null;
@@ -870,6 +966,7 @@ export default function BabyGPTClient() {
       conversations,
       credits,
       model,
+      pendingFiles,
       quantum,
       schrodinger,
       serverCredits,
@@ -877,6 +974,140 @@ export default function BabyGPTClient() {
       upsertConversation,
     ],
   );
+
+  const runGenerateImage = useCallback(async () => {
+    const prompt = chatDraft.trim();
+    if (!isIntroIntakeComplete()) {
+      setBanner("Finish the connection questionnaire first.");
+      return;
+    }
+    if (introGateOpen) return;
+    if (!credits) {
+      setBanner("Loading credits… try again in a moment.");
+      return;
+    }
+    if (!prompt) {
+      setBanner("Type an image description in the message box first.");
+      return;
+    }
+
+    const planDef = PLANS[credits.planId];
+    const mode: SendMode = "chat";
+    const costInput = {
+      model,
+      thinking: false,
+      mode,
+      quantum: {
+        kolmogorov: quantum.kolmogorov,
+        holographic: quantum.holographic,
+        dna: quantum.dna,
+      },
+    };
+    if (!planPermitsSend(planDef, costInput)) {
+      setBanner(`Not included on ${planDef.label} — open Plans.`);
+      return;
+    }
+    const costCore = { model, thinking: false, mode };
+    const cost = estimateSendCredits(costCore);
+    if (credits.balance < cost) {
+      setBanner(`Need ${cost} credits. Balance: ${credits.balance}.`);
+      return;
+    }
+
+    setBusy(true);
+    setBanner(null);
+    try {
+      const res = await fetch("/api/gemini/image", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, model }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        imageBase64?: string;
+        mimeType?: string;
+      };
+      if (!res.ok) {
+        setBanner(data.error ?? "Image generation failed.");
+        return;
+      }
+      if (!data.imageBase64 || !data.mimeType) {
+        setBanner("No image returned.");
+        return;
+      }
+
+      const convId = activeId ?? uuidv4();
+      const prev = conversations.find((c) => c.id === convId);
+      const md = `![Generated](data:${data.mimeType};base64,${data.imageBase64})`;
+      const userMsg: ChatMessage = {
+        id: uuidv4(),
+        role: "user",
+        content: `Create image: ${prompt}`,
+        createdAt: Date.now(),
+      };
+      const assistantMsg: ChatMessage = {
+        id: uuidv4(),
+        role: "assistant",
+        content: `Here’s your image.\n\n${md}`,
+        createdAt: Date.now(),
+        toolCalls: [],
+        errorCorrectionLog: [],
+      };
+      const next: Conversation = {
+        id: convId,
+        title: prev?.title === "New chat" || !prev ? `Image: ${prompt.slice(0, 40)}` : prev.title,
+        updatedAt: Date.now(),
+        messages: [...(prev?.messages ?? []), userMsg, assistantMsg],
+      };
+      upsertConversation(next);
+      setActiveId(convId);
+      setChatDraft("");
+
+      if (!serverCredits) {
+        setCredits((prev) => {
+          if (!prev) return prev;
+          const nextCredits = adjustBalance(prev, -cost);
+          saveCreditsState(nextCredits);
+          return nextCredits;
+        });
+      } else {
+        void (async () => {
+          const r = await fetch("/api/credits", { credentials: "include" });
+          if (!r.ok) return;
+          const d = (await r.json()) as {
+            source?: string;
+            planId?: PlanId;
+            balance?: number;
+            accrualMonth?: string;
+            welcomeApplied?: boolean;
+          };
+          if (d.source !== "server" || typeof d.balance !== "number" || !d.planId) return;
+          setCredits({
+            version: 1,
+            planId: d.planId,
+            balance: d.balance,
+            accrualMonth: d.accrualMonth ?? creditMonthKey(),
+            welcomeApplied: Boolean(d.welcomeApplied),
+          });
+        })();
+      }
+    } catch {
+      setBanner("Image request failed.");
+    } finally {
+      setBusy(false);
+    }
+  }, [
+    activeId,
+    chatDraft,
+    conversations,
+    credits,
+    introGateOpen,
+    model,
+    quantum,
+    serverCredits,
+    upsertConversation,
+  ]);
 
   const onIntroIntakeComplete = useCallback((answers: string[]) => {
     saveIntroIntake(answers);
@@ -1132,6 +1363,12 @@ export default function BabyGPTClient() {
             onUseSkill={() => {
               if (skillHint) setActiveSkill(skillHint);
             }}
+            pendingFiles={pendingFiles}
+            onPendingFilesChange={setPendingFiles}
+            onGenerateImage={runGenerateImage}
+            geminiEnabled
+            readAloud={readAloud}
+            onReadAloudChange={setReadAloudPersist}
           >
             {credits ? (
               <CostPreview

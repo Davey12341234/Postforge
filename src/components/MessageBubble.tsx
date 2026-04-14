@@ -1,11 +1,19 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeHighlight from "rehype-highlight";
+import { formatBytes } from "@/lib/file-attachments";
 import type { ChatMessage } from "@/lib/types";
+import {
+  getActiveSpeechMessageId,
+  isSpeechSynthesisAvailable,
+  speakAssistantMessage,
+  stopSpeech,
+  subscribeSpeechActive,
+} from "@/lib/speech-synthesis";
 import { ThinkingCanvas } from "./ThinkingCanvas";
 
 export function MessageBubble({
@@ -21,6 +29,13 @@ export function MessageBubble({
 }) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
+  const speechActiveId = useSyncExternalStore(
+    subscribeSpeechActive,
+    getActiveSpeechMessageId,
+    () => null,
+  );
+  const isSpeakingThis = !isUser && speechActiveId === message.id;
+  const canSpeak = !isUser && isSpeechSynthesisAvailable();
 
   const copyAssistant = useCallback(async () => {
     if (!message.content.trim()) return;
@@ -87,7 +102,7 @@ export function MessageBubble({
         ) : null}
 
         {!isUser && message.content.trim() ? (
-          <div className="mb-2 flex justify-end">
+          <div className="mb-2 flex justify-end gap-2">
             <button
               type="button"
               onClick={() => void copyAssistant()}
@@ -95,6 +110,51 @@ export function MessageBubble({
             >
               {copied ? "Copied" : "Copy"}
             </button>
+            {canSpeak ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isSpeakingThis) {
+                    stopSpeech();
+                    return;
+                  }
+                  speakAssistantMessage(message.id, message.content);
+                }}
+                className={`rounded-lg px-2 py-1 text-[11px] font-medium ring-1 ring-zinc-800 ${
+                  isSpeakingThis
+                    ? "bg-cyan-950/80 text-cyan-200 hover:bg-cyan-900/80"
+                    : "bg-zinc-950/60 text-zinc-400 hover:text-zinc-200"
+                }`}
+                title="Read this reply aloud (browser text-to-speech)"
+              >
+                {isSpeakingThis ? "Stop" : "Speak"}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {isUser && message.attachments?.length ? (
+          <div className="mb-2 flex flex-col gap-2">
+            {message.attachments.map((a) => (
+              <div
+                key={a.id}
+                className="rounded-lg border border-zinc-800/90 bg-zinc-950/40 p-2 ring-1 ring-white/5"
+              >
+                <div className="text-[10px] text-zinc-500">
+                  {a.name} · {formatBytes(a.sizeBytes)}
+                </div>
+                {a.mimeType.startsWith("image/") && a.dataBase64 ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- user-attached preview
+                  <img
+                    src={`data:${a.mimeType};base64,${a.dataBase64}`}
+                    alt=""
+                    className="mt-1 max-h-48 max-w-full rounded-lg object-contain"
+                  />
+                ) : a.mimeType.startsWith("image/") ? (
+                  <p className="mt-1 text-[10px] text-zinc-600">Image (uploaded to Gemini — preview not stored)</p>
+                ) : null}
+              </div>
+            ))}
           </div>
         ) : null}
 

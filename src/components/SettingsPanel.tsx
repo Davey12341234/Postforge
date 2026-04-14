@@ -15,6 +15,7 @@ import {
   removeTimeCapsule,
   type TimeCapsule,
 } from "@/lib/time-capsule";
+import { getUiDiagnosticsEnabled, setUiDiagnosticsEnabled } from "@/lib/ui-diagnostics";
 
 export function SettingsPanel({
   open,
@@ -39,12 +40,14 @@ export function SettingsPanel({
   const [capsules, setCapsules] = useState<TimeCapsule[]>([]);
   const [capMessage, setCapMessage] = useState("");
   const [capDate, setCapDate] = useState("");
+  const [uiDiagLog, setUiDiagLog] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     startTransition(() => {
       setPrefs(loadUiPreferences());
       setCapsules(listTimeCapsules());
+      setUiDiagLog(getUiDiagnosticsEnabled());
     });
   }, [open]);
 
@@ -105,6 +108,29 @@ export function SettingsPanel({
                 <option value="oled">OLED black</option>
                 <option value="light">Light</option>
               </select>
+            </label>
+          </section>
+
+          <section>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Diagnostics</h3>
+            <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+              When enabled, header controls and chat sends log structured lines to the browser console (
+              <span className="font-mono text-zinc-400">[BabyGPT UI]</span>
+              ). Also set <span className="font-mono text-zinc-400">NEXT_PUBLIC_UI_DIAGNOSTICS=true</span> at build
+              time to default on.
+            </p>
+            <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-zinc-300">
+              <input
+                type="checkbox"
+                checked={uiDiagLog}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setUiDiagnosticsEnabled(on);
+                  setUiDiagLog(on);
+                }}
+                className="rounded border-zinc-600"
+              />
+              Log UI control &amp; send diagnostics
             </label>
           </section>
 

@@ -22,6 +22,20 @@ export interface ErrorCorrectionLogEntry {
   detail: string;
 }
 
+/** File or image attached to a user message (sent to Gemini multimodal). */
+export interface ChatAttachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  sizeBytes: number;
+  /** Raw base64 (no data: prefix). Small files only — omitted when using Gemini Files API. */
+  dataBase64?: string;
+  /** Gemini Files API URI (large uploads via `/api/gemini/files`). */
+  geminiFileUri?: string;
+  /** Resource name, e.g. `files/abc123` — used to verify the file before chat. */
+  geminiFileName?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: Role;
@@ -30,6 +44,8 @@ export interface ChatMessage {
   createdAt: number;
   toolCalls?: ToolCall[];
   errorCorrectionLog?: ErrorCorrectionLogEntry[];
+  /** User uploads (images, PDFs, etc.) — requires `GEMINI_API_KEY` and `/api/chat/gemini`. */
+  attachments?: ChatAttachment[];
 }
 
 export interface Conversation {

@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     model: modelA,
     thinking: false,
     mode: "schrodinger",
+    secondaryModel: modelB,
   });
   if (gated) {
     return gated;

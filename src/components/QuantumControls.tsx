@@ -3,6 +3,7 @@
 import type { PlanDefinition } from "@/lib/plans";
 import { planAllowsModel } from "@/lib/plans";
 import type { ModelTier } from "@/lib/types";
+import { uiDiag } from "@/lib/ui-diagnostics";
 
 export type QuantumFlags = {
   kolmogorov: boolean;
@@ -67,9 +68,11 @@ export function QuantumControls({
           onChange={(e) => {
             const v = e.target.value as ModelTier;
             if (!planAllowsModel(plan, v)) {
+              uiDiag("header.model", "fail", { planId: plan.id, requested: v, reason: "not_on_plan" });
               onRequestUpgrade();
               return;
             }
+            uiDiag("header.model", "ok", { planId: plan.id, model: v });
             onModel(v);
           }}
           className="max-w-[140px] rounded-lg bg-zinc-900 px-2 py-1 text-xs text-zinc-100 ring-1 ring-zinc-800"
@@ -95,10 +98,13 @@ export function QuantumControls({
         }
         onClick={() => {
           if (!canThinking) {
+            uiDiag("header.thinking", "skip", { planId: plan.id, reason: "needs_upgrade" });
             onRequestUpgrade();
             return;
           }
-          onThinking(!thinking);
+          const next = !thinking;
+          uiDiag("header.thinking", "ok", { planId: plan.id, on: next });
+          onThinking(next);
         }}
         className={`rounded-full px-3 py-1 text-xs ring-1 ${
           !canThinking
@@ -122,12 +128,18 @@ export function QuantumControls({
               : "Run two models in parallel and keep the stronger reply"
         }
         onClick={() => {
-          if (agentMode) return;
+          if (agentMode) {
+            uiDiag("header.schrodinger", "skip", { planId: plan.id, reason: "agent_blocks" });
+            return;
+          }
           if (!canSchrodinger) {
+            uiDiag("header.schrodinger", "skip", { planId: plan.id, reason: "needs_upgrade" });
             onRequestUpgrade();
             return;
           }
-          onSchrodinger(!schrodinger);
+          const next = !schrodinger;
+          uiDiag("header.schrodinger", "ok", { planId: plan.id, on: next });
+          onSchrodinger(next);
         }}
         className={`rounded-full px-3 py-1 text-xs ring-1 ${
           agentMode
@@ -151,10 +163,12 @@ export function QuantumControls({
         }
         onClick={() => {
           if (!canAgent) {
+            uiDiag("header.agent", "skip", { planId: plan.id, reason: "needs_upgrade" });
             onRequestUpgrade();
             return;
           }
           const next = !agentMode;
+          uiDiag("header.agent", "ok", { planId: plan.id, on: next });
           onAgentMode(next);
           if (next) onSchrodinger(false);
         }}
@@ -182,9 +196,11 @@ export function QuantumControls({
               checked={canK && quantum.kolmogorov}
               onChange={(e) => {
                 if (!canK) {
+                  uiDiag("header.quantum.kolmogorov", "skip", { planId: plan.id, reason: "needs_upgrade" });
                   onRequestUpgrade();
                   return;
                 }
+                uiDiag("header.quantum.kolmogorov", "ok", { planId: plan.id, on: e.target.checked });
                 onQuantum({ ...quantum, kolmogorov: e.target.checked });
               }}
             />
@@ -197,10 +213,11 @@ export function QuantumControls({
               checked={canH && quantum.holographic}
               onChange={(e) => {
                 if (!canH) {
-                  e.preventDefault();
+                  uiDiag("header.quantum.holographic", "skip", { planId: plan.id, reason: "needs_upgrade" });
                   onRequestUpgrade();
                   return;
                 }
+                uiDiag("header.quantum.holographic", "ok", { planId: plan.id, on: e.target.checked });
                 onQuantum({ ...quantum, holographic: e.target.checked });
               }}
             />
@@ -213,9 +230,11 @@ export function QuantumControls({
               checked={canDna && quantum.dna}
               onChange={(e) => {
                 if (!canDna) {
+                  uiDiag("header.quantum.dna", "skip", { planId: plan.id, reason: "needs_upgrade" });
                   onRequestUpgrade();
                   return;
                 }
+                uiDiag("header.quantum.dna", "ok", { planId: plan.id, on: e.target.checked });
                 onQuantum({ ...quantum, dna: e.target.checked });
               }}
             />
@@ -230,10 +249,13 @@ export function QuantumControls({
               value={canDna ? Math.round(quantum.adiabatic * 100) : 50}
               onChange={(e) => {
                 if (!canDna) {
+                  uiDiag("header.quantum.adiabatic", "skip", { planId: plan.id, reason: "needs_upgrade" });
                   onRequestUpgrade();
                   return;
                 }
-                onQuantum({ ...quantum, adiabatic: Number(e.target.value) / 100 });
+                const a = Number(e.target.value) / 100;
+                uiDiag("header.quantum.adiabatic", "ok", { planId: plan.id, value: a });
+                onQuantum({ ...quantum, adiabatic: a });
               }}
               className={`mt-1 w-full ${!canDna ? "cursor-pointer opacity-60" : ""}`}
             />
@@ -242,7 +264,10 @@ export function QuantumControls({
             <button
               type="button"
               className="mt-2 w-full rounded-lg bg-zinc-900 py-1.5 text-[11px] text-cyan-300 ring-1 ring-zinc-800 hover:bg-zinc-800"
-              onClick={onRequestUpgrade}
+              onClick={() => {
+                uiDiag("header.quantum.viewPlans", "ok", { planId: plan.id });
+                onRequestUpgrade();
+              }}
             >
               View plans for full quantum stack
             </button>

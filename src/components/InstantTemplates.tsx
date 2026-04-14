@@ -2,6 +2,7 @@
 
 import type { PlanDefinition } from "@/lib/plans";
 import { POWER_TEMPLATES, planRank, type PowerTemplate } from "@/lib/instant-templates";
+import { uiDiag } from "@/lib/ui-diagnostics";
 
 export function InstantTemplates({
   plan,
@@ -28,7 +29,14 @@ export function InstantTemplates({
                   ? `Requires ${t.minPlan}+ plan — click to open Plans`
                   : t.description
               }
-              onClick={() => onPick(t)}
+              onClick={() => {
+                uiDiag("welcome.powerTemplate", ok ? "ok" : "skip", {
+                  planId: plan.id,
+                  templateId: t.id,
+                  minPlan: t.minPlan,
+                });
+                onPick(t);
+              }}
               className={`flex flex-col items-start rounded-xl border px-3 py-2.5 text-left text-xs transition ${
                 ok
                   ? "border-zinc-800 bg-zinc-900/50 text-zinc-200 ring-1 ring-transparent hover:border-cyan-500/30 hover:ring-cyan-500/20"

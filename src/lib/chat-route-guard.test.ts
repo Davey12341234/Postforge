@@ -56,6 +56,46 @@ describe("guardChatSend", () => {
     expect(readServerWallet).not.toHaveBeenCalled();
   });
 
+  it("returns 403 when quantum DNA not on plan", async () => {
+    vi.mocked(isGateEnabled).mockReturnValue(true);
+    vi.mocked(assertAuthorized).mockResolvedValue(null);
+    vi.mocked(readServerWallet).mockReturnValue({
+      version: 1,
+      planId: "free",
+      balance: 10_000,
+      accrualMonth: "2026-01",
+      welcomeApplied: true,
+    });
+    const out = await guardChatSend(req(), {
+      model: "glm-4-flash",
+      thinking: false,
+      mode: "chat",
+      quantum: { dna: true },
+    });
+    expect(out?.status).toBe(403);
+    expect(tryDebitServerWallet).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when schrodinger secondary model not on plan", async () => {
+    vi.mocked(isGateEnabled).mockReturnValue(true);
+    vi.mocked(assertAuthorized).mockResolvedValue(null);
+    vi.mocked(readServerWallet).mockReturnValue({
+      version: 1,
+      planId: "starter",
+      balance: 10_000,
+      accrualMonth: "2026-01",
+      welcomeApplied: true,
+    });
+    const out = await guardChatSend(req(), {
+      model: "glm-4-flash",
+      thinking: false,
+      mode: "schrodinger",
+      secondaryModel: "glm-4-long",
+    });
+    expect(out?.status).toBe(403);
+    expect(tryDebitServerWallet).not.toHaveBeenCalled();
+  });
+
   it("returns 403 when plan does not permit send mode", async () => {
     vi.mocked(isGateEnabled).mockReturnValue(true);
     vi.mocked(assertAuthorized).mockResolvedValue(null);

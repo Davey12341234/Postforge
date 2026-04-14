@@ -13,6 +13,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "verify:ui": "vitest run src/lib/usage-cost.test.ts src/lib/chat-route-guard.test.ts src/lib/schrodinger-pair.test.ts",
     "verify:billing": "node scripts/check-billing-env.cjs",
     "finish:billing": "node scripts/finish-billing-setup.cjs",
     "context:docx": "node scripts/cursor-context-generator.mjs",
@@ -20,6 +21,7 @@
     "vercel:env:prod": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set-babygpt-vercel-prod-env.ps1"
   },
   "dependencies": {
+    "@google/genai": "^1.50.0",
     "highlight.js": "^11.11.1",
     "jose": "^6.2.2",
     "next": "16.2.2",
