@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-13T07:03:04.826Z",
+  "generatedAt": "2026-04-13T22:10:01.145Z",
   "files": [
     "eslint.config.mjs",
     "next.config.ts",
@@ -61,6 +61,7 @@
     "src/lib/chat-route-guard.ts",
     "src/lib/comment-analysis.ts",
     "src/lib/community.ts",
+    "src/lib/companion-onboarding.ts",
     "src/lib/credits-store.ts",
     "src/lib/entanglement.ts",
     "src/lib/fetch-chat.test.ts",

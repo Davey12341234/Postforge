@@ -1,6 +1,6 @@
 # BabyGPT — Cursor context
 
-Generated: 2026-04-13T07:03:04.826Z
+Generated: 2026-04-13T22:10:01.145Z
 
 Repository root: `C:/Users/mckel/postforge`
 
@@ -34,7 +34,7 @@ Entry: `src/app/page.tsx` renders BabyGPTClient. Gated deploy: middleware protec
 
 ## 4. Component map (summary)
 
-Main shell: BabyGPTClient orchestrates Sidebar, ChatArea, ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.
+Main shell: BabyGPTClient orchestrates Sidebar, ChatArea (WelcomeScreen when empty), ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.
 
 ## 5. Button & interaction map
 
@@ -50,7 +50,8 @@ BabyGPTClient.tsx
 
 SubscriptionModal.tsx
 - "Manage billing" / "Close"; per-plan "Subscribe with Stripe" / "Use this plan" / portal for Free downgrade.
-- AI billing: Ask copilot → POST /api/billing/copilot; Search FAQ → POST /api/billing/support; Translate → POST /api/billing/translate.
+- Billing & subscription FAQ chips + suggested prompts (Stripe/credits only — src/lib/billing-faq.ts).
+- AI billing: Ask copilot → POST /api/billing/copilot; Search billing FAQ → POST /api/billing/support; Translate → POST /api/billing/translate.
 
 Sidebar.tsx
 - Tabs Chats / Memory; "New chat"; select conversation; delete conversation.
@@ -64,8 +65,9 @@ CommunityPanel.tsx
 SearchOverlay.tsx
 - Close; pick conversation → onPick.
 
-WelcomeScreen.tsx (empty state)
-- Open plans, open search, jump to quantum bar.
+WelcomeScreen.tsx (empty chat — first visit)
+- Companion card: intro 7 + journey 7 questions (Use in chat → composer); five mode prefixes (Fact search, Clarity, Discover, Precision, Perspective) from src/lib/companion-onboarding.ts.
+- Open plans, open search, jump to quantum bar; Power templates; quantum showcase below.
 
 QuantumControls.tsx
 - Model / thinking / Schrödinger / agent / quantum toggles; upgrade → onRequestUpgrade.
@@ -87,6 +89,9 @@ PostCard.tsx
 
 InstantTemplates.tsx
 - Template pick → onPick.
+
+SettingsPanel.tsx
+- Close; font scale / appearance / notifications; time capsule list + add/remove.
 ```
 ## 6. Storage & data model
 
@@ -100,12 +105,16 @@ Resolved keys in shipped code:
 - babygpt_agent_memory_v1 — agent memory blob (agent-memory.ts)
 - babygpt_skills_v1 — custom skills (skills.ts)
 - babygpt_reminders_v1 — reminders list (reminders.ts)
+- babygpt_ui_prefs_v1 — UiPreferences: fontScale, appearance, notificationsEnabled (ui-preferences.ts)
+- babygpt_time_capsule_v1 — scheduled messages (time-capsule.ts; UI in SettingsPanel)
+
+Cookie (not localStorage): babygpt_token — session JWT when gate enabled.
 
 Server files (not localStorage): .data/wallet.json, .data/billing.json when gate + Stripe features are used.
 ```
 ## 7. Path / feature configuration
 
-Plans & models: src/lib/plans.ts, model-tier.ts, usage-cost.ts. Stripe: stripe-config, stripe-sync, server-billing. Quantum/skills: QuantumControls, skills.ts, built-in-skills.ts.
+Plans & models: src/lib/plans.ts, model-tier.ts, usage-cost.ts. Stripe: stripe-config, stripe-sync, server-billing. Billing FAQ only: src/lib/billing-faq.ts. Life-coach / companion onboarding: src/lib/companion-onboarding.ts + WelcomeScreen (empty chat). Quantum/skills: QuantumControls, skills.ts, built-in-skills.ts.
 
 ## 8. Known issues & follow-ups
 
@@ -116,13 +125,60 @@ Verified for this repository (BabyGPT / postforge):
 • Server wallet and billing JSON under .data/ are single-tenant — not suitable for multi-user production without redesign.
 • Next.js may warn that "middleware" file convention is deprecated in favor of "proxy" — follow Next.js upgrade guidance when upgrading.
 • Stripe webhook must include events the handler uses (e.g. invoice.paid, invoice.payment_failed) for billing alerts.
+• Chat / API routes have no built-in per-IP rate limiting — add if exposing publicly.
 
-Template / other-app issues (NOT found in active src/):
-The following were listed in an external template and do NOT apply to the current BabyGPT codebase:
-— Font size setting saved but not applied; darkMode / notifications toggles; Time capsule UI; Future Self auto-greet.
-No matching settings modules or features exist under src/ for those items.
+UI notes: Font scale is applied via CSS variable --babygpt-font-scale on document root (see globals.css + ui-preferences applyUiPreferencesToDom). SettingsPanel includes time-capsule CRUD. Life-coach copy lives in companion-onboarding.ts + WelcomeScreen; billing FAQ is Stripe-only (billing-faq.ts). Full Clarity Engine / realignment product notes: docs/BabyGPT-Onboarding-Paths-Spec.md.
 ```
-## 9. File structure (trimmed, no _archive)
+## 9. Cursor handoff & continuity
+
+```text
+CURRENT STATE — Quality gates (run before release)
+• TypeScript: next build runs tsc (npm run build).
+• ESLint: npm run lint
+• Tests: npm run test (vitest)
+• Dev: npm run dev (port 3000)
+• Billing env: npm run verify:billing | npm run finish:billing
+
+ARCHITECTURE SNAPSHOT — Complete tree and every source file appear in Sections 10–11 of this document. Types: src/lib/types.ts and feature modules (plans, skills, credits, etc.). Storage keys: Section 6 above.
+
+RECENT FIXES & QA (examples — extend in your tracker)
+• SubscriptionModal: static billing FAQ + search available without server wallet; life-coach content removed from Plans — moved to WelcomeScreen.
+• src/lib/companion-onboarding.ts: intro 7, journey 7, MESSAGE_MODE_PREFIXES; billing-faq.ts is Stripe/subscription only.
+• API: /api/billing/support and /translate optional auth when BABYGPT_APP_PASSWORD unset; support prompt is billing-only.
+• SettingsPanel: refresh-on-open uses startTransition for ESLint react-hooks rule.
+• cursor-context-generator: removed unused h3 helper.
+(Document additional PR-level bug list in your changelog if you keep one.)
+
+TEN IMPROVEMENTS (product — see docs for detail)
+Verified as documented in docs/BabyGPT-Onboarding-Paths-Spec.md + docs/FINAL-LAUNCH-COPY.md: sharper opener, question reorder, micro-reactions, skip+letter, Quick Fire path, Daily Anchor ideas, Future Self ritual spec, Clarity 4-card spread, Life Mirror safety, 90-day realignment. Implementation in UI varies by item — see docs/BabyGPT-App-Diagnostic.md for code vs spec.
+
+KEY TECHNICAL DETAILS
+• localStorage: full key list in Section 6 (includes ui_prefs_v1, time_capsule_v1).
+• CSS: --babygpt-font-scale applied on :root; globals.css uses calc(14px * var(--babygpt-font-scale, 1)).
+• AI SDK: z-ai-web-dev-sdk used from server Route Handlers only (chat, agent, schrodinger, billing LLM helpers); OpenAI fallback where configured.
+• Time capsule: src/lib/time-capsule.ts (list/add/remove); SettingsPanel surfaces list + form.
+• Companion onboarding: src/lib/companion-onboarding.ts + WelcomeScreen. Clarity / realignment as full product: docs/BabyGPT-Onboarding-Paths-Spec.md — not a separate route yet.
+
+KNOWN WARNINGS (non-blocking)
+• Middleware → "proxy" migration warning from Next.js 16.
+• Dependency on LLM provider availability; no request queue.
+• Stripe / gate misconfiguration shows degraded Plans modal — use finish:billing.
+
+SUGGESTED NEXT STEPS (priority)
+High: Stripe live keys on Vercel Production (docs/FINAL-LAUNCH-COPY.md); webhook URL correctness.
+Medium: Welcome screen already surfaces questions + mode prefixes; optional dedicated Fact search / mode toggles in header; rate limiting on /api/chat.
+Nice: Multi-tenant wallet; durable community store; embeddings for billing FAQ search.
+
+QUICK REFERENCE COMMANDS
+npm run dev          # local dev (localhost:3000)
+npm run build        # production build + TypeScript
+npm run lint         # eslint
+npm run test         # vitest
+npm run context:docx # regenerate this document
+npm run verify:billing
+npm run finish:billing
+```
+## 10. File structure (trimmed, no _archive)
 
 ```text
 [dir] _archive
@@ -149,14 +205,17 @@ No matching settings modules or features exist under src/ for those items.
 [file] AGENTS.md
 [file] CLAUDE.md
 [dir] docs
+  [file] BabyGPT-App-Diagnostic.md
   [file] BabyGPT-Cursor-Context.docx
   [file] BabyGPT-Cursor-Context.md
   [file] BABYGPT-LAUNCH-HANDOFF.md
+  [file] BabyGPT-Onboarding-Paths-Spec.md
   [file] babygpt-system.manifest.json
   [file] BILLING-AND-NAMING.md
   [file] CURSOR-BABYGPT-HANDOFF.md
   [file] cursor-context-meta.json
   [file] cursor-review-snapshot.json
+  [file] FINAL-LAUNCH-COPY.md
   [file] HANDOFF-AI-NEXT-REVIEW.md
 [file] eslint.config.mjs
 [dir] games
@@ -274,6 +333,7 @@ No matching settings modules or features exist under src/ for those items.
     [file] chat-route-guard.ts
     [file] comment-analysis.ts
     [file] community.ts
+    [file] companion-onboarding.ts
     [file] credits-store.ts
     [file] entanglement.ts
     [file] fetch-chat.test.ts
@@ -332,7 +392,7 @@ No matching settings modules or features exist under src/ for those items.
 [file] tsconfig.tsbuildinfo
 [file] vitest.config.ts
 ```
-## 10. Complete source listing
+## 11. Complete source listing
 
 ### eslint.config.mjs
 
@@ -623,9 +683,9 @@ export async function POST(req: NextRequest) {
 
   const faqBlock = matches.map((e) => `## ${e.title}\n${e.body}`).join("\n\n");
   const system = [
-    "You help BabyGPT users with billing and subscription questions.",
+    "You help BabyGPT users with billing and subscription questions (Stripe, plans, credits, invoices, cancellation).",
     "Ground your answer in the FAQ excerpts below. Do not contradict them.",
-    "If the excerpts do not fully answer the question, say what is known from them and suggest Manage billing in the app for account-specific actions.",
+    "If the excerpts do not fully answer the question, say what is known from them. For account-specific Stripe actions, suggest Manage billing in the app.",
     "Under 160 words. Plain language.",
     "",
     "FAQ EXCERPTS:",
@@ -3010,6 +3070,16 @@ export default function BabyGPTClient() {
             streamingAssistantId={streamingAssistantId}
             plan={credits ? PLANS[credits.planId] : PLANS.free}
             onPickTemplate={applyPowerTemplate}
+            onInsertComposerText={(text, how) => {
+              if (how === "prefixFirst") {
+                setChatDraft((d) => {
+                  const cur = d.trim();
+                  return cur ? `${text}${cur}` : text;
+                });
+              } else {
+                setChatDraft(text);
+              }
+            }}
           />
           {active && active.messages.length > 0 && lastAssistantText && !busy ? (
             <SmartActions
@@ -3246,6 +3316,7 @@ export function ChatArea({
   streamingAssistantId,
   plan,
   onPickTemplate,
+  onInsertComposerText,
 }: {
   messages: ChatMessage[];
   empty: boolean;
@@ -3256,6 +3327,8 @@ export function ChatArea({
   streamingAssistantId?: string | null;
   plan: PlanDefinition;
   onPickTemplate: (t: PowerTemplate) => void;
+  /** replace = set draft; prefixFirst = put text at start of composer (for mode prefixes). */
+  onInsertComposerText: (text: string, how?: "replace" | "prefixFirst") => void;
 }) {
   const endRef = useRef<HTMLDivElement | null>(null);
   const lastContent = messages.at(-1)?.content ?? "";
@@ -3273,6 +3346,7 @@ export function ChatArea({
           onJumpToQuantum={onJumpToQuantum}
           plan={plan}
           onPickTemplate={onPickTemplate}
+          onInsertComposerText={onInsertComposerText}
         />
       </div>
     );
@@ -4396,7 +4470,7 @@ export function SearchOverlay({
 ```typescript
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
 import {
@@ -4432,8 +4506,10 @@ export function SettingsPanel({
 
   useEffect(() => {
     if (!open) return;
-    setPrefs(loadUiPreferences());
-    setCapsules(listTimeCapsules());
+    startTransition(() => {
+      setPrefs(loadUiPreferences());
+      setCapsules(listTimeCapsules());
+    });
   }, [open]);
 
   if (!open) return null;
@@ -5365,10 +5441,11 @@ export function SubscriptionModal({
         </div>
 
         <div className="border-t border-zinc-900 bg-zinc-950/90 px-5 py-4">
-          <div className="text-xs font-semibold text-zinc-200">Common billing questions</div>
+          <div className="text-xs font-semibold text-zinc-200">Billing & subscription help</div>
           <p className="mt-1 text-[11px] leading-snug text-zinc-500">
-            Tap a topic for an instant answer (built into the app). For AI-paraphrased help, use Search FAQ below. For
-            amounts tied to your Stripe account, sign in and use Ask copilot.
+            Topics below are about payments, credits, and your plan — not life-coach onboarding (that lives on the home
+            screen when you have no messages). For AI-paraphrased help, use Search FAQ. For Stripe-specific account
+            details when signed in, use Ask copilot.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {BILLING_FAQ.map((e) => (
@@ -5733,6 +5810,13 @@ import Image from "next/image";
 import { QUANTUM_FEATURES } from "@/lib/types";
 import type { PlanDefinition } from "@/lib/plans";
 import type { PowerTemplate } from "@/lib/instant-templates";
+import {
+  COMPANION_WELCOME_LEAD,
+  CORE_CONTROLS_SUMMARY,
+  INTRO_SEVEN_QUESTIONS,
+  JOURNEY_SEVEN_QUESTIONS,
+  MESSAGE_MODE_PREFIXES,
+} from "@/lib/companion-onboarding";
 import { BlochSphere } from "./BlochSphere";
 import { ConversationTopology } from "./ConversationTopology";
 import { InstantTemplates } from "./InstantTemplates";
@@ -5743,6 +5827,7 @@ export function WelcomeScreen({
   onJumpToQuantum,
   plan,
   onPickTemplate,
+  onInsertComposerText,
 }: {
   onOpenPlans: () => void;
   onOpenSearch: () => void;
@@ -5750,6 +5835,8 @@ export function WelcomeScreen({
   onJumpToQuantum: () => void;
   plan: PlanDefinition;
   onPickTemplate: (t: PowerTemplate) => void;
+  /** Prefill composer: full questions replace draft; mode prefixes go first. */
+  onInsertComposerText: (text: string, how?: "replace" | "prefixFirst") => void;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 py-10">
@@ -5787,6 +5874,73 @@ export function WelcomeScreen({
           </div>
         </div>
       </div>
+
+      <section className="w-full rounded-2xl border border-cyan-900/40 bg-gradient-to-b from-cyan-950/20 to-zinc-950/40 p-4 ring-1 ring-cyan-900/30">
+        <h2 className="text-sm font-semibold text-cyan-100/95">Companion — start here</h2>
+        <p className="mt-2 text-xs leading-relaxed text-zinc-400">{COMPANION_WELCOME_LEAD}</p>
+
+        <div className="mt-4 space-y-3">
+          <details open className="group rounded-xl border border-zinc-800 bg-zinc-950/60">
+            <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-zinc-200 [&::-webkit-details-marker]:hidden">
+              <span className="mr-2 text-cyan-500/90">▼</span>7 questions to connect & understand you
+            </summary>
+            <ol className="list-decimal space-y-2 px-3 pb-3 pl-8 text-[11px] leading-relaxed text-zinc-400">
+              {INTRO_SEVEN_QUESTIONS.map((q, i) => (
+                <li key={i} className="pl-1">
+                  <span>{q}</span>
+                  <button
+                    type="button"
+                    onClick={() => onInsertComposerText(`${q} `, "replace")}
+                    className="ml-2 shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-cyan-300/90 ring-1 ring-zinc-700 hover:bg-zinc-700"
+                  >
+                    Use in chat
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </details>
+
+          <details className="group rounded-xl border border-zinc-800 bg-zinc-950/60">
+            <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-zinc-200 [&::-webkit-details-marker]:hidden">
+              <span className="mr-2 text-zinc-500">▶</span>7 journey questions (vision & direction)
+            </summary>
+            <ol className="list-decimal space-y-2 px-3 pb-3 pl-8 text-[11px] leading-relaxed text-zinc-400">
+              {JOURNEY_SEVEN_QUESTIONS.map((q, i) => (
+                <li key={i} className="pl-1">
+                  <span>{q}</span>
+                  <button
+                    type="button"
+                    onClick={() => onInsertComposerText(`${q} `, "replace")}
+                    className="ml-2 shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-cyan-300/90 ring-1 ring-zinc-700 hover:bg-zinc-700"
+                  >
+                    Use in chat
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </details>
+        </div>
+
+        <div className="mt-4">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Message modes</div>
+          <p className="mt-1 text-[10px] text-zinc-600">Tap to insert at the start of your next message.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {MESSAGE_MODE_PREFIXES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                title={m.hint}
+                onClick={() => onInsertComposerText(`${m.prefix} `, "prefixFirst")}
+                className="rounded-full bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 hover:ring-cyan-800/50"
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="mt-3 text-[10px] leading-snug text-zinc-600">{CORE_CONTROLS_SUMMARY}</p>
+      </section>
 
       <InstantTemplates plan={plan} onPick={onPickTemplate} />
 
@@ -6248,7 +6402,7 @@ export const APP_VERSION = packageJson.version as string;
 ```typescript
 export type FaqEntry = { id: string; keywords: string[]; title: string; body: string };
 
-/** Static FAQ chunks for semantic-style matching (token overlap; no vector DB). */
+/** Stripe / subscription FAQ only — life-coach onboarding lives in src/lib/companion-onboarding.ts + WelcomeScreen. */
 export const BILLING_FAQ: FaqEntry[] = [
   {
     id: "cancel",
@@ -6312,7 +6466,7 @@ export const BILLING_FAQ: FaqEntry[] = [
   },
 ];
 
-/** Short prompts shown as chips — match FAQ keywords for search. */
+/** Chips for Plans modal — subscription and payment help only. */
 export const BILLING_SUGGESTED_QUESTIONS: string[] = [
   "How do I cancel my subscription?",
   "Why was I charged?",
@@ -6320,6 +6474,7 @@ export const BILLING_SUGGESTED_QUESTIONS: string[] = [
   "How do credits work?",
   "How do I change my plan?",
   "Is tax included?",
+  "How is my data stored?",
 ];
 
 function tokenize(s: string): Set<string> {
@@ -6332,7 +6487,7 @@ function tokenize(s: string): Set<string> {
   );
 }
 
-/** Returns top FAQ entries by simple overlap score (deterministic, fast). */
+/** Returns top billing FAQ entries by simple overlap score (deterministic, fast). */
 export function matchBillingFaq(query: string, limit = 4): FaqEntry[] {
   const q = tokenize(query);
   if (q.size === 0) return BILLING_FAQ.slice(0, limit);
@@ -6836,6 +6991,78 @@ export function updateResonance(postId: string, score: number) {
   const p = memory.find((x) => x.id === postId);
   if (p) p.resonance = score;
 }
+
+```
+### src/lib/companion-onboarding.ts
+
+```typescript
+/**
+ * Life-coach / AI companion onboarding copy — not billing.
+ * Shown on the welcome (empty chat) screen. Full narrative: docs/BabyGPT-Onboarding-Paths-Spec.md
+ */
+
+export const COMPANION_WELCOME_LEAD =
+  "BabyGPT is built to be an AI companion: quick help when you need it, and space to think clearly about your life and goals. Start with the questions below, or jump in with a mode prefix.";
+
+/** Seven intro questions — connect and understand before heavy strategy. */
+export const INTRO_SEVEN_QUESTIONS: string[] = [
+  "Why are you here right now — what made you open this chat?",
+  "What are we hoping to figure out together; what would “this helped” look like?",
+  "What have you already tried, and what patterns feel conditioned or repeated?",
+  "What sucks the most about how things stand — where’s it stuck or heavy?",
+  "How urgent is this: deadlines, stakes, or pressure if nothing changes?",
+  "Who else is affected by how this turns out (team, family, customers, future you)?",
+  "How should I talk with you — preferred tone and format: direct vs gentle, brief vs deep, examples vs steps?",
+];
+
+/** Deeper journey (mountaintop arc) — after rapport, when you want vision / letter work. */
+export const JOURNEY_SEVEN_QUESTIONS: string[] = [
+  "What’s one thing you’re really hoping I can help you with?",
+  "What’s your mountaintop — that big thing you’re ultimately working toward?",
+  "If you woke up tomorrow and your life was exactly how you want it, what would that perfect day look like?",
+  "What are the things you love doing so much that time just disappears?",
+  "What’s the one habit you know would change everything if you actually stuck with it?",
+  "When you’re finally on that mountaintop, what does a perfect day there actually feel like?",
+  "What’s one thing about you that I should never forget?",
+];
+
+/** Lead a message with one line so the model stays in that mode. */
+export const MESSAGE_MODE_PREFIXES: { id: string; label: string; prefix: string; hint: string }[] = [
+  {
+    id: "fact",
+    label: "Fact search",
+    prefix: "Fact search:",
+    hint: "Verifiable info, sources, dates; say when uncertain.",
+  },
+  {
+    id: "clarity",
+    label: "Clarity",
+    prefix: "Clarity mode:",
+    hint: "Define terms, remove ambiguity, confirm before advice.",
+  },
+  {
+    id: "discover",
+    label: "Discover",
+    prefix: "Discover mode:",
+    hint: "Widen options; no forced early answer.",
+  },
+  {
+    id: "precision",
+    label: "Precision",
+    prefix: "Precision mode:",
+    hint: "Decisions, criteria, one next step.",
+  },
+  {
+    id: "perspective",
+    label: "Perspective",
+    prefix: "Perspective mode:",
+    hint: "Stakeholders, tradeoffs, alternate frames.",
+  },
+];
+
+/** Short product controls reminder (not billing). */
+export const CORE_CONTROLS_SUMMARY =
+  "Header bar: model, Thinking, Schrödinger, Agent, and Quantum (Kolmogorov, Holographic, DNA, Adiabatic). Power templates set several at once.";
 
 ```
 ### src/lib/credits-store.ts
