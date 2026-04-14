@@ -45,6 +45,9 @@ yarn-error.log*
 !.env.production.template
 deploy/secrets.preview.env
 
+# ProLiant staging (ISO + zip built locally)
+deploy/proliant/staging/
+
 # vercel
 .vercel
 

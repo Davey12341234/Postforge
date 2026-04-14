@@ -1,4 +1,5 @@
 # Opens Rufus with an optional ISO pre-selected. Requires UAC (USB writing needs admin).
+# For Ubuntu + BabyGPT staging (ISO download, source zip, bootstrap): see prepare-proliant-babygpt.ps1
 # Usage:
 #   .\prepare-server-install-usb.ps1
 #   .\prepare-server-install-usb.ps1 -IsoPath "C:\Users\you\Downloads\ubuntu-24.04-live-server-amd64.iso"
