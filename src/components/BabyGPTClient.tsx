@@ -339,12 +339,18 @@ export default function BabyGPTClient() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        if (introGateOpen) return;
         setSearchOpen((v) => !v);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [introGateOpen]);
+
+  /** Keep search closed while connection intake is blocking (avoids hidden overlay under the modal). */
+  useEffect(() => {
+    if (introGateOpen) setSearchOpen(false);
+  }, [introGateOpen]);
 
   const convRef = useRef(conversations);
   const activeRef = useRef(activeId);

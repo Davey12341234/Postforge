@@ -37,7 +37,8 @@ export function ProactiveToast({
           <div className="mt-2 flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+              disabled={!t.draft?.trim()}
+              className="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
               onClick={() => {
                 const d = t.draft?.trim();
                 if (d) onAsk(d);

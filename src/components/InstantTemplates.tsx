@@ -23,13 +23,16 @@ export function InstantTemplates({
             <button
               key={t.id}
               type="button"
-              disabled={!ok}
-              title={!ok ? `Requires ${t.minPlan}+ plan` : t.description}
+              title={
+                !ok
+                  ? `Requires ${t.minPlan}+ plan — click to open Plans`
+                  : t.description
+              }
               onClick={() => onPick(t)}
               className={`flex flex-col items-start rounded-xl border px-3 py-2.5 text-left text-xs transition ${
                 ok
                   ? "border-zinc-800 bg-zinc-900/50 text-zinc-200 ring-1 ring-transparent hover:border-cyan-500/30 hover:ring-cyan-500/20"
-                  : "cursor-not-allowed border-zinc-800/50 bg-zinc-950/40 text-zinc-600"
+                  : "cursor-pointer border-zinc-800/50 bg-zinc-950/40 text-zinc-500 ring-1 ring-transparent hover:border-amber-500/25 hover:text-zinc-400"
               }`}
             >
               <span className="flex items-center gap-2 font-semibold text-zinc-100">

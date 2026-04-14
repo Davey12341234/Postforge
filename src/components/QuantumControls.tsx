@@ -88,11 +88,10 @@ export function QuantumControls({
 
       <button
         type="button"
-        disabled={!canThinking}
         title={
           canThinking
             ? "Use chain-of-thought style reasoning when the provider supports it"
-            : "Upgrade your plan to enable Thinking"
+            : "Upgrade your plan to enable Thinking (click to open Plans)"
         }
         onClick={() => {
           if (!canThinking) {
@@ -103,7 +102,7 @@ export function QuantumControls({
         }}
         className={`rounded-full px-3 py-1 text-xs ring-1 ${
           !canThinking
-            ? "cursor-not-allowed opacity-40"
+            ? "cursor-pointer opacity-60 hover:opacity-90"
             : thinking
               ? "bg-cyan-500/15 text-cyan-200 ring-cyan-500/30"
               : "bg-zinc-900 text-zinc-400 ring-zinc-800"
@@ -114,28 +113,30 @@ export function QuantumControls({
 
       <button
         type="button"
-        disabled={agentMode || !canSchrodinger}
+        disabled={agentMode}
         title={
           !canSchrodinger
-            ? "Schrödinger (dual-stream) requires Pro or Team"
+            ? "Schrödinger (dual-stream) requires Pro or Team — click to open Plans"
             : agentMode
               ? "Turn off Agent first — then you can enable Schrödinger dual-stream"
               : "Run two models in parallel and keep the stronger reply"
         }
         onClick={() => {
+          if (agentMode) return;
           if (!canSchrodinger) {
             onRequestUpgrade();
             return;
           }
-          if (agentMode) return;
           onSchrodinger(!schrodinger);
         }}
         className={`rounded-full px-3 py-1 text-xs ring-1 ${
-          agentMode || !canSchrodinger
+          agentMode
             ? "cursor-not-allowed opacity-40"
-            : schrodinger
-              ? "bg-fuchsia-500/15 text-fuchsia-200 ring-fuchsia-500/30"
-              : "bg-zinc-900 text-zinc-400 ring-zinc-800"
+            : !canSchrodinger
+              ? "cursor-pointer opacity-60 hover:opacity-90"
+              : schrodinger
+                ? "bg-fuchsia-500/15 text-fuchsia-200 ring-fuchsia-500/30"
+                : "bg-zinc-900 text-zinc-400 ring-zinc-800"
         }`}
       >
         Schrödinger
@@ -143,11 +144,10 @@ export function QuantumControls({
 
       <button
         type="button"
-        disabled={!canAgent}
         title={
           canAgent
             ? "Tool-using agent loop (web, calculator, …)"
-            : "Upgrade to Starter or higher for Agent mode"
+            : "Upgrade to Starter or higher for Agent mode (click to open Plans)"
         }
         onClick={() => {
           if (!canAgent) {
@@ -160,7 +160,7 @@ export function QuantumControls({
         }}
         className={`rounded-full px-3 py-1 text-xs ring-1 ${
           !canAgent
-            ? "cursor-not-allowed opacity-40"
+            ? "cursor-pointer opacity-60 hover:opacity-90"
             : agentMode
               ? "bg-amber-500/15 text-amber-200 ring-amber-500/30"
               : "bg-zinc-900 text-zinc-400 ring-zinc-800"
@@ -178,7 +178,7 @@ export function QuantumControls({
             <span title="Auto-pick model tier from prompt complexity">Kolmogorov router</span>
             <input
               type="checkbox"
-              disabled={!canK}
+              className={!canK ? "cursor-pointer opacity-60" : undefined}
               checked={canK && quantum.kolmogorov}
               onChange={(e) => {
                 if (!canK) {
@@ -193,10 +193,11 @@ export function QuantumControls({
             <span title="Fold long context for leaner prompts">Holographic context</span>
             <input
               type="checkbox"
-              disabled={!canH}
+              className={!canH ? "cursor-pointer opacity-60" : undefined}
               checked={canH && quantum.holographic}
               onChange={(e) => {
                 if (!canH) {
+                  e.preventDefault();
                   onRequestUpgrade();
                   return;
                 }
@@ -208,7 +209,7 @@ export function QuantumControls({
             <span title="Lock style from recent turns">Eigenresponse / DNA</span>
             <input
               type="checkbox"
-              disabled={!canDna}
+              className={!canDna ? "cursor-pointer opacity-60" : undefined}
               checked={canDna && quantum.dna}
               onChange={(e) => {
                 if (!canDna) {
@@ -225,8 +226,7 @@ export function QuantumControls({
               type="range"
               min={0}
               max={100}
-              disabled={!canDna}
-              title={canDna ? "Blend strength for adiabatic prompt morph" : "Unlock with Pro (DNA feature)"}
+              title={canDna ? "Blend strength for adiabatic prompt morph" : "Unlock with Pro (DNA feature) — click to open Plans"}
               value={canDna ? Math.round(quantum.adiabatic * 100) : 50}
               onChange={(e) => {
                 if (!canDna) {
@@ -235,7 +235,7 @@ export function QuantumControls({
                 }
                 onQuantum({ ...quantum, adiabatic: Number(e.target.value) / 100 });
               }}
-              className="mt-1 w-full disabled:opacity-40"
+              className={`mt-1 w-full ${!canDna ? "cursor-pointer opacity-60" : ""}`}
             />
           </label>
           {!canK || !canH || !canDna ? (
