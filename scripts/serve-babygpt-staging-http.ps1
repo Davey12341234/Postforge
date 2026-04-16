@@ -34,11 +34,16 @@ if ($ListenIp -eq "0.0.0.0") {
 }
 
 $listener = New-Object System.Net.HttpListener
-$listener.Prefixes.Add("http://+:$Port/")
+# Binding http://+:port/ requires Admin URL ACL. Binding a specific LAN IP usually works without elevation.
+if ($ListenIp -eq "0.0.0.0") {
+  $listener.Prefixes.Add("http://+:$Port/")
+} else {
+  $listener.Prefixes.Add("http://${ListenIp}:${Port}/")
+}
 try {
   $listener.Start()
 } catch {
-  Write-Error "Could not bind (try Admin, or another -Port): $_"
+  Write-Error "Could not bind (try -ListenIp <this-pc-lan-ip>, Admin PowerShell, or netsh urlacl): $_"
 }
 
 Write-Host "Serving:"
@@ -96,6 +101,12 @@ while ($listener.IsListening) {
       }
       "^/bootstrap.sh$" {
         Send-File $res (Join-Path $Staging "bootstrap.sh") "application/x-sh"
+      }
+      "^/bring-online.sh$" {
+        Send-File $res (Join-Path $Staging "bring-online.sh") "application/x-sh"
+      }
+      "^/babygpt.service$" {
+        Send-File $res (Join-Path $Staging "babygpt.service") "text/plain"
       }
       default {
         $res.StatusCode = 404

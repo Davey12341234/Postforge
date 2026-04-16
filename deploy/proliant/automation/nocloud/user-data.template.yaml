@@ -1,9 +1,6 @@
 #cloud-config
-# Ubuntu Server autoinstall — copy to file named "user-data" (no extension) on HTTP seed, or serve as /user-data
-# Edit CHANGEME. Host HTTP with: .\scripts\serve-babygpt-staging-http.ps1
-# Kernel must receive: autoinstall ds=nocloud-net\;s=http://YOUR_PC:8080/
-#
-# Reference: https://ubuntu.com/server/docs/install/autoinstall-reference
+# Filled by: scripts/prepare-autoinstall-seed.ps1 -> writes "user-data" (no extension)
+# Kernel cmdline must include: autoinstall ds=nocloud-net;s=CHANGEME_SEED_BASE/
 autoinstall:
   version: 1
   locale: en_US
@@ -19,21 +16,23 @@ autoinstall:
           dhcp4: true
   storage:
     layout:
-      name: lvm
+      name: CHANGEME_STORAGE_LAYOUT
   identity:
-    hostname: babygpt-host
+    hostname: CHANGEME_HOST
     username: CHANGEME_USER
-    password: "$6$CHANGEME_USE_mkpasswd_sha512"
+    password: "CHANGEME_PASSWORD_HASH"
   ssh:
     install-server: true
     allow-pw: true
   packages:
     - curl
     - wget
-  # Runs on FIRST BOOT of installed OS (network up) — safer than late-commands chroot
   user-data:
     runcmd:
-      - wget -qO /root/babygpt-src.zip http://CHANGEME_WINDOWS_IP:8080/babygpt-src.zip
-      - wget -qO /root/bootstrap.sh http://CHANGEME_WINDOWS_IP:8080/bootstrap.sh
-      - chmod +x /root/bootstrap.sh
-      - /bin/bash /root/bootstrap.sh /root/babygpt-src.zip
+      - "sleep 15"
+      - wget -qO /root/bootstrap.sh CHANGEME_SEED_BASE/bootstrap.sh
+      - wget -qO /root/bring-online.sh CHANGEME_SEED_BASE/bring-online.sh
+      - wget -qO /root/babygpt.service CHANGEME_SEED_BASE/babygpt.service
+      - wget -qO /root/babygpt-src.zip CHANGEME_SEED_BASE/babygpt-src.zip
+      - chmod +x /root/bootstrap.sh /root/bring-online.sh
+      - /bin/bash /root/bring-online.sh /root/babygpt-src.zip

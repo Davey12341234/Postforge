@@ -61,17 +61,21 @@ rm -rf "${TMP}"
 
 chown -R babygpt:babygpt "${INSTALL_ROOT}"
 
-sudo -u babygpt bash -c "cd ${INSTALL_ROOT} && npm ci && npm run build"
-
-if [[ ! -f "${INSTALL_ROOT}/.env" ]]; then
+# Non-interactive: BABYGPT_ENV_FILE installs secrets before npm build (NEXT_PUBLIC_* and build-time env).
+if [[ -n "${BABYGPT_ENV_FILE:-}" && -f "${BABYGPT_ENV_FILE}" ]]; then
+  install -o babygpt -g babygpt -m 0600 "${BABYGPT_ENV_FILE}" "${INSTALL_ROOT}/.env"
+  echo "Installed ${INSTALL_ROOT}/.env from BABYGPT_ENV_FILE"
+elif [[ ! -f "${INSTALL_ROOT}/.env" ]]; then
   if [[ -f "${INSTALL_ROOT}/.env.local.example" ]]; then
     cp "${INSTALL_ROOT}/.env.local.example" "${INSTALL_ROOT}/.env"
     chown babygpt:babygpt "${INSTALL_ROOT}/.env"
-    echo "Created ${INSTALL_ROOT}/.env from .env.local.example — edit it for Z_AI_API_KEY / OPENAI_API_KEY / gate secrets before relying on production."
+    echo "Created ${INSTALL_ROOT}/.env from .env.local.example - set Z_AI_API_KEY / OPENAI_API_KEY for full AI features."
   else
-    echo "WARNING: No .env — create ${INSTALL_ROOT}/.env (see .env.local.example)."
+    echo "WARNING: No .env - create ${INSTALL_ROOT}/.env (see .env.local.example)."
   fi
 fi
+
+sudo -u babygpt bash -c "cd ${INSTALL_ROOT} && npm ci && npm run build"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 if [[ -f "${SCRIPT_DIR}/babygpt.service" ]]; then
@@ -105,8 +109,13 @@ systemctl daemon-reload
 systemctl enable babygpt.service
 systemctl restart babygpt.service
 
-if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q 'Status: active'; then
+# OpenSSH first, then app port, then enable UFW (non-interactive; safe for default SSH install).
+if command -v ufw >/dev/null 2>&1; then
+  ufw allow OpenSSH comment 'ssh' 2>/dev/null || ufw allow 22/tcp comment 'ssh' || true
   ufw allow 3000/tcp comment 'BabyGPT' || true
+  if ufw status 2>/dev/null | grep -q 'Status: inactive'; then
+    ufw --force enable
+  fi
 fi
 
 echo "BabyGPT service installed."

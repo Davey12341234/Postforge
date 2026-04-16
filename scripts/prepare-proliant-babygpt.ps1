@@ -39,6 +39,7 @@ if (-not $SkipArchive) {
 }
 
 Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\bootstrap.sh") $StagingRoot
+Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\bring-online.sh") $StagingRoot
 Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\babygpt.service") $StagingRoot
 Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\README.md") $StagingRoot
 
@@ -151,7 +152,8 @@ if (-not $SkipRufus) {
   Write-Host ""
   Write-Host "After Ubuntu is installed, copy this folder to the server:"
   Write-Host "  $StagingRoot"
-  Write-Host "Then on Ubuntu: sudo bash bootstrap.sh ./babygpt-src.zip"
+  Write-Host "Then on Ubuntu: sudo bash bring-online.sh   (or: sudo bash bootstrap.sh ./babygpt-src.zip)"
+  Write-Host "Or from this PC: npm run deploy:server -- -Server <SERVER_IP>"
   Write-Host ""
   Start-Process -FilePath $exe -Verb RunAs -ArgumentList $rufusArgs
 } else {

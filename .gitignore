@@ -36,6 +36,9 @@ yarn-error.log*
 # Z.AI local config (may contain API keys)
 .z-ai-config
 
+# Generated autoinstall seed (contains password hash) — use user-data.template.yaml + prepare-autoinstall-seed.ps1
+/deploy/proliant/automation/nocloud/user-data
+
 # Server wallet (when BABYGPT_APP_PASSWORD is set)
 .data/
 
@@ -47,6 +50,9 @@ deploy/secrets.preview.env
 
 # ProLiant staging (ISO + zip built locally)
 deploy/proliant/staging/
+
+# usb-forward-all.ps1 fallback when no USB is visible (copy to stick manually)
+/usb-forward-output/
 
 # vercel
 .vercel

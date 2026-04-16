@@ -1,20 +1,34 @@
 # Copy BabyGPT payloads onto an already-flashed Ubuntu installer USB (or any drive letter).
 # Run from repo root AFTER: npm run build
 #   .\scripts\full-usb-deploy.ps1 -DriveLetter E
+# Or copy to a folder (e.g. CI / no USB visible):
+#   .\scripts\full-usb-deploy.ps1 -RootPath .\usb-forward-output -SkipStandalone
 #
 # Does NOT run Rufus — flash the ISO first (see deploy/proliant/RUNBOOK.md §2).
 # Copies only the small server kit files from staging (NOT the Ubuntu .iso — that stays on the PC for Rufus).
 param(
-  [Parameter(Mandatory = $true)]
-  [string]$DriveLetter,
+  [string]$DriveLetter = "",
+  [string]$RootPath = "",
   [switch]$SkipStandalone
 )
 
 $ErrorActionPreference = "Stop"
-$DriveLetter = $DriveLetter.TrimEnd(":").ToUpperInvariant()
-$Root = "${DriveLetter}:\"
-if (-not (Test-Path $Root)) {
-  Write-Error "Drive not found: $Root. Plug in the USB and use the correct letter (File Explorer)."
+
+if ($RootPath -ne "") {
+  if (-not $SkipStandalone) {
+    Write-Error "-RootPath is only supported together with -SkipStandalone (folder copy is kit-only)."
+  }
+  $resolved = New-Item -ItemType Directory -Force -Path $RootPath
+  $Root = $resolved.FullName.TrimEnd('\') + "\"
+  $DriveLetter = "folder"
+} elseif ($DriveLetter -ne "") {
+  $DriveLetter = $DriveLetter.TrimEnd(":").ToUpperInvariant()
+  $Root = "${DriveLetter}:\"
+  if (-not (Test-Path $Root)) {
+    Write-Error "Drive not found: $Root. Plug in the USB and use the correct letter (File Explorer)."
+  }
+} else {
+  Write-Error "Specify -DriveLetter E or -RootPath C:\path\to\folder"
 }
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
@@ -37,7 +51,7 @@ if (Test-Path $kit) {
 }
 New-Item -ItemType Directory -Path $kit | Out-Null
 Write-Host "Copying server kit -> $kit ..." -ForegroundColor Cyan
-$kitNames = @("babygpt-src.zip", "bootstrap.sh", "babygpt.service", "README.md")
+$kitNames = @("babygpt-src.zip", "bootstrap.sh", "bring-online.sh", "babygpt.service", "README.md")
 foreach ($name in $kitNames) {
   $src = Join-Path $Staging $name
   if (Test-Path -LiteralPath $src) {
@@ -73,7 +87,7 @@ Folders on this drive:
 After Ubuntu on disk:
   sudo bash bootstrap.sh ./babygpt-src.zip   (from kit folder on server)
 
-Pre-built app: $($DriveLetter):\babygpt-standalone — see README-STANDALONE.txt
+Pre-built app: $(if ($DriveLetter -eq 'folder') { '(skipped — kit-only folder copy)' } else { "${DriveLetter}:\babygpt-standalone" }) — see README-STANDALONE.txt
 
 Eject safely in Windows before unplugging.
 "@

@@ -31,6 +31,7 @@ $standalone = Join-Path $Root "babygpt-standalone"
 if (-not (Write-Check (Join-Path $Root "USB-START-HERE.txt") "USB-START-HERE.txt")) { $ok = $false }
 if (-not (Write-Check (Join-Path $kit "babygpt-src.zip") "babygpt-src.zip")) { $ok = $false }
 if (-not (Write-Check (Join-Path $kit "bootstrap.sh") "bootstrap.sh")) { $ok = $false }
+if (-not (Write-Check (Join-Path $kit "bring-online.sh") "bring-online.sh")) { $ok = $false }
 if (-not (Write-Check (Join-Path $kit "babygpt.service") "babygpt.service")) { $ok = $false }
 if (-not (Write-Check (Join-Path $kit "RUNBOOK.md") "RUNBOOK.md (in kit)")) { $ok = $false }
 

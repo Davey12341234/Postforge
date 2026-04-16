@@ -17,7 +17,8 @@
 
 | Item | Purpose |
 |------|---------|
-| `nocloud/user-data.template.yaml` | **Ubuntu autoinstall** template — copy to `nocloud/user-data` (no extension) after editing `CHANGEME_*`. |
+| `nocloud/user-data.template.yaml` | **Ubuntu autoinstall** template — use **`scripts/prepare-autoinstall-seed.ps1`** to generate `nocloud/user-data` (password hash + seed URL). |
+| **`deploy/proliant/AUTOINSTALL-SIMPLE.txt`** | Short checklist. Prefer **`npm run proliant:usb-forward`** (USB plugged in) → **`npm run proliant:serve-seed`** → GRUB line from **`START-BABYGPT.txt`** on the stick. |
 | `nocloud/meta-data` | Minimal `meta-data` for nocloud. |
 | `../../scripts/serve-babygpt-staging-http.ps1` | Tiny HTTP server: serves `staging/` + `/user-data` + `/meta-data` for **`ds=nocloud-net`**. May need **Run as Administrator** or `netsh http add urlacl` for `http://+:8080/`. |
 | `ilo-redfish-notes.md` | **iLO 4** — remote power + virtual media pointers (reduces physical intervention). |
