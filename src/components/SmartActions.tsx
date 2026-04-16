@@ -1,5 +1,6 @@
 "use client";
 
+import { CHAT_COLUMN_CLASS } from "@/lib/chat-layout";
 import { useMemo } from "react";
 
 export type SmartAction = { id: string; label: string; prompt: string };
@@ -53,19 +54,19 @@ export function SmartActions({
   if (!assistantText.trim() || actions.length === 0) return null;
 
   return (
-    <div className="border-t border-zinc-800/80 bg-zinc-950/30 px-4 py-3">
-      <div className="mx-auto flex max-w-3xl flex-col gap-2">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+    <div className="shrink-0 border-t border-zinc-800/80 bg-zinc-950/30 px-3 py-2">
+      <div className={`flex flex-col gap-1.5 ${CHAT_COLUMN_CLASS}`}>
+        <div className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
           Smart actions
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {actions.map((act) => (
             <button
               key={act.id}
               type="button"
               disabled={disabled}
               onClick={() => onAction(act.prompt)}
-              className="rounded-full bg-zinc-900/90 px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-700/80 transition hover:bg-zinc-800 hover:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-full bg-zinc-900/90 px-2.5 py-1 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-700/80 transition hover:bg-zinc-800 hover:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {act.label}
             </button>

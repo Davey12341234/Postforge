@@ -1,0 +1,8 @@
+rem Repair boot-stub ESP on USB disk 1 only (550 MB partition -> FAT32 BABYGPTBOOT, letter T).
+rem Edit "select disk N" if your USB is not disk 1 (check: diskpart -> list disk).
+
+select disk 1
+select partition 1
+format quick fs=fat32 label=BABYGPTBOOT
+assign letter=T
+exit

@@ -1,0 +1,8 @@
+rem Repair ESP on boot-stub USB: quick FAT32 + label (partition 1 only; does not wipe disk 2).
+rem Edit "select disk N" to match Get-Disk. Run CMD as Administrator: diskpart /s thisfile.txt
+
+select disk 1
+select partition 1
+format quick fs=fat32 label=BABYGPTBOOT
+assign letter=T
+exit

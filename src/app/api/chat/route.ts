@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { buildHolographicMessages } from "@/lib/holographic-context";
 import { resolveLlm } from "@/lib/llm-resolve";
 import { mapTierToOpenAIModel, streamOpenAIChat } from "@/lib/openai-api";
+import { mergeOpenAiThinkingDirective } from "@/lib/openai-thinking";
 import { routeWithKolmogorovDetailed } from "@/lib/kolmogorov-router";
 import { extractStyleDNA } from "@/lib/user-dna";
 import { adiabaticSystemPrompt } from "@/lib/adiabatic-prompt";
@@ -119,10 +120,17 @@ export async function POST(req: NextRequest) {
     }
 
     const omodel = mapTierToOpenAIModel(routed);
+    let openaiMsgs = msgs.map((m) => ({
+      role: m.role as "system" | "user" | "assistant",
+      content: m.content,
+    }));
+    if (thinking === "on") {
+      openaiMsgs = mergeOpenAiThinkingDirective(openaiMsgs);
+    }
     const stream = await streamOpenAIChat({
       apiKey: llm.apiKey,
       model: omodel,
-      messages: msgs.map((m) => ({ role: m.role, content: m.content })),
+      messages: openaiMsgs,
     });
 
     return new Response(stream, {

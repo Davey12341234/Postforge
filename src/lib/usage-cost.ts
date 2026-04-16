@@ -54,7 +54,7 @@ export function estimateSendCreditsBreakdown(input: SendCostInput): {
   lines.push({ label: `Model (${input.model})`, credits: base });
   if (input.thinking) lines.push({ label: "Thinking", credits: 2 });
   if (input.mode === "agent") lines.push({ label: "Agent loop", credits: 6 });
-  if (input.mode === "schrodinger") lines.push({ label: "Schrödinger", credits: 8 });
+  if (input.mode === "schrodinger") lines.push({ label: "Two models (dual stream)", credits: 8 });
   if (input.debate) lines.push({ label: "Debate", credits: 5 });
   return { lines, total: estimateSendCredits(input) };
 }
@@ -64,7 +64,7 @@ export function describeCost(input: SendCostInput, credits: number): string {
   bits.push(`${input.model}`);
   if (input.thinking) bits.push("thinking");
   if (input.mode === "agent") bits.push("agent");
-  if (input.mode === "schrodinger") bits.push("Schrödinger");
+  if (input.mode === "schrodinger") bits.push("two-models");
   if (input.debate) bits.push("debate");
   return `${credits} credits (${bits.join(" · ")})`;
 }

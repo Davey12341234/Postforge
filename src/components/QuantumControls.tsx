@@ -93,7 +93,7 @@ export function QuantumControls({
         type="button"
         title={
           canThinking
-            ? "Use chain-of-thought style reasoning when the provider supports it"
+            ? "GLM (Z.AI): native extended-reasoning channel. OpenAI: appends a step-by-step system instruction (no separate reasoning stream)."
             : "Upgrade your plan to enable Thinking (click to open Plans)"
         }
         onClick={() => {
@@ -122,10 +122,10 @@ export function QuantumControls({
         disabled={agentMode}
         title={
           !canSchrodinger
-            ? "Schrödinger (dual-stream) requires Pro or Team — click to open Plans"
+            ? "Two models (dual-stream) requires Pro or Team — click to open Plans"
             : agentMode
-              ? "Turn off Agent first — then you can enable Schrödinger dual-stream"
-              : "Run two models in parallel and keep the stronger reply"
+              ? "Turn off Agent first — then you can enable two-model dual-stream"
+              : "Run two models in parallel; keep the stronger reply stream"
         }
         onClick={() => {
           if (agentMode) {
@@ -151,7 +151,7 @@ export function QuantumControls({
                 : "bg-zinc-900 text-zinc-400 ring-zinc-800"
         }`}
       >
-        Schrödinger
+        Two models
       </button>
 
       <button
@@ -187,65 +187,112 @@ export function QuantumControls({
         <summary className="cursor-pointer list-none rounded-full bg-zinc-900 px-3 py-1 text-xs text-zinc-300 ring-1 ring-zinc-800">
           Quantum
         </summary>
-        <div className="absolute right-0 z-40 mt-2 w-[280px] rounded-2xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300 shadow-xl ring-1 ring-white/5">
-          <label className="flex items-center justify-between gap-2 py-1">
-            <span title="Auto-pick model tier from prompt complexity">Kolmogorov router</span>
-            <input
-              type="checkbox"
-              className={!canK ? "cursor-pointer opacity-60" : undefined}
-              checked={canK && quantum.kolmogorov}
-              onChange={(e) => {
-                if (!canK) {
-                  uiDiag("header.quantum.kolmogorov", "skip", { planId: plan.id, reason: "needs_upgrade" });
-                  onRequestUpgrade();
-                  return;
-                }
-                uiDiag("header.quantum.kolmogorov", "ok", { planId: plan.id, on: e.target.checked });
-                onQuantum({ ...quantum, kolmogorov: e.target.checked });
-              }}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-2 py-1">
-            <span title="Fold long context for leaner prompts">Holographic context</span>
-            <input
-              type="checkbox"
-              className={!canH ? "cursor-pointer opacity-60" : undefined}
-              checked={canH && quantum.holographic}
-              onChange={(e) => {
-                if (!canH) {
-                  uiDiag("header.quantum.holographic", "skip", { planId: plan.id, reason: "needs_upgrade" });
-                  onRequestUpgrade();
-                  return;
-                }
-                uiDiag("header.quantum.holographic", "ok", { planId: plan.id, on: e.target.checked });
-                onQuantum({ ...quantum, holographic: e.target.checked });
-              }}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-2 py-1">
-            <span title="Lock style from recent turns">Eigenresponse / DNA</span>
-            <input
-              type="checkbox"
-              className={!canDna ? "cursor-pointer opacity-60" : undefined}
-              checked={canDna && quantum.dna}
-              onChange={(e) => {
-                if (!canDna) {
-                  uiDiag("header.quantum.dna", "skip", { planId: plan.id, reason: "needs_upgrade" });
-                  onRequestUpgrade();
-                  return;
-                }
-                uiDiag("header.quantum.dna", "ok", { planId: plan.id, on: e.target.checked });
-                onQuantum({ ...quantum, dna: e.target.checked });
-              }}
-            />
-          </label>
-          <label className="mt-2 block text-zinc-500">
-            Adiabatic morph
+        <div className="absolute right-0 z-40 mt-2 w-[min(100vw-2rem,320px)] rounded-2xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300 shadow-xl ring-1 ring-white/5">
+          <p className="mb-3 text-[10px] leading-relaxed text-zinc-500">
+            The names are thematic. Each switch below changes the real HTTP request: which model tier runs,
+            how much chat history is kept, and extra system text — not quantum hardware.
+          </p>
+
+          <div className="space-y-3 border-b border-zinc-800/80 pb-3">
+            <label className="block">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium text-zinc-200">Kolmogorov router</span>
+                <input
+                  type="checkbox"
+                  className={!canK ? "cursor-pointer opacity-60" : undefined}
+                  checked={canK && quantum.kolmogorov}
+                  onChange={(e) => {
+                    if (!canK) {
+                      uiDiag("header.quantum.kolmogorov", "skip", { planId: plan.id, reason: "needs_upgrade" });
+                      onRequestUpgrade();
+                      return;
+                    }
+                    uiDiag("header.quantum.kolmogorov", "ok", { planId: plan.id, on: e.target.checked });
+                    onQuantum({ ...quantum, kolmogorov: e.target.checked });
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+                When on, the server picks a model tier from your <strong className="font-medium text-zinc-400">last user</strong>{" "}
+                message using topic keywords and length (not formal Kolmogorov complexity — a routing heuristic). It overrides
+                the Model dropdown for that send. A short reason appears in the header after each reply.
+              </p>
+            </label>
+
+            <label className="block">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium text-zinc-200">Holographic context</span>
+                <input
+                  type="checkbox"
+                  className={!canH ? "cursor-pointer opacity-60" : undefined}
+                  checked={canH && quantum.holographic}
+                  onChange={(e) => {
+                    if (!canH) {
+                      uiDiag("header.quantum.holographic", "skip", { planId: plan.id, reason: "needs_upgrade" });
+                      onRequestUpgrade();
+                      return;
+                    }
+                    uiDiag("header.quantum.holographic", "ok", { planId: plan.id, on: e.target.checked });
+                    onQuantum({ ...quantum, holographic: e.target.checked });
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+                Only matters when the transcript is long (~12k+ characters). Older turns are folded or truncated so the
+                outgoing prompt stays within a size budget.
+              </p>
+            </label>
+
+            <label className="block">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium text-zinc-200">Eigenresponse / DNA</span>
+                <input
+                  type="checkbox"
+                  className={!canDna ? "cursor-pointer opacity-60" : undefined}
+                  checked={canDna && quantum.dna}
+                  onChange={(e) => {
+                    if (!canDna) {
+                      uiDiag("header.quantum.dna", "skip", { planId: plan.id, reason: "needs_upgrade" });
+                      onRequestUpgrade();
+                      return;
+                    }
+                    uiDiag("header.quantum.dna", "ok", { planId: plan.id, on: e.target.checked });
+                    onQuantum({ ...quantum, dna: e.target.checked });
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+                Adds one short system line inferred from your last few <strong className="font-medium text-zinc-400">assistant</strong>{" "}
+                messages (right now: concise vs detailed + mirror formality).
+              </p>
+            </label>
+          </div>
+
+          <label className="mt-3 block text-zinc-400">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium text-zinc-200">Adiabatic morph</span>
+              {canDna ? (
+                <span className="text-[10px] text-cyan-500/90">
+                  {quantum.adiabatic < 1 / 3
+                    ? "explore"
+                    : quantum.adiabatic < 2 / 3
+                      ? "balance"
+                      : "commit"}
+                </span>
+              ) : (
+                <span className="text-[10px] text-zinc-600">Pro</span>
+              )}
+            </div>
             <input
               type="range"
               min={0}
               max={100}
-              title={canDna ? "Blend strength for adiabatic prompt morph" : "Unlock with Pro (DNA feature) — click to open Plans"}
+              disabled={!canDna}
+              title={
+                canDna
+                  ? "Maps to explore / balance / commit text merged into the system prompt"
+                  : "Unlock with Pro — Eigenresponse / DNA — click to open Plans"
+              }
               value={canDna ? Math.round(quantum.adiabatic * 100) : 50}
               onChange={(e) => {
                 if (!canDna) {
@@ -259,11 +306,16 @@ export function QuantumControls({
               }}
               className={`mt-1 w-full ${!canDna ? "cursor-pointer opacity-60" : ""}`}
             />
+            <p className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+              Slider position picks a stance label merged into the system prompt: lower ≈ explore ideas, middle ≈ balance,
+              higher ≈ commit to a direction (wording only — not a physics simulation).
+            </p>
           </label>
+
           {!canK || !canH || !canDna ? (
             <button
               type="button"
-              className="mt-2 w-full rounded-lg bg-zinc-900 py-1.5 text-[11px] text-cyan-300 ring-1 ring-zinc-800 hover:bg-zinc-800"
+              className="mt-3 w-full rounded-lg bg-zinc-900 py-1.5 text-[11px] text-cyan-300 ring-1 ring-zinc-800 hover:bg-zinc-800"
               onClick={() => {
                 uiDiag("header.quantum.viewPlans", "ok", { planId: plan.id });
                 onRequestUpgrade();

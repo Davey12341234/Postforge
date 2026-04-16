@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { FILE_SIZE_PRESETS, nearestPresetBytes } from "@/lib/attachment-presets";
 import { formatBytes } from "@/lib/file-attachments";
-import { getClientMaxFileBytes, getInlineAttachmentMaxBytes } from "@/lib/attachment-config";
+import { getInlineAttachmentMaxBytes } from "@/lib/attachment-config";
 import { getSpeechRecognitionConstructor } from "@/lib/speech-recognition";
+import { CHAT_COLUMN_CLASS } from "@/lib/chat-layout";
+import { VoiceModeOverlay } from "./VoiceModeOverlay";
 
 export function ChatInput({
   disabled,
@@ -17,9 +20,13 @@ export function ChatInput({
   pendingFiles,
   onPendingFilesChange,
   onGenerateImage,
+  imagePromptExtra = "",
+  onImagePromptExtraChange,
   geminiEnabled,
   readAloud,
   onReadAloudChange,
+  attachmentLimitBytes,
+  onAttachmentLimitChange,
 }: {
   disabled?: boolean;
   onSend: (text: string) => void | Promise<void>;
@@ -35,10 +42,16 @@ export function ChatInput({
   onPendingFilesChange: (files: File[]) => void;
   /** Opens Gemini image generation (requires GEMINI_API_KEY on server). */
   onGenerateImage?: () => void;
+  /** When the main composer is empty, user can type here for image-only generation. */
+  imagePromptExtra?: string;
+  onImagePromptExtraChange?: (v: string) => void;
   geminiEnabled?: boolean;
   /** When true, new assistant replies are read with browser text-to-speech after streaming completes. */
   readAloud?: boolean;
   onReadAloudChange?: (next: boolean) => void;
+  /** Effective per-file max (from env + user preset in localStorage). */
+  attachmentLimitBytes: number;
+  onAttachmentLimitChange: (bytes: number) => void;
 }) {
   const [internal, setInternal] = useState("");
   const controlled = controlledValue !== undefined;
@@ -47,11 +60,14 @@ export function ChatInput({
   const recRef = useRef<SpeechRecognition | null>(null);
   const valueRef = useRef("");
   const [listening, setListening] = useState(false);
-  const maxBytes = getClientMaxFileBytes();
+  const [voicePanelOpen, setVoicePanelOpen] = useState(false);
+  const [interimText, setInterimText] = useState("");
   const inlineMax = getInlineAttachmentMaxBytes();
   const voiceCtor = typeof window !== "undefined" ? getSpeechRecognitionConstructor() : null;
 
-  valueRef.current = value;
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const setValue = useCallback(
     (next: string) => {
@@ -70,6 +86,7 @@ export function ChatInput({
     }
     recRef.current = null;
     setListening(false);
+    setInterimText("");
   }, []);
 
   useEffect(() => () => stopVoice(), [stopVoice]);
@@ -80,22 +97,28 @@ export function ChatInput({
     stopVoice();
     const rec = new Ctor();
     rec.continuous = true;
-    rec.interimResults = false;
+    rec.interimResults = true;
     rec.lang = typeof navigator !== "undefined" ? navigator.language : "en-US";
     rec.onresult = (ev: SpeechRecognitionEvent) => {
-      let chunk = "";
       for (let i = ev.resultIndex; i < ev.results.length; i++) {
         const r = ev.results[i];
-        if (r?.isFinal) chunk += r[0]?.transcript ?? "";
+        if (!r?.[0]) continue;
+        const t = r[0].transcript;
+        if (r.isFinal && t.trim()) {
+          const cur = valueRef.current.trim();
+          const sep = cur && !cur.endsWith(" ") ? " " : "";
+          setValue(`${cur}${sep}${t.trim()}`);
+        }
       }
-      const t = chunk.trim();
-      if (!t) return;
-      const cur = valueRef.current.trim();
-      const sep = cur && !cur.endsWith(" ") ? " " : "";
-      setValue(`${cur}${sep}${t}`);
+      let interimBuf = "";
+      for (let i = 0; i < ev.results.length; i++) {
+        if (!ev.results[i].isFinal) interimBuf += ev.results[i][0]?.transcript ?? "";
+      }
+      setInterimText(interimBuf.trim());
     };
     rec.onerror = () => {
       stopVoice();
+      setVoicePanelOpen(false);
     };
     rec.onend = () => {
       setListening(false);
@@ -107,12 +130,19 @@ export function ChatInput({
       rec.start();
     } catch {
       stopVoice();
+      setVoicePanelOpen(false);
     }
   }, [disabled, setValue, stopVoice]);
 
-  function toggleVoice() {
-    if (listening) stopVoice();
-    else startVoice();
+  function openVoiceMode() {
+    if (!voiceCtor || disabled) return;
+    setVoicePanelOpen(true);
+    startVoice();
+  }
+
+  function closeVoiceMode() {
+    stopVoice();
+    setVoicePanelOpen(false);
   }
 
   async function submit() {
@@ -122,11 +152,27 @@ export function ChatInput({
     await onSend(t);
   }
 
+  const maxBytes = attachmentLimitBytes;
+  const presetSelectBytes = nearestPresetBytes(attachmentLimitBytes);
+
+  const col = CHAT_COLUMN_CLASS;
+
   return (
-    <div className="border-t border-zinc-900 bg-zinc-950/40 p-3">
+    <div className="shrink-0 border-t border-zinc-900 bg-zinc-950/40 px-2 py-2 sm:px-3">
+      <VoiceModeOverlay
+        open={voicePanelOpen}
+        listening={listening}
+        interimText={interimText}
+        readAloud={readAloud}
+        onReadAloudChange={onReadAloudChange}
+        onDone={closeVoiceMode}
+      />
+
       {children}
       {skillSuggestion ? (
-        <div className="mx-auto mb-2 flex max-w-3xl items-center justify-between gap-2 rounded-2xl border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-400">
+        <div
+          className={`mb-1.5 flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-950/60 px-2.5 py-1.5 text-xs text-zinc-400 ${col}`}
+        >
           <span>
             Use skill: <span className="text-zinc-200">{skillSuggestion.name}</span>?
           </span>
@@ -152,7 +198,7 @@ export function ChatInput({
         }}
       />
       {pendingFiles.length > 0 ? (
-        <div className="mx-auto mb-2 flex max-w-3xl flex-wrap gap-2">
+        <div className={`mb-1.5 flex flex-wrap gap-1.5 ${col}`}>
           {pendingFiles.map((f, i) => (
             <span
               key={`${f.name}-${i}`}
@@ -172,48 +218,61 @@ export function ChatInput({
           ))}
         </div>
       ) : null}
-      <div className="mx-auto flex max-w-3xl flex-wrap items-end gap-2">
-        <div className="flex shrink-0 flex-col gap-1">
-          <button
-            type="button"
+
+      {/* Attach + max size + create image on one row */}
+      <div className={`mb-1.5 flex flex-wrap items-center gap-1.5 text-[11px] ${col}`}>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex items-center gap-1 rounded-lg bg-zinc-900/90 px-2.5 py-1.5 font-medium text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 disabled:opacity-40"
+          title={`Add files (max ${formatBytes(maxBytes)} each)`}
+        >
+          <span className="text-sm leading-none text-zinc-400">+</span>
+          Attach
+        </button>
+        <label className="inline-flex items-center gap-1.5 text-zinc-500">
+          <span className="hidden sm:inline">Max</span>
+          <select
             disabled={disabled}
-            onClick={() => fileInputRef.current?.click()}
-            className="rounded-xl bg-zinc-900 px-3 py-2 text-[11px] font-semibold text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 disabled:opacity-40"
-            title={`Attach files (max ${formatBytes(maxBytes)} each)`}
+            value={presetSelectBytes}
+            onChange={(e) => onAttachmentLimitChange(Number(e.target.value))}
+            className="cursor-pointer rounded-lg border-0 bg-zinc-900/90 py-1.5 pl-2 pr-7 text-[11px] font-medium text-zinc-300 ring-1 ring-zinc-800 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 disabled:opacity-40"
+            title="Per-file size limit (stored on this device)"
           >
-            Attach
-          </button>
-          <button
-            type="button"
-            disabled={disabled || !voiceCtor}
-            onClick={toggleVoice}
-            className={`rounded-xl px-3 py-2 text-[11px] font-semibold ring-1 disabled:opacity-40 ${
-              listening
-                ? "bg-rose-950/90 text-rose-100 ring-rose-700/80"
-                : "bg-zinc-900 text-cyan-100 ring-cyan-900/50 hover:bg-zinc-800"
-            }`}
-            title={
-              voiceCtor
-                ? listening
-                  ? "Stop dictation"
-                  : "Voice: speak to type in the message box (browser speech-to-text)"
-                : "Voice input is not available in this browser"
-            }
-          >
-            {listening ? "Listening…" : "Voice"}
-          </button>
-          {onGenerateImage && geminiEnabled ? (
+            {FILE_SIZE_PRESETS.map((p) => (
+              <option key={p.id} value={p.bytes}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {onGenerateImage && geminiEnabled ? (
+          <>
+            <input
+              type="text"
+              value={imagePromptExtra}
+              onChange={(e) => onImagePromptExtraChange?.(e.target.value)}
+              disabled={disabled}
+              placeholder="Image prompt…"
+              className="min-w-0 max-w-[200px] flex-1 rounded-lg border-0 bg-zinc-900/90 px-2 py-1.5 text-[11px] text-zinc-200 ring-1 ring-zinc-800 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/25 disabled:opacity-40 sm:max-w-xs"
+              title="Optional: describe the image here if you do not want to use the main message box above"
+              aria-label="Image generation prompt"
+            />
             <button
               type="button"
               disabled={disabled}
               onClick={onGenerateImage}
-              className="rounded-xl bg-fuchsia-950/80 px-3 py-2 text-[11px] font-semibold text-fuchsia-100 ring-1 ring-fuchsia-900/80 hover:bg-fuchsia-900/60 disabled:opacity-40"
-              title="Generate an image with Gemini (uses one chat credit)"
+              className="rounded-lg bg-fuchsia-950/50 px-2.5 py-1.5 text-[11px] font-semibold text-fuchsia-100/95 ring-1 ring-fuchsia-900/60 hover:bg-fuchsia-950/80 disabled:opacity-40"
+              title="Generate an image with Gemini (uses one chat credit; needs GEMINI_API_KEY on the server)"
             >
               Create image
             </button>
-          ) : null}
-        </div>
+          </>
+        ) : null}
+      </div>
+
+      <div className={`flex flex-wrap items-end gap-1.5 ${col}`}>
         <textarea
           value={value}
           disabled={disabled}
@@ -226,33 +285,63 @@ export function ChatInput({
               void submit();
             }
           }}
-          rows={3}
+          rows={2}
           placeholder="Message BabyGPT…"
-          className="min-h-[52px] min-w-0 flex-1 resize-none rounded-2xl bg-zinc-900/60 px-4 py-3 text-sm text-zinc-100 outline-none ring-1 ring-zinc-800 placeholder:text-zinc-600 focus:ring-cyan-500/30 disabled:opacity-50"
+          className="min-h-[44px] min-w-0 flex-1 resize-y rounded-2xl bg-zinc-900/60 px-3 py-2.5 text-sm leading-relaxed text-zinc-100 outline-none ring-1 ring-zinc-800 placeholder:text-zinc-600 focus:ring-cyan-500/30 disabled:opacity-50"
         />
+
+        {/* ChatGPT-style circular voice control */}
+        <button
+          type="button"
+          disabled={disabled || !voiceCtor}
+          onClick={openVoiceMode}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition sm:h-12 sm:w-12 ${
+            voicePanelOpen
+              ? "border-cyan-500/60 bg-cyan-950/50 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.25)]"
+              : "border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800"
+          } disabled:cursor-not-allowed disabled:opacity-40`}
+          title={
+            voiceCtor
+              ? "Voice dictation — opens the voice panel; speak to insert text into the message box"
+              : "Voice dictation is not supported in this browser"
+          }
+          aria-label={voicePanelOpen ? "Voice panel open" : "Open voice dictation"}
+          aria-pressed={voicePanelOpen}
+        >
+          <svg className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z" />
+          </svg>
+        </button>
+
         <button
           type="button"
           disabled={disabled || (!value.trim() && pendingFiles.length === 0)}
           onClick={() => void submit()}
-          className="h-[52px] shrink-0 rounded-2xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-11 shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40 sm:h-12 sm:px-5"
         >
           Send
         </button>
       </div>
-      <div className="mx-auto mt-2 flex max-w-3xl flex-col gap-2 text-[11px] text-zinc-600 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <p className="min-w-0 flex-1">
-          Enter sends · Shift+Enter newline · Over {formatBytes(inlineMax)} per file uses Gemini upload (multipart) ·
-          Max {formatBytes(maxBytes)} each
+
+      <div
+        className={`mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-zinc-900/80 pt-1.5 text-[10px] text-zinc-600 ${col}`}
+      >
+        <p
+          className="min-w-0 flex-1 leading-snug"
+          title={`Enter sends · Shift+Enter newline · Inline attach up to ${formatBytes(inlineMax)} · Max per file from menu above · Host may cap lower`}
+        >
+          <span className="text-zinc-500">Enter</span> send · <span className="text-zinc-500">Shift+Enter</span> newline ·
+          Inline cap {formatBytes(inlineMax)}
         </p>
         {onReadAloudChange ? (
-          <label className="flex shrink-0 cursor-pointer items-center gap-2 text-zinc-500 hover:text-zinc-400">
+          <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-zinc-500 hover:text-zinc-400">
             <input
               type="checkbox"
               checked={readAloud ?? false}
               onChange={(e) => onReadAloudChange(e.target.checked)}
               className="rounded border-zinc-700 bg-zinc-900 accent-cyan-600"
             />
-            Read replies aloud
+            Read aloud
           </label>
         ) : null}
       </div>

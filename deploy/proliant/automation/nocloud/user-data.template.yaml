@@ -1,0 +1,39 @@
+#cloud-config
+# Ubuntu Server autoinstall — copy to file named "user-data" (no extension) on HTTP seed, or serve as /user-data
+# Edit CHANGEME. Host HTTP with: .\scripts\serve-babygpt-staging-http.ps1
+# Kernel must receive: autoinstall ds=nocloud-net\;s=http://YOUR_PC:8080/
+#
+# Reference: https://ubuntu.com/server/docs/install/autoinstall-reference
+autoinstall:
+  version: 1
+  locale: en_US
+  keyboard:
+    layout: us
+  network:
+    network:
+      version: 2
+      ethernets:
+        any:
+          match:
+            name: en*
+          dhcp4: true
+  storage:
+    layout:
+      name: lvm
+  identity:
+    hostname: babygpt-host
+    username: CHANGEME_USER
+    password: "$6$CHANGEME_USE_mkpasswd_sha512"
+  ssh:
+    install-server: true
+    allow-pw: true
+  packages:
+    - curl
+    - wget
+  # Runs on FIRST BOOT of installed OS (network up) — safer than late-commands chroot
+  user-data:
+    runcmd:
+      - wget -qO /root/babygpt-src.zip http://CHANGEME_WINDOWS_IP:8080/babygpt-src.zip
+      - wget -qO /root/bootstrap.sh http://CHANGEME_WINDOWS_IP:8080/bootstrap.sh
+      - chmod +x /root/bootstrap.sh
+      - /bin/bash /root/bootstrap.sh /root/babygpt-src.zip

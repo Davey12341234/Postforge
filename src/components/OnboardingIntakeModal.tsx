@@ -29,6 +29,10 @@ const WHY_CONNECTION_COPY = {
     "Nothing here replaces professional care if you need it. This questionnaire simply gives the model a fair shot at meeting you where you are.",
 } as const;
 
+/** Satisfies INTRO_INTAKE_MIN_CHARS so skip counts as completed intake; user can redo from Settings. */
+const INTRO_SKIP_PLACEHOLDER_ANSWER =
+  "Exploring BabyGPT first — I can open the connection questionnaire from Settings when I am ready.";
+
 export function OnboardingIntakeModal({
   appearance,
   onComplete,
@@ -110,6 +114,19 @@ export function OnboardingIntakeModal({
             <p className={`mt-2 text-xs leading-relaxed ${muted}`}>
               Answer each question in your own words. This runs once, stays on your device, and is
               folded into local memory so replies can match your situation and tone.
+            </p>
+            <p className="mt-3 text-center">
+              <button
+                type="button"
+                onClick={() =>
+                  onComplete(INTRO_SEVEN_QUESTIONS.map(() => INTRO_SKIP_PLACEHOLDER_ANSWER))
+                }
+                className={`text-xs font-medium underline decoration-cyan-500/50 underline-offset-2 transition hover:decoration-cyan-400 ${
+                  theme === "light" ? "text-cyan-700 hover:text-cyan-800" : "text-cyan-400/95 hover:text-cyan-300"
+                }`}
+              >
+                Skip questionnaire — start chatting
+              </button>
             </p>
           </div>
         </div>

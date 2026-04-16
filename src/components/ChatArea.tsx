@@ -6,6 +6,7 @@ import { MessageBubble } from "./MessageBubble";
 import { WelcomeScreen } from "./WelcomeScreen";
 import type { PlanDefinition } from "@/lib/plans";
 import type { PowerTemplate } from "@/lib/instant-templates";
+import { CHAT_COLUMN_CLASS } from "@/lib/chat-layout";
 
 export function ChatArea({
   messages,
@@ -43,7 +44,7 @@ export function ChatArea({
 
   if (empty) {
     return (
-      <div className="flex-1 overflow-auto">
+      <div className="flex min-h-0 flex-1 overflow-auto">
         <WelcomeScreen
           onOpenPlans={onOpenPlans}
           onOpenSearch={onOpenSearch}
@@ -58,8 +59,8 @@ export function ChatArea({
   }
 
   return (
-    <div className="flex-1 overflow-auto px-4 py-6">
-      <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      <div className="flex min-h-0 flex-1 overflow-auto px-3 py-4 sm:px-4 sm:py-5">
+      <div className={`flex flex-col gap-3 ${CHAT_COLUMN_CLASS}`}>
         {messages.map((m) => (
           <MessageBubble
             key={m.id}

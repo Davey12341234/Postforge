@@ -1,5 +1,7 @@
 # BabyGPT — Onboarding flow & paths (product spec)
 
+> **Scope:** This is a **product/design spec**, not a guarantee of shipped features. The live app may only implement a subset (e.g. connection questionnaire, FAQ copy). Do not treat Letter generator, path wizard, Daily Anchor UI, or similar sections below as released until `docs/BabyGPT-App-Diagnostic.md` says they are.
+
 Canonical copy for design and implementation. This document is **not** fully wired in the shipped UI yet; see `docs/BabyGPT-App-Diagnostic.md` for code vs spec gaps.
 
 **Also in repo (searchable from Plans → FAQ via `src/lib/billing-faq.ts`):**

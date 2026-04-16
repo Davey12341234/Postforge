@@ -55,15 +55,48 @@ export interface Conversation {
   messages: ChatMessage[];
 }
 
+/** Shipped behaviors only — names are thematic; descriptions match server/client code. */
 export const QUANTUM_FEATURES = [
-  { id: "schrodinger", name: "Schrödinger Chat", description: "Dual-model racing" },
-  { id: "kolmogorov", name: "Kolmogorov Router", description: "Complexity-aware routing" },
-  { id: "holographic", name: "Holographic Context", description: "Token-aware context folding" },
-  { id: "dna", name: "Eigenresponse / DNA", description: "Style lock from prior turns" },
-  { id: "bloch", name: "Bloch Sphere", description: "Intent state visualization" },
-  { id: "entangle", name: "Entanglement", description: "Linked thread coherence" },
-  { id: "adiabatic", name: "Adiabatic Prompts", description: "Smooth prompt morphing" },
-  { id: "qec", name: "Quantum Error Correction", description: "Self-healing drafts" },
-  { id: "topology", name: "Conversation Topology", description: "Branch graph view" },
-  { id: "retro", name: "Retrocausal Prediction", description: "Next-turn priors" },
+  {
+    id: "thinking",
+    name: "Thinking",
+    description:
+      "GLM (Z.AI): native extended-reasoning channel in the API. OpenAI: adds a stronger step-by-step system instruction (no separate reasoning stream).",
+  },
+  {
+    id: "schrodinger",
+    name: "Two models",
+    description: "Two models stream in parallel; one winning reply is kept (same feature as the header toggle).",
+  },
+  {
+    id: "agent",
+    name: "Agent",
+    description: "Tool-using loop (web, calculator, …) with a streamed final answer.",
+  },
+  {
+    id: "kolmogorov",
+    name: "Kolmogorov router",
+    description:
+      "Keyword + length heuristics pick a model tier for this send, overriding the dropdown for that request.",
+  },
+  {
+    id: "holographic",
+    name: "Holographic context",
+    description: "If the transcript exceeds ~12k characters, older messages are folded to cap prompt size.",
+  },
+  {
+    id: "dna",
+    name: "Eigenresponse / DNA",
+    description: "Injects a short style hint from recent assistant replies.",
+  },
+  {
+    id: "adiabatic",
+    name: "Adiabatic morph",
+    description: "Slider merges explore / balance / commit wording into the system prompt.",
+  },
+  {
+    id: "qec",
+    name: "Error correction",
+    description: "In Agent mode, malformed tool JSON may be retried or repaired — not a separate header toggle.",
+  },
 ] as const;

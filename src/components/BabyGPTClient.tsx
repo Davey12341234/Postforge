@@ -28,6 +28,8 @@ import {
 import type { Skill } from "@/lib/skill-model";
 import { lsKey } from "@/lib/storage";
 import { skillSystemPrompt, suggestSkillForMessage } from "@/lib/skills";
+import { getClientMaxFileBytes } from "@/lib/attachment-config";
+import { DEFAULT_ATTACHMENT_BYTES, nearestPresetBytes } from "@/lib/attachment-presets";
 import { filesToChatAttachments } from "@/lib/file-attachments";
 import { speakAssistantMessage } from "@/lib/speech-synthesis";
 import type { ChatAttachment, ChatMessage, Conversation, ModelTier } from "@/lib/types";
@@ -126,9 +128,12 @@ export default function BabyGPTClient() {
   const [skillHint, setSkillHint] = useState<Skill | null>(null);
   /** Composer text — drives skills, mood, and templates */
   const [chatDraft, setChatDraft] = useState("");
+  /** Optional image-only prompt when the main composer is empty (ChatGPT-style image flow). */
+  const [imagePromptExtra, setImagePromptExtra] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [readAloud, setReadAloud] = useState(false);
   const readAloudRef = useRef(false);
+  const [attachmentLimitBytes, setAttachmentLimitBytes] = useState(DEFAULT_ATTACHMENT_BYTES);
   const [streamingAssistantId, setStreamingAssistantId] = useState<string | null>(null);
   /** Aborts in-flight chat SSE when starting a new send or clicking Stop. */
   const streamAbortRef = useRef<AbortController | null>(null);
@@ -212,6 +217,19 @@ export default function BabyGPTClient() {
   useEffect(() => {
     readAloudRef.current = readAloud;
   }, [readAloud]);
+
+  useEffect(() => {
+    setAttachmentLimitBytes(nearestPresetBytes(getClientMaxFileBytes()));
+  }, []);
+
+  const setAttachmentLimitPersist = useCallback((bytes: number) => {
+    try {
+      localStorage.setItem("babygpt_max_file_bytes_override", String(bytes));
+    } catch {
+      /* ignore */
+    }
+    setAttachmentLimitBytes(nearestPresetBytes(bytes));
+  }, []);
 
   const setReadAloudPersist = useCallback((v: boolean) => {
     setReadAloud(v);
@@ -396,7 +414,10 @@ export default function BabyGPTClient() {
         return last?.content ?? null;
       },
       onSuggest: (s) => {
-        setToasts((prev) => [...prev, { ...s, open: true }]);
+        setToasts((prev) => {
+          const base = s.id.startsWith("retro-") ? prev.filter((x) => !x.id.startsWith("retro-")) : prev;
+          return [...base, { ...s, open: true }];
+        });
         if (
           typeof window !== "undefined" &&
           "Notification" in window &&
@@ -520,22 +541,30 @@ export default function BabyGPTClient() {
       const useSchrodinger = schrodinger && !agentMode;
       const mode: SendMode = agentMode ? "agent" : useSchrodinger ? "schrodinger" : "chat";
       const schPair = schrodingerPair(model, planDef.allowedModels);
+      /** Multimodal attachments always use `/api/chat/gemini` (billed as chat, thinking off) — match labels + credit math. */
+      const attachmentMultimodal = !regenerate && pendingFiles.length > 0;
+      if (attachmentMultimodal && (agentMode || useSchrodinger)) {
+        setBanner("File attachments use Gemini — turn off Agent and Two models for this chat.");
+        return;
+      }
+      const costMode: SendMode = attachmentMultimodal ? "chat" : mode;
+      const costThinking = attachmentMultimodal ? false : thinking;
       const costInput = {
         model,
-        thinking,
-        mode,
+        thinking: costThinking,
+        mode: costMode,
         quantum: {
           kolmogorov: quantum.kolmogorov,
           holographic: quantum.holographic,
           dna: quantum.dna,
         },
-        secondaryModel: useSchrodinger ? schPair.modelB : undefined,
+        secondaryModel: costMode === "schrodinger" ? schPair.modelB : undefined,
       };
       if (!planPermitsSend(planDef, costInput)) {
         uiDiag("send.planGate", "fail", {
           planId: planDef.id,
           model,
-          mode,
+          mode: costMode,
           quantum: costInput.quantum,
           secondaryModel: costInput.secondaryModel,
         });
@@ -547,11 +576,11 @@ export default function BabyGPTClient() {
       uiDiag("send.planGate", "ok", {
         planId: planDef.id,
         model,
-        mode,
+        mode: costMode,
         quantum: costInput.quantum,
         secondaryModel: costInput.secondaryModel,
       });
-      const costCore = { model, thinking, mode };
+      const costCore = { model, thinking: costThinking, mode: costMode };
       const cost = estimateSendCredits(costCore);
       if (credits.balance < cost) {
         uiDiag("send.credits", "fail", { need: cost, balance: credits.balance });
@@ -710,13 +739,6 @@ export default function BabyGPTClient() {
         (m) => m.role === "user" && (m.attachments?.length ?? 0) > 0,
       );
 
-      if (useGemini && (agentMode || useSchrodinger)) {
-        setBusy(false);
-        streamAbortRef.current = null;
-        setBanner("File attachments use Gemini — turn off Agent and Schrödinger for this chat.");
-        return;
-      }
-
       const endpoint = useGemini
         ? "/api/chat/gemini"
         : useSchrodinger
@@ -819,7 +841,7 @@ export default function BabyGPTClient() {
             try {
               const j = JSON.parse(payload) as { schrodinger?: boolean; winner?: string };
               if (j.schrodinger && j.winner) {
-                setBanner(`Schrödinger winner: ${j.winner}`);
+                setBanner(`Two models · winning stream: ${j.winner}`);
               }
             } catch {
               // ignore
@@ -976,7 +998,7 @@ export default function BabyGPTClient() {
   );
 
   const runGenerateImage = useCallback(async () => {
-    const prompt = chatDraft.trim();
+    const prompt = chatDraft.trim() || imagePromptExtra.trim();
     if (!isIntroIntakeComplete()) {
       setBanner("Finish the connection questionnaire first.");
       return;
@@ -987,7 +1009,7 @@ export default function BabyGPTClient() {
       return;
     }
     if (!prompt) {
-      setBanner("Type an image description in the message box first.");
+      setBanner("Describe the image in the message box or in the image prompt field next to Create image.");
       return;
     }
 
@@ -1063,6 +1085,7 @@ export default function BabyGPTClient() {
       upsertConversation(next);
       setActiveId(convId);
       setChatDraft("");
+      setImagePromptExtra("");
 
       if (!serverCredits) {
         setCredits((prev) => {
@@ -1100,6 +1123,7 @@ export default function BabyGPTClient() {
   }, [
     activeId,
     chatDraft,
+    imagePromptExtra,
     conversations,
     credits,
     introGateOpen,
@@ -1144,7 +1168,10 @@ export default function BabyGPTClient() {
     [sendMessage],
   );
 
-  const previewMode: SendMode = agentMode ? "agent" : schrodinger && !agentMode ? "schrodinger" : "chat";
+  const useSchrodingerPreview = schrodinger && !agentMode;
+  const previewMode: SendMode =
+    pendingFiles.length > 0 ? "chat" : agentMode ? "agent" : useSchrodingerPreview ? "schrodinger" : "chat";
+  const previewThinking = pendingFiles.length > 0 ? false : thinking;
   const appearance = uiPrefs?.appearance ?? "dark";
 
   return (
@@ -1194,9 +1221,12 @@ export default function BabyGPTClient() {
                   ? "bg-zinc-200 text-zinc-700 ring-zinc-300"
                   : "bg-zinc-900 text-zinc-500 ring-zinc-800"
               }`}
-              title={routingReason ?? "Model routing appears after each reply when Kolmogorov routing is on."}
+              title={
+                routingReason ??
+                "Every chat response includes a routing note: either Kolmogorov’s pick or “router off — using selected model.”"
+              }
             >
-              {routingReason ? routingReason : "Model reason"}
+              {routingReason ? routingReason : "Model routing (see after send)"}
             </span>
           </div>
           <div
@@ -1366,16 +1396,25 @@ export default function BabyGPTClient() {
             pendingFiles={pendingFiles}
             onPendingFilesChange={setPendingFiles}
             onGenerateImage={runGenerateImage}
+            imagePromptExtra={imagePromptExtra}
+            onImagePromptExtraChange={setImagePromptExtra}
             geminiEnabled
             readAloud={readAloud}
             onReadAloudChange={setReadAloudPersist}
+            attachmentLimitBytes={attachmentLimitBytes}
+            onAttachmentLimitChange={setAttachmentLimitPersist}
           >
             {credits ? (
               <CostPreview
                 balance={credits.balance}
                 model={model}
-                thinking={thinking}
+                thinking={previewThinking}
                 mode={previewMode}
+                contextHint={
+                  pendingFiles.length > 0
+                    ? "Pending files: priced as one Gemini multimodal send (chat credits, Thinking off)."
+                    : undefined
+                }
               />
             ) : null}
           </ChatInput>
@@ -1536,7 +1575,7 @@ export default function BabyGPTClient() {
           }}
         />
       ) : null}
-      <footer className={footerShellClass(appearance)}>
+      <footer className={`${footerShellClass(appearance)} text-[9px] leading-tight sm:text-[10px]`}>
         <span className="text-zinc-500">v{APP_VERSION}</span>
         {" · "}
         BabyGPT is not affiliated with or endorsed by OpenAI. &quot;ChatGPT&quot; is a trademark of OpenAI.

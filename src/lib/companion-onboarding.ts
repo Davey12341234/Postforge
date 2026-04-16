@@ -64,4 +64,4 @@ export const MESSAGE_MODE_PREFIXES: { id: string; label: string; prefix: string;
 
 /** Short product controls reminder (not billing). */
 export const CORE_CONTROLS_SUMMARY =
-  "Header bar: model, Thinking, Schrödinger, Agent, and Quantum (Kolmogorov, Holographic, DNA, Adiabatic). Power templates set several at once.";
+  "Header bar: model, Thinking, Two models (dual stream), Agent, and Quantum (Kolmogorov, Holographic, DNA, Adiabatic). Power templates set several at once.";

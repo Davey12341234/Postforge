@@ -170,7 +170,7 @@ export function WelcomeScreen({
 
       <div className="grid w-full gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4">
-          <div className="mb-3 text-sm font-medium text-zinc-200">Quantum feature showcase</div>
+          <div className="mb-3 text-sm font-medium text-zinc-200">What each mode actually does</div>
           <ul className="space-y-2 text-sm text-zinc-400">
             {QUANTUM_FEATURES.map((f) => (
               <li key={f.id} className="flex gap-2">

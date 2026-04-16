@@ -294,7 +294,7 @@ export function SubscriptionModal({
                   <li>
                     Agent: {p.features.agent ? <span className="text-emerald-400">yes</span> : <span className="text-zinc-600">no</span>}
                     {" · "}
-                    Schrödinger:{" "}
+                    Two models:{" "}
                     {p.features.schrodinger ? <span className="text-emerald-400">yes</span> : <span className="text-zinc-600">no</span>}
                   </li>
                   <li>

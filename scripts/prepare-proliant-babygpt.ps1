@@ -31,6 +31,7 @@ if (-not $StagingRoot) {
   $StagingRoot = Join-Path $RepoRoot "deploy\proliant\staging"
 }
 $null = New-Item -ItemType Directory -Force -Path $StagingRoot
+& (Join-Path $PSScriptRoot "assert-proliant-staging-location.ps1") -StagingRoot $StagingRoot
 
 if (-not $SkipArchive) {
   $zipOut = Join-Path $StagingRoot "babygpt-src.zip"
@@ -96,12 +97,26 @@ if ($DownloadIso) {
     $ProgressPreference = "SilentlyContinue"
     if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
       $curl = (Get-Command curl.exe).Source
-      & $curl -fL --retry 5 --retry-delay 10 --connect-timeout 60 -o $isoPath $IsoUrl
+      $cargs = @('-fL', '--retry', '8', '--retry-delay', '15', '--connect-timeout', '60')
+      if (Test-Path -LiteralPath $isoPath) {
+        $partialLen = (Get-Item -LiteralPath $isoPath).Length
+        if ($partialLen -gt 0 -and $partialLen -lt 500MB) {
+          Write-Host "Resuming partial download ($partialLen bytes)..." -ForegroundColor Yellow
+          $cargs = @('-C', '-') + $cargs
+        }
+      }
+      $cargs = $cargs + @('-o', $isoPath, $IsoUrl)
+      & $curl @cargs
       if ($LASTEXITCODE -ne 0) {
         Write-Error "curl download failed (exit $LASTEXITCODE). Try again or download the ISO in a browser and save as:`n  $isoPath"
       }
     } else {
       Invoke-WebRequest -Uri $IsoUrl -OutFile $isoPath -UseBasicParsing -TimeoutSec 86400
+    }
+    $finalLen = (Get-Item -LiteralPath $isoPath).Length
+    if ($finalLen -lt 500MB) {
+      Remove-Item -LiteralPath $isoPath -Force -ErrorAction SilentlyContinue
+      Write-Error "Downloaded file is too small ($finalLen bytes) - likely corrupt or truncated. Removed. Retry when network is stable."
     }
     Write-Host "Saved: $isoPath" -ForegroundColor Green
   }

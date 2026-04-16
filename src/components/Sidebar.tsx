@@ -58,7 +58,7 @@ export function Sidebar({
   const rowText = appearance === "light" ? "text-zinc-800" : "text-zinc-300";
 
   return (
-    <aside className={`flex h-full w-[300px] shrink-0 flex-col border-r ${shell}`}>
+    <aside className={`flex h-full w-[min(13.5rem,30vw)] shrink-0 flex-col border-r sm:w-52 ${shell}`}>
       <div className={`flex border-b ${hairline} p-2`}>
         <button
           type="button"

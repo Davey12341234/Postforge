@@ -118,7 +118,7 @@ export const POWER_TEMPLATES: PowerTemplate[] = [
   },
   {
     id: "schrodinger-race",
-    title: "Schrödinger race",
+    title: "Two-model race",
     description: "Dual-model stream (Pro+)",
     emoji: "🔀",
     minPlan: "pro",

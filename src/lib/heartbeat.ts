@@ -8,7 +8,8 @@ export type HeartbeatSuggestion = {
   draft: string;
 };
 
-const INTERVAL_MS = 5 * 60_000;
+/** Suggestions are opt-in heuristics only — keep the cadence relaxed. */
+const INTERVAL_MS = 20 * 60_000;
 
 export function startHeartbeat(opts: {
   getLastUserMessage: () => string | null;
@@ -36,8 +37,8 @@ export function startHeartbeat(opts: {
         const pick = ideas[Math.floor(Math.random() * ideas.length)];
         opts.onSuggest({
           id: `retro-${now}`,
-          title: "BabyGPT suggests",
-          body: `Would you like to continue: ${pick}?`,
+          title: "Optional follow-up",
+          body: pick,
           draft: pick,
         });
       }
