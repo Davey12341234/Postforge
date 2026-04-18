@@ -42,6 +42,8 @@ Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\bootstrap.sh") $StagingRo
 Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\bring-online.sh") $StagingRoot
 Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\babygpt.service") $StagingRoot
 Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\README.md") $StagingRoot
+Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\install-tailscale.sh") $StagingRoot
+Copy-Item -Force (Join-Path $RepoRoot "deploy\proliant\cloudflared-quick-tunnel.sh") $StagingRoot
 
 $isoPath = Join-Path $StagingRoot $IsoFileName
 
