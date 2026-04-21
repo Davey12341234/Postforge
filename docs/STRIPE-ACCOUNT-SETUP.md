@@ -35,6 +35,23 @@ Technical deploy steps (Vercel env push) stay in `docs/HANDOFF-AI-NEXT-REVIEW.md
 
 ---
 
+## 3a. Product name & description (optional, API — avoids Dashboard typos)
+
+Canonical copy matches `src/lib/plans.ts`. After `STRIPE_SECRET_KEY` is in `.env.local`, you can push **name + description** to a Stripe Product from the repo (no manual paste):
+
+```bash
+# Preview payload (no Stripe call, no secret required for --dry-run)
+node scripts/stripe-update-product-copy.cjs --dry-run prod_YOUR_ID starter
+
+# Apply (requires STRIPE_SECRET_KEY)
+node scripts/stripe-update-product-copy.cjs prod_YOUR_ID starter
+```
+
+Or set `STRIPE_PRODUCT_STARTER`, `STRIPE_PRODUCT_PRO`, `STRIPE_PRODUCT_TEAM` and run `node scripts/stripe-update-product-copy.cjs --all`.  
+`npm run stripe:sync-product-copy` runs the same script (pass args after `--`).
+
+This **does not** create Prices or change amounts — only Product metadata. Price IDs still go in `STRIPE_PRICE_*`.
+
 ## 3. Products and Prices (must match app env names)
 
 BabyGPT expects **three recurring monthly prices** (Starter, Pro, Team):
