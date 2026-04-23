@@ -23,8 +23,15 @@ export function getAppPassword(): string | undefined {
   return normalizeEnvString(process.env.BBGPT_APP_PASSWORD ?? process.env.BABYGPT_APP_PASSWORD);
 }
 
+/** Email/password accounts + per-user wallets (`BBGPT_USER_AUTH=1`, requires Postgres). */
+export function isUserAuthEnabled(): boolean {
+  return process.env.BBGPT_USER_AUTH?.trim() === "1";
+}
+
+/** Gate on when session secret exists and either legacy shared password or user auth mode is enabled. */
 export function isGateEnabled(): boolean {
-  return Boolean(getAppPassword());
+  if (!getSessionSecret()) return false;
+  return Boolean(getAppPassword()) || isUserAuthEnabled();
 }
 
 export function getApiSecret(): string | undefined {

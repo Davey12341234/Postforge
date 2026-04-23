@@ -1,0 +1,58 @@
+bbGPT — what’s automated vs your hands, and how to build up
+============================================================
+
+ALREADY IN THE REPO (npm scripts)
+---------------------------------
+  npm run verify              Lint + tests + production build
+  npm run launch:smoke        Health checks (set LAUNCH_SMOKE_URL if not default)
+  npm run launch:follow-up    Login + /api/credits against production (uses .env files only)
+  npm run launch:path         Full gate: verify → finish:billing → vercel:env:prod → deploy → smoke
+  npm run bootstrap:gate -- --force   Reset BBGPT_APP_PASSWORD locally + Vercel
+  npm run vercel:env:prod     Push .env.local keys to Vercel Production
+  npm run deploy:prod         Ship current git state to Vercel
+  npm run roadmap:check       Probes Vercel host + custom domain; prints this file’s phases
+
+DOMAIN (bbgpt.ai) — automation vs you
+-------------------------------------
+  Done in Vercel: domains attached, NEXT_PUBLIC_APP_URL=https://www.bbgpt.ai, redeployed.
+  Only you can do at Namecheap / DNS: point @ and www to Vercel (see deploy/bbgpt-ai-DNS-Namecheap.txt).
+  Run: npm run roadmap:check — when custom domain shows “app reachable”, DNS is correct.
+
+FINISH THESE (manual, short list)
+---------------------------------
+  1) DNS A records for @ and www → 76.76.21.21 (or switch nameservers to Vercel’s pair).
+  2) Stripe Dashboard → Webhooks → endpoint https://www.bbgpt.ai/api/stripe/webhook (when DNS works).
+  3) Vercel → Domains → confirm both hostnames Valid + HTTPS.
+  4) Local: npx vercel env pull .env.local --environment production --yes (merge carefully).
+
+HOW TO BUILD UP (phased — pick order by pain)
+----------------------------------------------
+  Phase A — Stable operations
+    • Prefer one canonical URL (www vs apex); add redirect in Vercel Domains when both exist.
+    • Stripe live vs test: match STRIPE_SECRET_KEY mode to Checkout tests you run.
+    • Re-run npm run roadmap:check after each DNS or env change.
+
+  Phase B — Wallet / data durability (when traffic or money matters)
+    • Today server wallet on Vercel uses /tmp on serverless — ephemeral across instances.
+    • Next step: Postgres (Neon, Supabase) or Vercel KV/Blob for wallet.json + billing.json semantics.
+    • Until then: accept best-effort credits on multi-instance serverless.
+
+  Phase C — Observability
+    • Add error tracking (e.g. Sentry) + optional uptime ping on /login or /api/credits.
+    • Stripe Dashboard email alerts for failed payments (already partly surfaced in-app).
+
+  Phase D — Product polish
+    • SEO: metadata in layout.tsx, OG image, robots.txt / sitemap if public marketing matters.
+    • Rate limiting on /api/chat if exposed broadly (middleware or Edge Config).
+
+  Phase E — Growth
+    • Analytics (Plausible, GA4) if you need funnels; keep privacy policy in sync.
+    • Landing/marketing page separate from app shell if you outgrow the welcome screen.
+
+CANNOT AUTOMATE FROM THIS REPO
+------------------------------
+  • Registrar DNS login, ICANN email verification, Stripe business verification.
+  • Legal (Terms, Privacy) — use your counsel; link from footer when you add one.
+  • Content moderation / safety policy for public chat — product decision.
+
+When in doubt: npm run roadmap:check && npm run launch:follow-up
