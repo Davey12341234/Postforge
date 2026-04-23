@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     return denied;
   }
 
-  const billing = await readServerBilling();
+  const billing = await readServerBilling(req);
   if (!billing.customerId) {
     return NextResponse.json(
       { error: "No Stripe customer yet. Subscribe to a paid plan first (Checkout)." },

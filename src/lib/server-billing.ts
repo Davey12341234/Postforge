@@ -5,7 +5,7 @@ import type { BillingAlertPayload } from "@/lib/billing-usage-hints";
 import { getDataDir } from "@/lib/data-dir";
 import { isPostgresPersistenceEnabled } from "@/lib/persistence-env";
 import type { PaymentAlert } from "@/lib/payment-alert";
-import { dbReadBilling, dbWriteBilling } from "@/lib/site-wallet-store";
+import { dbReadBilling, dbWriteBilling, findClerkIdByStripeCustomerId } from "@/lib/site-wallet-store";
 import { getDefaultWalletClerkId } from "@/lib/site-wallet-user";
 import { getWalletClerkIdFromRequest } from "@/lib/session-server";
 import type { ServerBillingRecord } from "@/lib/server-billing-record";
@@ -96,6 +96,39 @@ export async function clearPaymentAlert(req?: NextRequest): Promise<void> {
   const prev = await readServerBilling(req);
   if (!prev.paymentAlert) return;
   await writeServerBilling({ ...prev, paymentAlert: null }, req);
+}
+
+/** Clears payment alert for the wallet row tied to this Stripe customer (Postgres multi-tenant). */
+export async function clearPaymentAlertForStripeCustomer(customerId: string | null): Promise<void> {
+  if (!isPostgresPersistenceEnabled() || !customerId) {
+    await clearPaymentAlert();
+    return;
+  }
+  const clerkId = await findClerkIdByStripeCustomerId(customerId);
+  if (!clerkId) {
+    await clearPaymentAlert();
+    return;
+  }
+  const prev = await dbReadBilling(clerkId);
+  await dbWriteBilling(clerkId, { ...prev, paymentAlert: null });
+}
+
+/** Records payment failure alert on the correct wallet row when possible. */
+export async function recordPaymentFailureForStripeCustomer(
+  customerId: string | null,
+  alert: PaymentAlert,
+): Promise<void> {
+  if (!isPostgresPersistenceEnabled() || !customerId) {
+    await recordPaymentFailure(alert);
+    return;
+  }
+  const clerkId = await findClerkIdByStripeCustomerId(customerId);
+  if (!clerkId) {
+    await recordPaymentFailure(alert);
+    return;
+  }
+  const prev = await dbReadBilling(clerkId);
+  await dbWriteBilling(clerkId, { ...prev, paymentAlert: alert });
 }
 
 /** Client-safe banner for failed renewal (no Stripe ids). */

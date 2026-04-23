@@ -1,11 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe-client";
+import {
+  clearPaymentAlertForStripeCustomer,
+  recordPaymentFailureForStripeCustomer,
+} from "@/lib/server-billing";
 import { getStripeWebhookSecret } from "@/lib/stripe-config";
-import { clearPaymentAlert, recordPaymentFailure } from "@/lib/server-billing";
 import { applyStripeSubscription, clearStripeSubscriptionToFree } from "@/lib/stripe-sync";
 
 export const runtime = "nodejs";
+
+function stripeCustomerId(
+  customer: Stripe.Checkout.Session["customer"] | Stripe.Subscription["customer"] | Stripe.Invoice["customer"],
+): string | null {
+  if (customer == null) return null;
+  return typeof customer === "string" ? customer : customer.id;
+}
 
 export async function POST(req: NextRequest) {
   const whsec = getStripeWebhookSecret();
@@ -39,12 +49,13 @@ export async function POST(req: NextRequest) {
             typeof session.subscription === "string" ? session.subscription : session.subscription.id;
           const sub = await stripe.subscriptions.retrieve(subId);
           await applyStripeSubscription(sub);
-          await clearPaymentAlert();
+          await clearPaymentAlertForStripeCustomer(stripeCustomerId(session.customer));
         }
         break;
       }
       case "invoice.paid": {
-        await clearPaymentAlert();
+        const inv = event.data.object as Stripe.Invoice;
+        await clearPaymentAlertForStripeCustomer(stripeCustomerId(inv.customer));
         break;
       }
       case "customer.subscription.created":
@@ -65,15 +76,14 @@ export async function POST(req: NextRequest) {
         const subRef = inv.subscription;
         const subId =
           subRef == null ? null : typeof subRef === "string" ? subRef : subRef.id;
-        const customerId =
-          typeof inv.customer === "string" ? inv.customer : inv.customer?.id ?? null;
+        const customerId = stripeCustomerId(inv.customer);
         console.warn("[stripe webhook] invoice.payment_failed", {
           invoiceId: inv.id,
           customerId,
           subscriptionId: subId,
           attemptCount: inv.attempt_count,
         });
-        await recordPaymentFailure({
+        await recordPaymentFailureForStripeCustomer(customerId, {
           at: new Date().toISOString(),
           invoiceId: inv.id ?? null,
           attemptCount: inv.attempt_count ?? null,

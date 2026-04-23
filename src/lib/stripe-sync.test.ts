@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type Stripe from "stripe";
 
+vi.mock("./persistence-env", () => ({
+  isPostgresPersistenceEnabled: () => false,
+}));
+
 const writeServerBilling = vi.fn();
 const readServerBilling = vi.fn();
 const setServerPlan = vi.fn();

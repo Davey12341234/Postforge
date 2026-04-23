@@ -27,7 +27,7 @@ export async function guardChatSend(
     return null;
   }
 
-  const wallet = await readServerWallet();
+  const wallet = await readServerWallet(request);
   const plan = PLANS[wallet.planId];
   if (!planPermitsSend(plan, input)) {
     return NextResponse.json(
@@ -41,7 +41,7 @@ export async function guardChatSend(
     thinking: input.thinking,
     mode: input.mode,
   });
-  const { ok } = await tryDebitServerWallet(cost);
+  const { ok } = await tryDebitServerWallet(cost, request);
   if (!ok) {
     return NextResponse.json(
       { error: `Insufficient credits (this send needs ${cost}).` },
@@ -67,7 +67,7 @@ export async function guardChatSendBalanceOnly(
     return null;
   }
 
-  const wallet = await readServerWallet();
+  const wallet = await readServerWallet(request);
   const plan = PLANS[wallet.planId];
   if (!planPermitsSend(plan, input)) {
     return NextResponse.json(
@@ -99,13 +99,13 @@ export async function guardDebate(request: NextRequest): Promise<NextResponse | 
     return null;
   }
 
-  const wallet = await readServerWallet();
+  const wallet = await readServerWallet(request);
   const plan = PLANS[wallet.planId];
   if (!plan.features.communityDebate) {
     return NextResponse.json({ error: "Debate not included on your plan." }, { status: 403 });
   }
 
-  const { ok } = await tryDebitServerWallet(COMMUNITY_DEBATE_COST);
+  const { ok } = await tryDebitServerWallet(COMMUNITY_DEBATE_COST, request);
   if (!ok) {
     return NextResponse.json(
       { error: `Insufficient credits (debate costs ${COMMUNITY_DEBATE_COST}).` },

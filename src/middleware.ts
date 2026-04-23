@@ -2,7 +2,7 @@ import { LEGACY_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-cook
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getApiSecret, getSessionSecret, isGateEnabled } from "@/lib/server-config";
+import { getApiSecret, getSessionSecret, isGateEnabled, isUserAuthEnabled } from "@/lib/server-config";
 
 export async function middleware(request: NextRequest) {
   if (!isGateEnabled()) {
@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname === "/register") {
     return NextResponse.next();
   }
   if (pathname.startsWith("/api/auth/")) {
@@ -30,10 +30,10 @@ export async function middleware(request: NextRequest) {
   const secret = getSessionSecret();
   if (!secret) {
     if (pathname.startsWith("/api")) {
-      return NextResponse.json(
-        { error: "Server misconfigured: set BBGPT_SESSION_SECRET when BBGPT_APP_PASSWORD is set." },
-        { status: 500 },
-      );
+      const hint = isUserAuthEnabled()
+        ? "Set BBGPT_SESSION_SECRET when the gate is enabled."
+        : "Set BBGPT_SESSION_SECRET when BBGPT_APP_PASSWORD (or BBGPT_USER_AUTH) is set.";
+      return NextResponse.json({ error: `Server misconfigured: ${hint}` }, { status: 500 });
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }

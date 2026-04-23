@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   }
 
   const origin = requestAppOrigin(req);
-  const billingRecord = await readServerBilling();
+  const billingRecord = await readServerBilling(req);
 
   const stripe = getStripe();
   const autoTax = process.env.STRIPE_CHECKOUT_AUTO_TAX?.trim() === "1";

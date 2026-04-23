@@ -1,17 +1,22 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+
+const userAuthUi = process.env.NEXT_PUBLIC_BBGPT_USER_AUTH === "1";
 
 function magicMessage(code: string | null): string | null {
   switch (code) {
     case "invalid":
-      return "That sign-in link expired or was already used. Sign in with the shared app password, or ask the person who manages Vercel for the current password.";
+      return userAuthUi
+        ? "That sign-in link expired or is invalid. Try signing in with email and password."
+        : "That sign-in link expired or was already used. Sign in with the shared app password, or ask the person who manages Vercel for the current password.";
     case "missing":
-      return "Sign-in link was incomplete. Use the password field above, or get a fresh link from your admin.";
+      return "Sign-in link was incomplete. Use the form below.";
     case "config":
-      return "Sign-in links are not configured on this server. Use the shared app password.";
+      return "Sign-in links are not configured on this server.";
     case "off":
       return "The app gate is off for this deployment.";
     default:
@@ -24,6 +29,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const banner = magicMessage(searchParams.get("magic"));
 
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,10 +40,13 @@ function LoginContent() {
     setError(null);
     setBusy(true);
     try {
+      const body = userAuthUi
+        ? { email: email.trim(), password }
+        : { password: password.trim() };
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: password.trim() }),
+        body: JSON.stringify(body),
         credentials: "include",
         cache: "no-store",
       });
@@ -70,24 +79,46 @@ function LoginContent() {
           />
           <h1 className="text-center text-lg font-semibold text-zinc-100">bbGPT</h1>
         </div>
-        <p className="mt-2 text-center text-xs text-zinc-500">
-          This deployment uses <strong className="font-medium text-zinc-400">one shared password</strong> for everyone
-          (<code className="text-zinc-400">BBGPT_APP_PASSWORD</code> on the server). There are no separate per-user passwords
-          to “reset” from this page.
-        </p>
-        <p className="mt-2 text-center text-[11px] text-zinc-600">
-          Use the same hostname you always use (e.g. only <code className="text-zinc-500">www.bbgpt.ai</code> or only the
-          <code className="text-zinc-500"> .vercel.app </code>
-          URL) so the session cookie applies.
-        </p>
+        {userAuthUi ? (
+          <p className="mt-2 text-center text-xs text-zinc-500">
+            Sign in with your account email and password. New here?{" "}
+            <Link href="/register" className="font-medium text-emerald-500/90 hover:text-emerald-400">
+              Create an account
+            </Link>
+            .
+          </p>
+        ) : (
+          <>
+            <p className="mt-2 text-center text-xs text-zinc-500">
+              This deployment uses a <strong className="font-medium text-zinc-400">shared app password</strong> (
+              <code className="text-zinc-400">BBGPT_APP_PASSWORD</code> on the server).
+            </p>
+            <p className="mt-2 text-center text-[11px] text-zinc-600">
+              Use the same hostname you always use so the session cookie applies.
+            </p>
+          </>
+        )}
         {banner ? <p className="mt-3 rounded-lg bg-amber-950/40 px-3 py-2 text-center text-[11px] text-amber-200/90">{banner}</p> : null}
         <div className="mt-6 space-y-3">
           <form className="space-y-3" onSubmit={onSubmit}>
+            {userAuthUi ? (
+              <label className="block text-xs text-zinc-400">
+                Email
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-1 ring-zinc-800 focus:ring-emerald-500/35"
+                  required
+                />
+              </label>
+            ) : null}
             <label className="block text-xs text-zinc-400">
-              Shared app password
+              {userAuthUi ? "Password" : "Shared app password"}
               <input
                 type="password"
-                autoComplete="current-password"
+                autoComplete={userAuthUi ? "current-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-1 ring-zinc-800 focus:ring-emerald-500/35"
@@ -103,48 +134,36 @@ function LoginContent() {
               {busy ? "Signing in…" : "Sign in"}
             </button>
           </form>
-          <button
-            type="button"
-            onClick={() => setForgotOpen((open) => !open)}
-            aria-expanded={forgotOpen}
-            aria-controls="forgot-password-panel"
-            className="w-full pt-1 text-center text-sm font-medium text-emerald-500/90 underline-offset-2 hover:text-emerald-400 hover:underline"
-          >
-            Forgot password? / Change the shared password
-          </button>
-          {forgotOpen ? (
-            <div
-              id="forgot-password-panel"
-              className="space-y-3 rounded-xl border border-zinc-700/80 bg-zinc-950/60 p-4 text-left text-[11px] leading-relaxed text-zinc-400"
-            >
-              <p className="font-medium text-zinc-300">Rotating access (one password for all users)</p>
-              <p>
-                To <strong className="text-zinc-400">set a new shared password</strong> that everyone will use on the next
-                request:
-              </p>
-              <ol className="list-decimal space-y-2 pl-4 marker:text-zinc-600">
-                <li>
-                  Open <strong className="text-zinc-400">Vercel</strong> → your project →{" "}
-                  <strong className="text-zinc-400">Settings → Environment Variables</strong> → <strong className="text-zinc-400">Production</strong>.
-                </li>
-                <li>
-                  Edit <code className="text-zinc-300">BBGPT_APP_PASSWORD</code> (or legacy <code className="text-zinc-300">BABYGPT_APP_PASSWORD</code>) — enter the new password
-                  value, save.
-                </li>
-                <li>
-                  <strong className="text-zinc-400">Redeploy</strong> the project (Deployments → … → Redeploy) so running
-                  instances pick up the new value, then try signing in with the new password.
-                </li>
-              </ol>
-              <p className="border-t border-zinc-800 pt-3 text-zinc-500">
-                Optional email sign-in links require <code className="text-zinc-400">RESEND_API_KEY</code>,{" "}
-                <code className="text-zinc-400">EMAIL_FROM</code>, and{" "}
-                <code className="text-zinc-400">BBGPT_MAGIC_LINK_EMAILS</code> — see{" "}
-                <code className="text-zinc-400">deploy/LAUNCH-HANDOFF.md</code>. Operators can also run{" "}
-                <code className="text-zinc-300">npm run magic:link -- email https://your-host</code> locally with secrets.
-              </p>
-            </div>
-          ) : null}
+          {userAuthUi ? null : (
+            <>
+              <button
+                type="button"
+                onClick={() => setForgotOpen((open) => !open)}
+                aria-expanded={forgotOpen}
+                aria-controls="forgot-password-panel"
+                className="w-full pt-1 text-center text-sm font-medium text-emerald-500/90 underline-offset-2 hover:text-emerald-400 hover:underline"
+              >
+                Forgot password? / Change the shared password
+              </button>
+              {forgotOpen ? (
+                <div
+                  id="forgot-password-panel"
+                  className="space-y-3 rounded-xl border border-zinc-700/80 bg-zinc-950/60 p-4 text-left text-[11px] leading-relaxed text-zinc-400"
+                >
+                  <p className="font-medium text-zinc-300">Rotating the shared password</p>
+                  <ol className="list-decimal space-y-2 pl-4 marker:text-zinc-600">
+                    <li>Vercel → Settings → Environment Variables → Production.</li>
+                    <li>
+                      Edit <code className="text-zinc-300">BBGPT_APP_PASSWORD</code>, save, then redeploy.
+                    </li>
+                  </ol>
+                  <p className="border-t border-zinc-800 pt-3 text-zinc-500">
+                    Optional magic links: <code className="text-zinc-400">deploy/LAUNCH-HANDOFF.md</code>
+                  </p>
+                </div>
+              ) : null}
+            </>
+          )}
         </div>
       </div>
     </div>

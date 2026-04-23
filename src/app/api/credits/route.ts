@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const stripePayload = async () => {
-    const b = await readServerBilling();
+    const b = await readServerBilling(req);
     return {
       configured: isStripeConfigured(),
       customerId: b.customerId,
@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
     return denied;
   }
 
-  const w = await readServerWallet();
-  const billing = await readServerBilling();
+  const w = await readServerWallet(req);
+  const billing = await readServerBilling(req);
   const usageHints = [
     ...computeUsageHints(w),
     ...(billing.paymentAlert
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid planId" }, { status: 400 });
   }
 
-  const w = await setServerPlan(planId);
+  const w = await setServerPlan(planId, req);
   return NextResponse.json({
     source: "server" as const,
     planId: w.planId,

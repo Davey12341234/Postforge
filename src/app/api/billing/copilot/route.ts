@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "question required (max 2000 chars)" }, { status: 400 });
   }
 
-  const billing = await readServerBilling();
+  const billing = await readServerBilling(req);
   const { facts, error } = await buildStripeBillingFacts(billing);
   if (error) {
     return NextResponse.json({ error }, { status: 400 });
