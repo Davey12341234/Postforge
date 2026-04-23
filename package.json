@@ -25,6 +25,7 @@
     "release:check": "npm run verify && npm run launch:smoke",
     "launch:path": "node scripts/launch-path.cjs",
     "bootstrap:gate": "node scripts/bootstrap-gate-password.cjs",
+    "launch:follow-up": "node scripts/launch-follow-up-verify.cjs",
     "deploy:prod": "npx vercel deploy --prod --yes",
     "deploy:prod:fresh": "npx vercel deploy --prod --yes --force",
     "env:open": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/open-env-local.ps1",

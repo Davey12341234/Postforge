@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+import { getDataDir } from "@/lib/data-dir";
 import type { BillingAlertPayload } from "@/lib/billing-usage-hints";
 
 /** Shown in-app after Stripe `invoice.payment_failed` until cleared by `invoice.paid` or successful checkout. */
@@ -17,7 +18,7 @@ export type ServerBillingRecord = {
   paymentAlert: PaymentAlert | null;
 };
 
-const DATA_DIR = join(process.cwd(), ".data");
+const DATA_DIR = getDataDir();
 const BILLING_FILE = join(DATA_DIR, "billing.json");
 
 function defaultBilling(): ServerBillingRecord {

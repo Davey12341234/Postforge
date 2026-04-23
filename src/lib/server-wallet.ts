@@ -3,8 +3,10 @@ import { join } from "path";
 import type { CreditsStateV1 } from "@/lib/credits-store";
 import { DEFAULT_PLAN, FIRST_VISIT_CREDIT_BONUS, PLANS, type PlanId } from "@/lib/plans";
 
-/** Persisted under project `.data/` (gitignored). */
-const DATA_DIR = join(process.cwd(), ".data");
+import { getDataDir } from "@/lib/data-dir";
+
+/** Persisted under `.data/` locally or `/tmp/bbgpt-data` on Vercel (gitignored locally). */
+const DATA_DIR = getDataDir();
 const WALLET_FILE = join(DATA_DIR, "wallet.json");
 
 function monthKey(d = new Date()): string {

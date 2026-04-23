@@ -20,7 +20,7 @@ function normalizeEnvString(raw: string | undefined): string | undefined {
 
 /** Resolved app password for login comparison (undefined if gate should be off). */
 export function getAppPassword(): string | undefined {
-  return normalizeEnvString(process.env.BABYGPT_APP_PASSWORD);
+  return normalizeEnvString(process.env.BBGPT_APP_PASSWORD ?? process.env.BABYGPT_APP_PASSWORD);
 }
 
 export function isGateEnabled(): boolean {
