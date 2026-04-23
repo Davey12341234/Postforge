@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   const faqBlock = matches.map((e) => `## ${e.title}\n${e.body}`).join("\n\n");
   const system = [
-    "You help BabyGPT users with billing and subscription questions (Stripe, plans, credits, invoices, cancellation).",
+    "You help bbGPT users with billing and subscription questions (Stripe, plans, credits, invoices, cancellation).",
     "Ground your answer in the FAQ excerpts below. Do not contradict them.",
     "If the excerpts do not fully answer the question, say what is known from them. For account-specific Stripe actions, suggest Manage billing in the app.",
     "Under 160 words. Plain language.",

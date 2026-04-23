@@ -59,11 +59,11 @@ export function SettingsPanel({
         ref={ref}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="babygpt-settings-title"
+        aria-labelledby="bbgpt-settings-title"
         className="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl ring-1 ring-white/5"
       >
         <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
-          <h2 id="babygpt-settings-title" className="text-sm font-semibold text-zinc-100">
+          <h2 id="bbgpt-settings-title" className="text-sm font-semibold text-zinc-100">
             Settings
           </h2>
           <button
@@ -115,7 +115,7 @@ export function SettingsPanel({
             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Diagnostics</h3>
             <p className="mt-1 text-[11px] leading-snug text-zinc-500">
               When enabled, header controls and chat sends log structured lines to the browser console (
-              <span className="font-mono text-zinc-400">[BabyGPT UI]</span>
+              <span className="font-mono text-zinc-400">[bbGPT UI]</span>
               ). Also set <span className="font-mono text-zinc-400">NEXT_PUBLIC_UI_DIAGNOSTICS=true</span> at build
               time to default on.
             </p>
@@ -185,7 +185,7 @@ export function SettingsPanel({
           <section>
             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Time capsule</h3>
             <p className="mt-1 text-[11px] leading-snug text-zinc-500">
-              Save a note to your future self. When the time passes, BabyGPT shows it in a popup (stored in this
+              Save a note to your future self. When the time passes, bbGPT shows it in a popup (stored in this
               browser only).
             </p>
             <textarea

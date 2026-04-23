@@ -18,36 +18,36 @@ body {
 }
 
 html {
-  font-size: calc(14px * var(--babygpt-font-scale, 1));
+  font-size: calc(14px * var(--bbgpt-font-scale, 1));
 }
 
-html.babygpt-appearance-light body {
+html.bbgpt-appearance-light body {
   @apply bg-zinc-100 text-zinc-900;
 }
 
-html.babygpt-appearance-oled body {
+html.bbgpt-appearance-oled body {
   @apply bg-black text-zinc-100;
 }
 
 /* Header icon buttons: light shell */
-html.babygpt-appearance-light .babygpt-app-root header .babygpt-header-btn {
+html.bbgpt-appearance-light .bbgpt-app-root header .bbgpt-header-btn {
   @apply bg-white text-zinc-900 ring-zinc-300 hover:bg-zinc-100;
 }
 
-.babygpt-markdown pre {
+.bbgpt-markdown pre {
   @apply overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/80 p-3 text-sm;
 }
 
-.babygpt-markdown code {
+.bbgpt-markdown code {
   @apply rounded bg-zinc-800 px-1 py-0.5 text-[0.9em];
 }
 
-.babygpt-markdown pre code {
+.bbgpt-markdown pre code {
   @apply bg-transparent p-0;
 }
 
 /* Voice overlay — Grok-like eyes + waveform (see VoiceModeOverlay) */
-@keyframes babygpt-voice-blink {
+@keyframes bbgpt-voice-blink {
   0%,
   86%,
   100% {
@@ -59,15 +59,15 @@ html.babygpt-appearance-light .babygpt-app-root header .babygpt-header-btn {
   }
 }
 
-.babygpt-voice-eye--active {
-  animation: babygpt-voice-blink 3.4s ease-in-out infinite;
+.bbgpt-voice-eye--active {
+  animation: bbgpt-voice-blink 3.4s ease-in-out infinite;
 }
 
-.babygpt-voice-eye--lag.babygpt-voice-eye--active {
+.bbgpt-voice-eye--lag.bbgpt-voice-eye--active {
   animation-delay: 0.12s;
 }
 
-@keyframes babygpt-voice-wave {
+@keyframes bbgpt-voice-wave {
   0%,
   100% {
     height: 0.25rem;
@@ -79,6 +79,6 @@ html.babygpt-appearance-light .babygpt-app-root header .babygpt-header-btn {
   }
 }
 
-.babygpt-voice-bar {
-  animation: babygpt-voice-wave 0.52s ease-in-out infinite;
+.bbgpt-voice-bar {
+  animation: bbgpt-voice-wave 0.52s ease-in-out infinite;
 }

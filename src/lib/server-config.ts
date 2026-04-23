@@ -1,6 +1,7 @@
 /**
  * Optional deployment gate: password login + server-side wallet.
- * When BABYGPT_APP_PASSWORD is unset, the app behaves as a local-first dev UI (no login).
+ * Canonical env: `BBGPT_*`. Legacy `BABYGPT_*` is still read when the new key is unset.
+ * When no app password is set, the app behaves as a local-first dev UI (no login).
  */
 
 /** Trim and strip a single pair of surrounding quotes (common .env copy/paste mistake). */
@@ -27,9 +28,9 @@ export function isGateEnabled(): boolean {
 }
 
 export function getApiSecret(): string | undefined {
-  return normalizeEnvString(process.env.BABYGPT_API_SECRET);
+  return normalizeEnvString(process.env.BBGPT_API_SECRET ?? process.env.BABYGPT_API_SECRET);
 }
 
 export function getSessionSecret(): string | undefined {
-  return normalizeEnvString(process.env.BABYGPT_SESSION_SECRET);
+  return normalizeEnvString(process.env.BBGPT_SESSION_SECRET ?? process.env.BABYGPT_SESSION_SECRET);
 }

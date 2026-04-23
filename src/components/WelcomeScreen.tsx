@@ -39,16 +39,16 @@ export function WelcomeScreen({
     <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 py-10">
       <div className="flex flex-col items-center gap-4 text-center">
         <Image
-          src="/babygpt-logo.png"
-          alt="BabyGPT"
+          src="/bbgpt-logo.png"
+          alt="bbGPT"
           width={88}
           height={88}
           priority
           style={{ width: "auto", height: "auto" }}
-          className="drop-shadow-[0_0_24px_rgba(34,211,238,0.25)]"
+          className="drop-shadow-[0_0_26px_rgba(167,243,208,0.35)]"
         />
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">BabyGPT</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">bbGPT</h1>
           <p className="mt-2 text-sm text-zinc-400">
             A dark, ChatGPT-style UI with quantum-inspired controls — powered by{" "}
             <span className="text-zinc-300">z-ai-web-dev-sdk</span> on the server.

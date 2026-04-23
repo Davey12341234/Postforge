@@ -1,4 +1,4 @@
-# BabyGPT — agent notes
+# bbGPT — agent notes
 
 ## Quality gate (local / CI)
 
@@ -13,7 +13,7 @@
 
 ## Routes
 
-- `GET /` — BabyGPT UI (sidebar, chat, quantum controls, community).
+- `GET /` — bbGPT UI (sidebar, chat, quantum controls, community).
 - `POST /api/chat` — streaming chat (SSE).
 - `POST /api/chat/agent` — agent loop (tools) stream.
 - `POST /api/chat/gemini` — Gemini multimodal when user messages include attachments (`GEMINI_API_KEY`).
@@ -23,11 +23,11 @@
 - `GET|POST /api/community` — in-memory community CRUD.
 - `POST /api/community/debate` — paired non-stream completions.
 
-**Voice / files (UI):** Composer uses Web Speech API (voice overlay) and per-file size presets (`babygpt_max_file_bytes_override` in `localStorage`). Default max ~25 MB when env unset; raise `BABYGPT_MAX_FILE_BYTES` for self-host.
+**Voice / files (UI):** Composer uses Web Speech API (voice overlay) and per-file size presets (`bbgpt_max_file_bytes_override` in `localStorage`; legacy `babygpt_*` still read). Default max ~25 MB when env unset; raise `BBGPT_MAX_FILE_BYTES` (legacy `BABYGPT_MAX_FILE_BYTES`) for self-host.
 
 ## Persistence
 
-- Browser: `localStorage` keys prefixed with `babygpt_`.
+- Browser: `localStorage` keys prefixed with `bbgpt_` (legacy `babygpt_*` migrated on first load).
 - Server: no durable store for community data (resets on restart).
 
 ## PostForge
@@ -41,8 +41,8 @@ See `docs/HANDOFF-AI-NEXT-REVIEW.md` (architecture, Stripe / Plans modal behavio
 
 **Finish billing setup:** `npm run finish:billing` (then `npm run vercel:env:prod` on Windows when keys are complete).
 
-**ProLiant / installer USB (bare metal):** step-by-step for beginners: `deploy/proliant/BEGINNER-FULL-PATH.md`. Technical runbook: `deploy/proliant/RUNBOOK.md`. **Ubuntu 22.04 ISO + Rufus:** `npm run proliant:prepare-official` (or download-only: `npm run proliant:prepare-official-download`). ISOs download to **`deploy/proliant/staging` on a fixed disk** only (scripts refuse USB/SD staging). **BabyGPT onto the flashed stick:** `npm run proliant:usb-sync:e` (or `npm run proliant:usb-sync` with **`BABYGPT_USB_LETTER`**). Check: `npm run proliant:verify-usb-deploy:e`. One shot: `npm run proliant:usb-sync-and-verify:e`. **No NVMe / no bay disks yet (USB-only OS):** `npm run proliant:quick-usb` (verify + staging + deploy to all plugged USBs; optional `-LaunchRufus` in `scripts/proliant-usb-only-prep.ps1`).
+**ProLiant / installer USB (bare metal):** step-by-step for beginners: `deploy/proliant/BEGINNER-FULL-PATH.md`. Technical runbook: `deploy/proliant/RUNBOOK.md`. **Ubuntu 22.04 ISO + Rufus:** `npm run proliant:prepare-official` (or download-only: `npm run proliant:prepare-official-download`). ISOs download to **`deploy/proliant/staging` on a fixed disk** only (scripts refuse USB/SD staging). **bbGPT onto the flashed stick:** `npm run proliant:usb-sync:e` (or `npm run proliant:usb-sync` with **`BBGPT_USB_LETTER`**, legacy `BABYGPT_USB_LETTER`). Check: `npm run proliant:verify-usb-deploy:e`. One shot: `npm run proliant:usb-sync-and-verify:e`. **No NVMe / no bay disks yet (USB-only OS):** `npm run proliant:quick-usb` (verify + staging + deploy to all plugged USBs; optional `-LaunchRufus` in `scripts/proliant-usb-only-prep.ps1`).
 
-**Cursor handoff doc:** `npm run context:docx` writes `docs/BabyGPT-Cursor-Context.docx` and **`docs/BabyGPT-Cursor-Context.md`** (same content; use `.md` if Word won’t open the docx). Section **9** is **Cursor handoff & continuity** (quality gates, storage/CSS/AI notes, warnings, next steps, commands). `npm run context:review` writes `docs/cursor-review-snapshot.json`.
+**Cursor handoff doc:** `npm run context:docx` writes `docs/bbGPT-Cursor-Context.docx` and **`docs/bbGPT-Cursor-Context.md`** (same content; use `.md` if Word won’t open the docx). Section **9** is **Cursor handoff & continuity** (quality gates, storage/CSS/AI notes, warnings, next steps, commands). `npm run context:review` writes `docs/cursor-review-snapshot.json`.
 
 **Onboarding / paths product spec (not fully implemented in UI):** `docs/BabyGPT-Onboarding-Paths-Spec.md`. **Full app diagnostic (compact paste):** `docs/BabyGPT-App-Diagnostic.md`. **Go-live, Stripe, final copy:** `docs/FINAL-LAUNCH-COPY.md`.

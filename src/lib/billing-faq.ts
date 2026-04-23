@@ -30,7 +30,7 @@ export const BILLING_FAQ: FaqEntry[] = [
     id: "refund",
     keywords: ["refund", "money back", "dispute"],
     title: "Refunds",
-    body: "Refund policy is set by you as the merchant. Stripe supports refunds and disputes in the Dashboard. BabyGPT does not decide refund eligibility automatically.",
+    body: "Refund policy is set by you as the merchant. Stripe supports refunds and disputes in the Dashboard. bbGPT does not decide refund eligibility automatically.",
   },
   {
     id: "tax",

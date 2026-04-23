@@ -58,7 +58,7 @@ import {
   appRootBgClass,
   type UiPreferences,
 } from "@/lib/ui-preferences";
-import { PLANS, planAllowsModel, type PlanId, type PlanDefinition } from "@/lib/plans";
+import { PLANS, planAllowsModel, type PlanBillingCadence, type PlanId, type PlanDefinition } from "@/lib/plans";
 import { schrodingerPair } from "@/lib/schrodinger-pair";
 import { uiDiag } from "@/lib/ui-diagnostics";
 import {
@@ -104,7 +104,7 @@ function loadConvos(): Conversation[] {
   }
 }
 
-export default function BabyGPTClient() {
+export default function BbGPTClient() {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -190,14 +190,18 @@ export default function BabyGPTClient() {
   const showBillingBanner = useMemo(() => {
     if (!billingAlert || billingAlertLocalDismiss) return false;
     if (typeof sessionStorage !== "undefined") {
-      if (sessionStorage.getItem(`babygpt_dismiss_billing_${billingAlert.at}`) === "1") return false;
+      if (
+        sessionStorage.getItem(`bbgpt_dismiss_billing_${billingAlert.at}`) === "1" ||
+        sessionStorage.getItem(`babygpt_dismiss_billing_${billingAlert.at}`) === "1"
+      )
+        return false;
     }
     return true;
   }, [billingAlert, billingAlertLocalDismiss]);
 
   const dismissBillingAlert = useCallback(() => {
     if (!billingAlert) return;
-    sessionStorage.setItem(`babygpt_dismiss_billing_${billingAlert.at}`, "1");
+    sessionStorage.setItem(`bbgpt_dismiss_billing_${billingAlert.at}`, "1");
     setBillingAlertLocalDismiss(true);
   }, [billingAlert]);
 
@@ -208,7 +212,11 @@ export default function BabyGPTClient() {
 
   useEffect(() => {
     try {
-      if (localStorage.getItem("babygpt_read_aloud") === "1") setReadAloud(true);
+      if (
+        localStorage.getItem("bbgpt_read_aloud") === "1" ||
+        localStorage.getItem("babygpt_read_aloud") === "1"
+      )
+        setReadAloud(true);
     } catch {
       /* ignore */
     }
@@ -224,7 +232,7 @@ export default function BabyGPTClient() {
 
   const setAttachmentLimitPersist = useCallback((bytes: number) => {
     try {
-      localStorage.setItem("babygpt_max_file_bytes_override", String(bytes));
+      localStorage.setItem("bbgpt_max_file_bytes_override", String(bytes));
     } catch {
       /* ignore */
     }
@@ -234,7 +242,7 @@ export default function BabyGPTClient() {
   const setReadAloudPersist = useCallback((v: boolean) => {
     setReadAloud(v);
     try {
-      localStorage.setItem("babygpt_read_aloud", v ? "1" : "0");
+      localStorage.setItem("bbgpt_read_aloud", v ? "1" : "0");
     } catch {
       /* ignore */
     }
@@ -311,12 +319,13 @@ export default function BabyGPTClient() {
     };
   }, []);
 
-  const openStripeCheckout = useCallback(async (planId: Exclude<PlanId, "free">) => {
+  const openStripeCheckout = useCallback(
+    async (planId: Exclude<PlanId, "free">, billing: PlanBillingCadence = "monthly") => {
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ planId }),
+      body: JSON.stringify({ planId, billing }),
     });
     const data = (await res.json()) as { error?: string; url?: string };
     if (!res.ok) {
@@ -350,7 +359,7 @@ export default function BabyGPTClient() {
   }, []);
 
   const scrollToQuantumBar = useCallback(() => {
-    document.getElementById("babygpt-quantum-bar")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("bbgpt-quantum-bar")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
   const activePlanId = credits?.planId;
@@ -796,7 +805,8 @@ export default function BabyGPTClient() {
         return;
       }
 
-      const rr = res.headers.get("X-BabyGPT-Routing-Reason");
+      const rr =
+        res.headers.get("X-bbGPT-Routing-Reason") ?? res.headers.get("X-BabyGPT-Routing-Reason");
       if (rr) setRoutingReason(decodeURIComponent(rr));
 
       if (!res.ok) {
@@ -1175,7 +1185,7 @@ export default function BabyGPTClient() {
   const appearance = uiPrefs?.appearance ?? "dark";
 
   return (
-    <div className={`babygpt-app-root flex h-[100dvh] w-full flex-col ${appRootBgClass(appearance)}`}>
+    <div className={`bbgpt-app-root flex h-[100dvh] w-full flex-col ${appRootBgClass(appearance)}`}>
       {introGateOpen ? (
         <OnboardingIntakeModal appearance={appearance} onComplete={onIntroIntakeComplete} />
       ) : null}
@@ -1206,7 +1216,7 @@ export default function BabyGPTClient() {
             <div
               className={`truncate text-sm font-semibold ${appearance === "light" ? "text-zinc-900" : "text-zinc-100"}`}
             >
-              BabyGPT
+              bbGPT
             </div>
             <span
               className={`hidden items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ring-1 sm:inline-flex ${mood.accentClass}`}
@@ -1236,7 +1246,7 @@ export default function BabyGPTClient() {
           </div>
         </div>
         <QuantumControls
-          id="babygpt-quantum-bar"
+          id="bbgpt-quantum-bar"
           plan={credits ? PLANS[credits.planId] : PLANS.free}
           model={model}
           onModel={setModel}
@@ -1254,7 +1264,7 @@ export default function BabyGPTClient() {
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            className="babygpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
             title="Font size, theme, notifications, time capsule"
           >
             Settings
@@ -1262,7 +1272,7 @@ export default function BabyGPTClient() {
           <button
             type="button"
             onClick={() => setSubscriptionOpen(true)}
-            className="babygpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
             title="Subscription tiers, model access, and credit balance"
           >
             Plans
@@ -1289,7 +1299,7 @@ export default function BabyGPTClient() {
                 router.push("/login");
                 router.refresh();
               }}
-              className="babygpt-header-btn hidden rounded-full bg-zinc-900 px-2 py-1 text-[10px] text-zinc-400 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:inline"
+              className="bbgpt-header-btn hidden rounded-full bg-zinc-900 px-2 py-1 text-[10px] text-zinc-400 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:inline"
             >
               Sign out
             </button>
@@ -1302,14 +1312,14 @@ export default function BabyGPTClient() {
           <button
             type="button"
             onClick={() => setSkillsOpen(true)}
-            className="babygpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
           >
             Skills
           </button>
           <button
             type="button"
             onClick={() => setCommunityOpen(true)}
-            className="babygpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
           >
             Community
           </button>
@@ -1578,7 +1588,7 @@ export default function BabyGPTClient() {
       <footer className={`${footerShellClass(appearance)} text-[9px] leading-tight sm:text-[10px]`}>
         <span className="text-zinc-500">v{APP_VERSION}</span>
         {" · "}
-        BabyGPT is not affiliated with or endorsed by OpenAI. &quot;ChatGPT&quot; is a trademark of OpenAI.
+        bbGPT is not affiliated with or endorsed by OpenAI. &quot;ChatGPT&quot; is a trademark of OpenAI.
       </footer>
     </div>
   );

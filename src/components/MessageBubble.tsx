@@ -163,7 +163,7 @@ export function MessageBubble({
         ) : showGeneratingPlaceholder ? (
           <p className="animate-pulse text-zinc-500">Generating…</p>
         ) : (
-          <div className="babygpt-markdown prose prose-invert max-w-none prose-p:my-2 prose-headings:my-3">
+          <div className="bbgpt-markdown prose prose-invert max-w-none prose-p:my-2 prose-headings:my-3">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeSanitize, rehypeHighlight]}

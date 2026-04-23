@@ -127,8 +127,8 @@ function mergeSchrodingerStreams(
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
-      "X-BabyGPT-Schrodinger": "1",
-      "X-BabyGPT-Provider": provider,
+      "X-bbGPT-Schrodinger": "1",
+      "X-bbGPT-Provider": provider,
     },
   });
 }

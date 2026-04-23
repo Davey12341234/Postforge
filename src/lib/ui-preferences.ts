@@ -58,10 +58,10 @@ export function saveUiPreferences(next: UiPreferences): void {
 export function applyUiPreferences(p: UiPreferences): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.style.setProperty("--babygpt-font-scale", String(p.fontScale));
-  root.dataset.babygptAppearance = p.appearance;
-  root.classList.toggle("babygpt-appearance-light", p.appearance === "light");
-  root.classList.toggle("babygpt-appearance-oled", p.appearance === "oled");
+  root.style.setProperty("--bbgpt-font-scale", String(p.fontScale));
+  root.dataset.bbgptAppearance = p.appearance;
+  root.classList.toggle("bbgpt-appearance-light", p.appearance === "light");
+  root.classList.toggle("bbgpt-appearance-oled", p.appearance === "oled");
 }
 
 /** Outer app root background (fills viewport). */

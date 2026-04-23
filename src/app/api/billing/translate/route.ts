@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   const system = [
     `Translate the user's string to ${targetLocale} for a billing/subscription UI.`,
-    "Keep product names: BabyGPT, Stripe, OpenAI unchanged unless a locale convention requires transliteration.",
+    "Keep product names: bbGPT, Stripe, OpenAI unchanged unless a locale convention requires transliteration.",
     "Output only the translation text — no quotes or preamble.",
   ].join(" ");
 

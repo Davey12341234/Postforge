@@ -1,3 +1,4 @@
+import { LEGACY_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-cookie";
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -16,8 +17,6 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/api/auth/")) {
     return NextResponse.next();
   }
-  // Stripe Checkout/Portal/Finalize require the same session as the rest of the app.
-  // Only the webhook is verified via Stripe-Signature (no browser cookie).
   if (pathname === "/api/stripe/webhook" || pathname.startsWith("/api/stripe/webhook/")) {
     return NextResponse.next();
   }
@@ -32,14 +31,16 @@ export async function middleware(request: NextRequest) {
   if (!secret) {
     if (pathname.startsWith("/api")) {
       return NextResponse.json(
-        { error: "Server misconfigured: set BABYGPT_SESSION_SECRET when BABYGPT_APP_PASSWORD is set." },
+        { error: "Server misconfigured: set BBGPT_SESSION_SECRET when BBGPT_APP_PASSWORD is set." },
         { status: 500 },
       );
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const token = request.cookies.get("babygpt_token")?.value;
+  const token =
+    request.cookies.get(SESSION_COOKIE_NAME)?.value ??
+    request.cookies.get(LEGACY_SESSION_COOKIE_NAME)?.value;
   if (!token) {
     if (pathname.startsWith("/api")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -60,6 +61,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|babygpt-logo.png|.*\\.(?:ico|png|jpg|jpeg|svg|webp|gif)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|bbgpt-logo.png|babygpt-logo.png|.*\\.(?:ico|png|jpg|jpeg|svg|webp|gif)$).*)",
   ],
 };

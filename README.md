@@ -1,6 +1,6 @@
-# BabyGPT
+# bbGPT
 
-BabyGPT is a dark, ChatGPT-style assistant built with Next.js 16, React 19, Tailwind CSS 4, and the `z-ai-web-dev-sdk` on the server.
+bbGPT is a dark, ChatGPT-style assistant built with Next.js 16, React 19, Tailwind CSS 4, and the `z-ai-web-dev-sdk` on the server.
 
 ## Setup
 
@@ -33,6 +33,6 @@ Open `http://localhost:3000`.
 
 ## Notes
 
-- Chat history is stored in the browser (`localStorage`, prefix `babygpt_`).
+- Chat history is stored in the browser (`localStorage`, prefix `bbgpt_`; legacy `babygpt_*` keys migrate once on load).
 - Community posts are kept in memory on the server and reset when the dev server restarts.
 - Legacy PostForge assets are archived under `_archive/`.

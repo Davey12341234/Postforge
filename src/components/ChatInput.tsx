@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { FILE_SIZE_PRESETS, nearestPresetBytes } from "@/lib/attachment-presets";
 import { formatBytes } from "@/lib/file-attachments";
 import { getInlineAttachmentMaxBytes } from "@/lib/attachment-config";
@@ -63,7 +63,14 @@ export function ChatInput({
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
   const [interimText, setInterimText] = useState("");
   const inlineMax = getInlineAttachmentMaxBytes();
-  const voiceCtor = typeof window !== "undefined" ? getSpeechRecognitionConstructor() : null;
+  /** Browser-only API: server snapshot null, client uses live constructor after hydration. */
+  const voiceCtor = useSyncExternalStore(
+    () => () => {
+      /* no external store; capability is fixed per document */
+    },
+    () => getSpeechRecognitionConstructor(),
+    () => null,
+  );
 
   useEffect(() => {
     valueRef.current = value;
@@ -286,7 +293,7 @@ export function ChatInput({
             }
           }}
           rows={2}
-          placeholder="Message BabyGPT…"
+          placeholder="Message bbGPT…"
           className="min-h-[44px] min-w-0 flex-1 resize-y rounded-2xl bg-zinc-900/60 px-3 py-2.5 text-sm leading-relaxed text-zinc-100 outline-none ring-1 ring-zinc-800 placeholder:text-zinc-600 focus:ring-cyan-500/30 disabled:opacity-50"
         />
 

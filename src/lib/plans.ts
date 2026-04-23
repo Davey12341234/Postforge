@@ -2,6 +2,9 @@ import type { ModelTier } from "@/lib/types";
 
 export type PlanId = "free" | "starter" | "pro" | "team";
 
+/** Monthly vs annual Stripe checkout — separate recurring Prices in Dashboard. */
+export type PlanBillingCadence = "monthly" | "annual";
+
 export type QuantumFeatureKey = "kolmogorov" | "holographic" | "dna";
 
 export interface PlanDefinition {
@@ -120,6 +123,9 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
 };
 
 export const DEFAULT_PLAN: PlanId = "free";
+
+/** Stable UI / billing order (do not rely only on `Object.keys(PLANS)`). */
+export const PLAN_IDS_IN_UI_ORDER: readonly PlanId[] = ["free", "starter", "pro", "team"];
 
 /** One-time welcome grant so new users can explore credit spend before monthly accrual. */
 export const FIRST_VISIT_CREDIT_BONUS = 120;

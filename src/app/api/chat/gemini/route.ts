@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { guardChatSend } from "@/lib/chat-route-guard";
-import { babygptMessagesToGeminiContents, type PayloadMessage } from "@/lib/gemini-contents";
+import { bbgptMessagesToGeminiContents, type PayloadMessage } from "@/lib/gemini-contents";
 import { createGeminiClient, getGeminiChatModel } from "@/lib/gemini-server";
 import type { GoogleGenAI } from "@google/genai";
 import { getServerMaxFileBytes } from "@/lib/attachment-config";
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
   });
   if (gated) return gated;
 
-  const { contents, systemInstruction } = babygptMessagesToGeminiContents(body.messages, memorySkill);
+  const { contents, systemInstruction } = bbgptMessagesToGeminiContents(body.messages, memorySkill);
 
   const chatModel = getGeminiChatModel();
 
@@ -143,8 +143,8 @@ export async function POST(req: NextRequest) {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
-        "X-BabyGPT-Provider": "gemini",
-        "X-BabyGPT-Model": chatModel,
+        "X-bbGPT-Provider": "gemini",
+        "X-bbGPT-Model": chatModel,
       },
     });
   } catch (e) {

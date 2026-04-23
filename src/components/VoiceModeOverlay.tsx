@@ -51,7 +51,7 @@ export function VoiceModeOverlay({
         className="relative z-10 flex w-full max-w-lg flex-col items-center px-6"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="babygpt-voice-title"
+        aria-labelledby="bbgpt-voice-title"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -66,7 +66,7 @@ export function VoiceModeOverlay({
         </button>
 
         <div className="relative flex min-h-[280px] w-full flex-col items-center">
-          <h2 id="babygpt-voice-title" className="sr-only">
+          <h2 id="bbgpt-voice-title" className="sr-only">
             Voice input
           </h2>
 
@@ -82,13 +82,13 @@ export function VoiceModeOverlay({
           {/* Grok-style “eyes” */}
           <div className="relative z-10 mt-4 flex items-center justify-center gap-6 sm:gap-10">
             <div
-              className={`babygpt-voice-eye h-11 w-[4.25rem] rounded-[999px] bg-gradient-to-b from-white/25 via-cyan-100/10 to-zinc-950 shadow-[0_0_40px_rgba(34,211,238,0.45)] ring-1 ring-cyan-400/25 ${
-                listening ? "babygpt-voice-eye--active" : "opacity-60"
+              className={`bbgpt-voice-eye h-11 w-[4.25rem] rounded-[999px] bg-gradient-to-b from-white/25 via-cyan-100/10 to-zinc-950 shadow-[0_0_40px_rgba(34,211,238,0.45)] ring-1 ring-cyan-400/25 ${
+                listening ? "bbgpt-voice-eye--active" : "opacity-60"
               }`}
             />
             <div
-              className={`babygpt-voice-eye babygpt-voice-eye--lag h-11 w-[4.25rem] rounded-[999px] bg-gradient-to-b from-white/25 via-violet-100/10 to-zinc-950 shadow-[0_0_40px_rgba(139,92,246,0.35)] ring-1 ring-violet-400/20 ${
-                listening ? "babygpt-voice-eye--active" : "opacity-60"
+              className={`bbgpt-voice-eye bbgpt-voice-eye--lag h-11 w-[4.25rem] rounded-[999px] bg-gradient-to-b from-white/25 via-violet-100/10 to-zinc-950 shadow-[0_0_40px_rgba(139,92,246,0.35)] ring-1 ring-violet-400/20 ${
+                listening ? "bbgpt-voice-eye--active" : "opacity-60"
               }`}
             />
           </div>
@@ -99,7 +99,7 @@ export function VoiceModeOverlay({
               <div
                 key={i}
                 className={`w-1.5 rounded-full bg-gradient-to-t from-cyan-600/90 to-cyan-300/80 ${
-                  listening ? "babygpt-voice-bar" : "h-1 opacity-30"
+                  listening ? "bbgpt-voice-bar" : "h-1 opacity-30"
                 }`}
                 style={listening ? { animationDelay: `${i * 0.08}s` } : undefined}
               />

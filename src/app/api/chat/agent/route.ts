@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
           enc.encode(
             sseData({
               choices: [{ delta: { content: "" } }],
-              babygpt_agent: {
+              bbgpt_agent: {
                 toolCalls: result.toolCalls,
                 errorCorrectionLog: result.errorCorrectionLog,
                 routingReason: result.routingReason,
@@ -136,9 +136,9 @@ export async function POST(req: NextRequest) {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
-        "X-BabyGPT-Model": result.plannerModel,
-        "X-BabyGPT-Routing-Reason": encodeURIComponent(result.routingReason),
-        "X-BabyGPT-Provider": llm.provider,
+        "X-bbGPT-Model": result.plannerModel,
+        "X-bbGPT-Routing-Reason": encodeURIComponent(result.routingReason),
+        "X-bbGPT-Provider": llm.provider,
       },
     });
   } catch (e) {

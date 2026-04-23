@@ -13,8 +13,8 @@ type GeminiPart =
 
 type GeminiContent = { role: "user" | "model"; parts: GeminiPart[] };
 
-/** Map BabyGPT history to Gemini `contents` (multimodal user parts). */
-export function babygptMessagesToGeminiContents(
+/** Map bbGPT history to Gemini `contents` (multimodal user parts). */
+export function bbgptMessagesToGeminiContents(
   messages: PayloadMessage[],
   memoryPrompt?: string,
 ): { contents: GeminiContent[]; systemInstruction?: string } {

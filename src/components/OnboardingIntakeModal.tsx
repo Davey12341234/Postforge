@@ -7,7 +7,7 @@ import { INTRO_INTAKE_MIN_CHARS } from "@/lib/onboarding-intake-storage";
 const WHY_CONNECTION_COPY = {
   title: "Why connection matters",
   lead:
-    "BabyGPT is not a clinician. What we can do is use your words—goals, constraints, tone—to steer replies toward what actually fits you. That is the same reason coaches take an intake and why good product copy asks who it is for: ambiguity is expensive.",
+    "bbGPT is not a clinician. What we can do is use your words—goals, constraints, tone—to steer replies toward what actually fits you. That is the same reason coaches take an intake and why good product copy asks who it is for: ambiguity is expensive.",
   bullets: [
     {
       label: "Coaching & counseling research",
@@ -31,7 +31,7 @@ const WHY_CONNECTION_COPY = {
 
 /** Satisfies INTRO_INTAKE_MIN_CHARS so skip counts as completed intake; user can redo from Settings. */
 const INTRO_SKIP_PLACEHOLDER_ANSWER =
-  "Exploring BabyGPT first — I can open the connection questionnaire from Settings when I am ready.";
+  "Exploring bbGPT first — I can open the connection questionnaire from Settings when I am ready.";
 
 export function OnboardingIntakeModal({
   appearance,

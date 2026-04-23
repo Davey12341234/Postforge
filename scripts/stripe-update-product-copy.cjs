@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Push BabyGPT product name + description to Stripe via API (no Dashboard paste errors).
+ * Push bbGPT product name + description to Stripe via API (no Dashboard paste errors).
  * Copy is aligned with src/lib/plans.ts (paid tiers) and default list USD in .env.local.example.
  *
  * Usage (repo root; reads .env / .env.local for STRIPE_SECRET_KEY):
@@ -21,7 +21,7 @@ const { loadMergedEnv } = require("./load-env-files.cjs");
 const PAID = {
   starter: {
     listUsd: 12,
-    name: "BabyGPT — Starter",
+    name: "bbGPT — Starter",
     subtitle: "Stronger models + agent tools",
     monthlyCredits: 4_000,
     blurb:
@@ -29,7 +29,7 @@ const PAID = {
   },
   pro: {
     listUsd: 24,
-    name: "BabyGPT — Pro",
+    name: "bbGPT — Pro",
     subtitle: "Full stack: dual-model, DNA, long context",
     monthlyCredits: 25_000,
     blurb:
@@ -37,7 +37,7 @@ const PAID = {
   },
   team: {
     listUsd: 69,
-    name: "BabyGPT — Team",
+    name: "bbGPT — Team",
     subtitle: "Same capabilities as Pro — higher monthly pool",
     monthlyCredits: 80_000,
     blurb:
@@ -50,7 +50,7 @@ function buildDescription(key) {
   return [
     p.subtitle,
     "",
-    `About ${p.monthlyCredits.toLocaleString("en-US")} credits per month in-app (BabyGPT bookkeeping).`,
+    `About ${p.monthlyCredits.toLocaleString("en-US")} credits per month in-app (bbGPT bookkeeping).`,
     `Public list price: $${p.listUsd}/month — must match the recurring Price in Stripe and NEXT_PUBLIC_PLAN_PRICE_${key.toUpperCase()}_USD.`,
     "",
     p.blurb,

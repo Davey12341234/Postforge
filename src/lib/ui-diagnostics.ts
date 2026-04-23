@@ -32,13 +32,13 @@ export function setUiDiagnosticsEnabled(on: boolean): void {
 export function uiDiag(controlId: string, status: UiDiagStatus, detail?: Record<string, unknown>): void {
   if (!isUiDiagnosticsEnabled()) return;
   const line = {
-    app: "BabyGPT",
+    app: "bbGPT",
     controlId,
     status,
     at: new Date().toISOString(),
     ...detail,
   };
-  const msg = `[BabyGPT UI] ${JSON.stringify(line)}`;
+  const msg = `[bbGPT UI] ${JSON.stringify(line)}`;
   if (status === "fail") console.warn(msg);
   else console.log(msg);
 }

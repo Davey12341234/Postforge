@@ -65,10 +65,10 @@ export function SkillsPanel({
         className="h-[min(90vh,820px)] w-full max-w-4xl overflow-auto rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl ring-1 ring-white/5"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="babygpt-skills-title"
+        aria-labelledby="bbgpt-skills-title"
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-zinc-900 bg-zinc-950/90 px-4 py-3 backdrop-blur">
-          <div id="babygpt-skills-title" className="text-sm font-semibold text-zinc-100">
+          <div id="bbgpt-skills-title" className="text-sm font-semibold text-zinc-100">
             Skills
           </div>
           <button

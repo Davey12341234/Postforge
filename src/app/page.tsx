@@ -1,5 +1,5 @@
-import BabyGPTClient from "@/components/BabyGPTClient";
+import BbGPTClient from "@/components/BbGPTClient";
 
 export default function Home() {
-  return <BabyGPTClient />;
+  return <BbGPTClient />;
 }

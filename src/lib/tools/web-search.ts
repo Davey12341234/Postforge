@@ -3,7 +3,7 @@ import type { ToolDefinition } from "./types";
 /** DuckDuckGo lite + optional Z.AI web_search. Full browser automation (e.g. OpenClaw-style Playwright agents) is out of scope here — run as a separate service if you need it. */
 async function duckDuckGoLite(query: string): Promise<string> {
   const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
-  const res = await fetch(url, { headers: { "User-Agent": "BabyGPT/1.0 (tool)" } });
+  const res = await fetch(url, { headers: { "User-Agent": "bbGPT/1.0 (tool)" } });
   const j = (await res.json()) as {
     AbstractText?: string;
     AbstractURL?: string;

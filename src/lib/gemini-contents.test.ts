@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { babygptMessagesToGeminiContents } from "./gemini-contents";
+import { bbgptMessagesToGeminiContents } from "./gemini-contents";
 
-describe("babygptMessagesToGeminiContents", () => {
+describe("bbgptMessagesToGeminiContents", () => {
   it("uses fileData for Gemini file refs", () => {
-    const { contents } = babygptMessagesToGeminiContents(
+    const { contents } = bbgptMessagesToGeminiContents(
       [
         {
           role: "user",
@@ -34,7 +34,7 @@ describe("babygptMessagesToGeminiContents", () => {
   });
 
   it("uses inlineData when base64 is present", () => {
-    const { contents } = babygptMessagesToGeminiContents(
+    const { contents } = bbgptMessagesToGeminiContents(
       [
         {
           role: "user",

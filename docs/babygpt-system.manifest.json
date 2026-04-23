@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "BabyGPT system manifest",
+  "title": "bbGPT system manifest",
   "description": "Handoff snapshot for external systems. Canonical values live in TypeScript sources listed under source_of_truth.",
   "app": {
-    "name": "babygpt",
-    "package": "babygpt",
+    "name": "bbgpt",
+    "package": "bbgpt",
     "node": ">=20"
   },
   "source_of_truth": {
@@ -47,16 +47,16 @@
       "required_for": "Fallback when Z.AI client cannot be constructed"
     },
     {
-      "name": "BABYGPT_APP_PASSWORD",
-      "required_for": "Optional deploy gate: shared password → JWT session at /login"
+      "name": "BBGPT_APP_PASSWORD",
+      "required_for": "Optional deploy gate: shared password → JWT session at /login (legacy: BABYGPT_APP_PASSWORD)"
     },
     {
-      "name": "BABYGPT_SESSION_SECRET",
-      "required_for": "Required when BABYGPT_APP_PASSWORD is set (signs babygpt_token cookie)"
+      "name": "BBGPT_SESSION_SECRET",
+      "required_for": "Required when BBGPT_APP_PASSWORD is set (signs bbgpt_token cookie; legacy BABYGPT_SESSION_SECRET / babygpt_token)"
     },
     {
-      "name": "BABYGPT_API_SECRET",
-      "required_for": "Optional Bearer token for scripts calling APIs without a browser cookie"
+      "name": "BBGPT_API_SECRET",
+      "required_for": "Optional Bearer token for scripts calling APIs without a browser cookie (legacy: BABYGPT_API_SECRET)"
     },
     {
       "name": "NEXT_PUBLIC_APP_URL",
@@ -81,6 +81,34 @@
     {
       "name": "STRIPE_PRICE_TEAM",
       "required_for": "Stripe Price ID for Team subscription"
+    },
+    {
+      "name": "STRIPE_PRICE_STARTER_YEARLY",
+      "required_for": "Optional — Stripe yearly Price ID for Starter (annual Checkout)"
+    },
+    {
+      "name": "STRIPE_PRICE_PRO_YEARLY",
+      "required_for": "Optional — Stripe yearly Price ID for Pro"
+    },
+    {
+      "name": "STRIPE_PRICE_TEAM_YEARLY",
+      "required_for": "Optional — Stripe yearly Price ID for Team"
+    },
+    {
+      "name": "NEXT_PUBLIC_PLAN_PRICE_STARTER_YEARLY_USD",
+      "required_for": "Optional — annual list price shown in Plans modal"
+    },
+    {
+      "name": "NEXT_PUBLIC_PLAN_PRICE_PRO_YEARLY_USD",
+      "required_for": "Optional — annual list price for Pro"
+    },
+    {
+      "name": "NEXT_PUBLIC_PLAN_PRICE_TEAM_YEARLY_USD",
+      "required_for": "Optional — annual list price for Team"
+    },
+    {
+      "name": "GEMINI_API_KEY",
+      "required_for": "Optional — multimodal attachments + image generation"
     }
   ],
   "api_routes": [
@@ -99,16 +127,16 @@
   ],
   "pages": ["/", "/login", "/checkout/return"],
   "localStorage": {
-    "prefix": "babygpt_",
+    "prefix": "bbgpt_",
     "keys": [
-      "babygpt_conversations",
-      "babygpt_active_conversation_id",
-      "babygpt_credits_v1"
+      "bbgpt_conversations",
+      "bbgpt_active_conversation_id",
+      "bbgpt_credits_v1"
     ],
-    "note": "Used when BABYGPT_APP_PASSWORD is unset. Additional babygpt_* keys for memory, skills, reminders, etc."
+    "note": "Legacy babygpt_* keys migrate once on load (see src/lib/storage.ts). Additional bbgpt_* keys for memory, skills, reminders, etc."
   },
   "server_persistence": {
-    "directory_env": "BABYGPT_DATA_DIR",
+    "directory_env": ".data (fixed path in server-wallet.ts / server-billing.ts)",
     "default_relative": ".data",
     "files": ["wallet.json", "billing.json"],
     "note": "Ephemeral disk on many serverless hosts; use durable storage for multi-instance production."
@@ -125,7 +153,7 @@
     }
   },
   "production_risks": [
-    "Without BABYGPT_APP_PASSWORD, chat and community APIs accept unauthenticated requests; credits are client-side only.",
+    "Without BBGPT_APP_PASSWORD (legacy BABYGPT_APP_PASSWORD), chat and community APIs accept unauthenticated requests; credits are client-side only.",
     "With gate on, server wallet + plan enforcement apply per request (see chat-route-guard); still single shared wallet per deploy, not per-user accounts.",
     "Stripe maps Price IDs to planId via env; webhook must be registered on the production URL.",
     "Filesystem wallet/billing under .data/ is not suitable for horizontally scaled serverless without a shared volume or database."

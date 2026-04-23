@@ -3,8 +3,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { UsageHint } from "@/lib/billing-usage-hints";
-import { FIRST_VISIT_CREDIT_BONUS, PLANS, type PlanId } from "@/lib/plans";
-import { formatPlanMoneyHeadline, planPriceConfigured } from "@/lib/plan-pricing-display";
+import { FIRST_VISIT_CREDIT_BONUS, PLAN_IDS_IN_UI_ORDER, PLANS, type PlanBillingCadence, type PlanId } from "@/lib/plans";
+import {
+  formatPlanMoneyHeadline,
+  planAnnualPriceConfigured,
+  planPriceConfigured,
+} from "@/lib/plan-pricing-display";
 import { BILLING_FAQ, BILLING_SUGGESTED_QUESTIONS } from "@/lib/billing-faq";
 
 export type StripeBillingInfo = {
@@ -34,7 +38,7 @@ export function SubscriptionModal({
   serverCredits?: boolean;
   /** Present when credits API returned stripe payload. */
   stripeBilling?: StripeBillingInfo | null;
-  onCheckout?: (id: Exclude<PlanId, "free">) => void | Promise<void>;
+  onCheckout?: (id: Exclude<PlanId, "free">, billing: PlanBillingCadence) => void | Promise<void>;
   onManageBilling?: () => void | Promise<void>;
   /** Heuristic hints from GET /api/credits (low credits, payment retry, etc.). */
   usageHints?: UsageHint[];
@@ -51,6 +55,7 @@ export function SubscriptionModal({
   const [trOut, setTrOut] = useState<string | null>(null);
   const [trBusy, setTrBusy] = useState(false);
   const [faqPick, setFaqPick] = useState<string | null>(null);
+  const [billingCadence, setBillingCadence] = useState<PlanBillingCadence>("monthly");
 
   useEffect(() => {
     if (!open) return;
@@ -58,6 +63,7 @@ export function SubscriptionModal({
     setSupportA(null);
     setTrOut(null);
     setFaqPick(null);
+    setBillingCadence("monthly");
   }, [open]);
 
   useDialogA11y(open, dialogRef, onClose);
@@ -65,7 +71,14 @@ export function SubscriptionModal({
   if (!open) return null;
 
   const stripeMode = Boolean(serverCredits && stripeBilling?.configured);
-  const missingPublicPrices = stripeMode && (["starter", "pro", "team"] as const).some((id) => !planPriceConfigured(id));
+  const missingPublicPrices =
+    stripeMode &&
+    billingCadence === "monthly" &&
+    (["starter", "pro", "team"] as const).some((id) => !planPriceConfigured(id));
+  const missingPublicAnnualPrices =
+    stripeMode &&
+    billingCadence === "annual" &&
+    (["starter", "pro", "team"] as const).some((id) => !planAnnualPriceConfigured(id));
 
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-auto bg-black/60 p-4 pt-12 backdrop-blur-sm">
@@ -74,20 +87,22 @@ export function SubscriptionModal({
         className="w-full max-w-4xl rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl ring-1 ring-white/5"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="babygpt-plans-title"
+        aria-labelledby="bbgpt-plans-title"
       >
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-900 px-5 py-4">
           <div>
-            <div id="babygpt-plans-title" className="text-sm font-semibold text-zinc-100">
+            <div id="bbgpt-plans-title" className="text-sm font-semibold text-zinc-100">
               Plans & credits
             </div>
             <p className="mt-1 max-w-xl text-xs text-zinc-500">
               {stripeMode ? (
                 <>
-                  Paid tiers use <span className="text-zinc-300">Stripe Checkout</span> — you&apos;ll confirm tax,
-                  currency, and the final total on Stripe&apos;s page. The table below is your public list price (set{" "}
-                  <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span>) plus monthly credits
-                  included in-app.
+                  Paid tiers use <span className="text-zinc-300">Stripe Checkout</span> — confirm tax and total on
+                  Stripe. Use <span className="font-mono text-zinc-400">Monthly</span> /{" "}
+                  <span className="font-mono text-zinc-400">Annual</span> above: list prices come from{" "}
+                  <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span> or{" "}
+                  <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_YEARLY_USD</span>; credits stay
+                  monthly per plan.
                 </>
               ) : (
                 <>
@@ -100,8 +115,15 @@ export function SubscriptionModal({
             {missingPublicPrices && stripeMode ? (
               <p className="mt-2 text-[11px] text-amber-400/90">
                 Set <span className="font-mono">NEXT_PUBLIC_PLAN_PRICE_STARTER_USD</span>,{" "}
-                <span className="font-mono">PRO</span>, and <span className="font-mono">TEAM</span> so list prices show
-                here (Checkout still shows Stripe&apos;s authoritative amount).
+                <span className="font-mono">PRO</span>, and <span className="font-mono">TEAM</span> so monthly list
+                prices show here (Checkout still shows Stripe&apos;s authoritative amount).
+              </p>
+            ) : null}
+            {missingPublicAnnualPrices && stripeMode ? (
+              <p className="mt-2 text-[11px] text-amber-400/90">
+                Set <span className="font-mono">NEXT_PUBLIC_PLAN_PRICE_STARTER_YEARLY_USD</span>,{" "}
+                <span className="font-mono">PRO_YEARLY</span>, and <span className="font-mono">TEAM_YEARLY</span> so
+                annual list prices match your Stripe yearly Prices.
               </p>
             ) : null}
             {serverCredits && !stripeBilling?.configured ? (
@@ -136,23 +158,59 @@ export function SubscriptionModal({
         </div>
 
         <div className="border-b border-zinc-900 bg-zinc-950/90 px-5 py-3">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Price breakdown (USD)</div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Price breakdown (USD)
+            </div>
+            <div className="flex rounded-full bg-zinc-900 p-0.5 ring-1 ring-zinc-800">
+              <button
+                type="button"
+                onClick={() => setBillingCadence("monthly")}
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                  billingCadence === "monthly"
+                    ? "bg-zinc-100 text-zinc-950"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCadence("annual")}
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                  billingCadence === "annual"
+                    ? "bg-emerald-900/90 text-emerald-50 ring-1 ring-emerald-700/60"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                Annual (save vs monthly ×12)
+              </button>
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] leading-snug text-zinc-600">
+            Annual checkout uses separate <span className="font-mono text-zinc-500">STRIPE_PRICE_*_YEARLY</span> Prices in
+            Stripe (recurring yearly). Same plan benefits — billed once per year.
+          </p>
           <div className="mt-2 overflow-x-auto">
             <table className="w-full min-w-[320px] text-left text-[11px] text-zinc-400">
               <thead>
                 <tr className="border-b border-zinc-800 text-zinc-500">
                   <th className="py-1.5 pr-2 font-medium">Plan</th>
-                  <th className="py-1.5 pr-2 font-medium">List price</th>
+                  <th className="py-1.5 pr-2 font-medium">
+                    List price ({billingCadence === "annual" ? "per year" : "per month"})
+                  </th>
                   <th className="py-1.5 font-medium">Credits / month</th>
                 </tr>
               </thead>
               <tbody>
-                {(Object.keys(PLANS) as PlanId[]).map((id) => {
+                {PLAN_IDS_IN_UI_ORDER.map((id) => {
                   const p = PLANS[id];
                   return (
                     <tr key={id} className="border-b border-zinc-800/80 last:border-0">
                       <td className="py-2 pr-2 text-zinc-200">{p.label}</td>
-                      <td className="py-2 pr-2 font-mono text-emerald-300/95">{formatPlanMoneyHeadline(id)}</td>
+                      <td className="py-2 pr-2 font-mono text-emerald-300/95">
+                        {formatPlanMoneyHeadline(id, billingCadence)}
+                      </td>
                       <td className="py-2 font-mono text-zinc-300">{p.monthlyCredits.toLocaleString()}</td>
                     </tr>
                   );
@@ -168,9 +226,10 @@ export function SubscriptionModal({
               </>
             ) : (
               <>
-                List prices default to $12 / $24 / $69 per month when{" "}
-                <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span> is not set — override to
-                match your Stripe recurring prices.
+                Monthly list defaults: $12 / $24 / $69 (Starter / Pro / Team). Annual defaults: $120 / $240 / $690 per
+                year (~two months off vs paying monthly ×12). Override with{" "}
+                <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span> and{" "}
+                <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_YEARLY_USD</span>.
               </>
             )}
           </p>
@@ -203,7 +262,7 @@ export function SubscriptionModal({
         </div>
 
         <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4">
-          {(Object.keys(PLANS) as PlanId[]).map((id) => {
+          {PLAN_IDS_IN_UI_ORDER.map((id) => {
             const p = PLANS[id];
             const active = id === currentPlanId;
             const paid = id !== "free";
@@ -231,7 +290,7 @@ export function SubscriptionModal({
                   disabled={active || !onCheckout}
                   onClick={() => {
                     if (active || !onCheckout) return;
-                    void onCheckout(id);
+                    void onCheckout(id, billingCadence);
                   }}
                   className={`mt-4 w-full rounded-xl py-2 text-xs font-semibold ${
                     active
@@ -283,7 +342,9 @@ export function SubscriptionModal({
               >
                 <div className="text-sm font-semibold text-zinc-100">{p.label}</div>
                 <div className="mt-1 text-[11px] text-zinc-500">{p.subtitle}</div>
-                <div className="mt-2 text-base font-semibold text-emerald-300/95">{formatPlanMoneyHeadline(id)}</div>
+                <div className="mt-2 text-base font-semibold text-emerald-300/95">
+                  {formatPlanMoneyHeadline(id, billingCadence)}
+                </div>
                 <div className="mt-1 text-xs text-zinc-400">
                   <span className="font-mono text-zinc-200">{p.monthlyCredits.toLocaleString()}</span> credits / month
                 </div>

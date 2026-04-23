@@ -93,8 +93,8 @@ export async function POST(req: NextRequest) {
     "Content-Type": "text/event-stream; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
     Connection: "keep-alive" as const,
-    "X-BabyGPT-Model": routed,
-    "X-BabyGPT-Routing-Reason": encodeURIComponent(routingReason),
+    "X-bbGPT-Model": routed,
+    "X-bbGPT-Routing-Reason": encodeURIComponent(routingReason),
   };
 
   try {
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
         return new Response(result, {
           headers: {
             ...commonHeaders,
-            "X-BabyGPT-Provider": "zai",
+            "X-bbGPT-Provider": "zai",
           },
         });
       }
@@ -136,8 +136,8 @@ export async function POST(req: NextRequest) {
     return new Response(stream, {
       headers: {
         ...commonHeaders,
-        "X-BabyGPT-Provider": "openai",
-        "X-BabyGPT-OpenAI-Model": omodel,
+        "X-bbGPT-Provider": "openai",
+        "X-bbGPT-OpenAI-Model": omodel,
       },
     });
   } catch (e) {

@@ -14,14 +14,16 @@ function parseBytes(raw: string | undefined, fallback: number): number {
 
 /** Server-side max per attached file (bytes). */
 export function getServerMaxFileBytes(): number {
-  return parseBytes(process.env.BABYGPT_MAX_FILE_BYTES, DEFAULT_MAX);
+  return parseBytes(process.env.BBGPT_MAX_FILE_BYTES ?? process.env.BABYGPT_MAX_FILE_BYTES, DEFAULT_MAX);
 }
 
 /** Client-side max (build-time env). */
 export function getClientMaxFileBytes(): number {
   if (typeof window !== "undefined") {
     try {
-      const fromLs = localStorage.getItem("babygpt_max_file_bytes_override");
+      const fromLs =
+        localStorage.getItem("bbgpt_max_file_bytes_override") ??
+        localStorage.getItem("babygpt_max_file_bytes_override");
       if (fromLs) return parseBytes(fromLs, DEFAULT_MAX);
     } catch {
       /* ignore */
@@ -32,12 +34,14 @@ export function getClientMaxFileBytes(): number {
 
 /**
  * Max size for inline base64 in the chat JSON body. Larger files upload via `/api/gemini/files` (multipart).
- * Set `BABYGPT_INLINE_ATTACHMENT_BYTES` on the server and `NEXT_PUBLIC_INLINE_ATTACHMENT_BYTES` for matching client builds.
+ * Set `BBGPT_INLINE_ATTACHMENT_BYTES` on the server and `NEXT_PUBLIC_INLINE_ATTACHMENT_BYTES` for matching client builds.
  */
 export function getInlineAttachmentMaxBytes(): number {
   const raw =
     typeof window !== "undefined"
       ? process.env.NEXT_PUBLIC_INLINE_ATTACHMENT_BYTES
-      : process.env.BABYGPT_INLINE_ATTACHMENT_BYTES ?? process.env.NEXT_PUBLIC_INLINE_ATTACHMENT_BYTES;
+      : process.env.BBGPT_INLINE_ATTACHMENT_BYTES ??
+          process.env.BABYGPT_INLINE_ATTACHMENT_BYTES ??
+          process.env.NEXT_PUBLIC_INLINE_ATTACHMENT_BYTES;
   return parseBytes(raw, DEFAULT_INLINE_MAX);
 }

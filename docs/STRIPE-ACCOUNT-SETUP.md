@@ -3,6 +3,13 @@
 Use this when you are **new to Stripe** or wiring **paid plans** for the first time.  
 Technical deploy steps (Vercel env push) stay in `docs/HANDOFF-AI-NEXT-REVIEW.md`.
 
+### If Cursor cannot open `.env.local` (“Unable to resolve resource”)
+
+The file is **gitignored** (correct for secrets). Some editor tabs break after URI changes.
+
+1. **Command Palette** → **Developer: Reload Window**, then **File → Open Folder** → select the repo root (`postforge`), then open `.env.local` from the tree or **File → Open File** and paste the full path to `.env.local`.
+2. Or run: **`npm run env:open`** — creates `.env.local` from `.env.local.example` if missing, then launches **Cursor CLI**, **VS Code**, or **Notepad** with that path so you can paste Stripe values.
+
 ---
 
 ## What an AI or script cannot do for you
@@ -74,6 +81,36 @@ BabyGPT expects **three recurring monthly prices** (Starter, Pro, Team):
    NEXT_PUBLIC_PLAN_PRICE_PRO_USD=24
    NEXT_PUBLIC_PLAN_PRICE_TEAM_USD=69
    ```
+
+### 3b. Annual subscriptions (yearly Stripe Prices)
+
+BabyGPT supports **Annual** billing in the Plans modal (toggle). You need **three additional recurring Prices** in Stripe with interval **year** — one per tier.
+
+**Option A — API helper (same Product IDs as monthly):** after `STRIPE_SECRET_KEY` and `STRIPE_BABYGPT_PRODUCT_ID` (or `STRIPE_PRODUCT_*`) are set:
+
+```bash
+npm run stripe:ensure-prices
+```
+
+This creates missing **monthly** and **yearly** prices ($12/$24/$69 per month and $120/$240/$690 per year) and prints `STRIPE_PRICE_*` and `STRIPE_PRICE_*_YEARLY` lines. Use `npm run stripe:ensure-prices:yearly` for yearly only.
+
+**Option B — Dashboard:** Product catalog → **Add price** → **Recurring**, **Yearly**, then copy each `price_…` into `.env.local`:
+
+```env
+STRIPE_PRICE_STARTER_YEARLY=price_...
+STRIPE_PRICE_PRO_YEARLY=price_...
+STRIPE_PRICE_TEAM_YEARLY=price_...
+```
+
+Optional: align what the modal shows before Checkout:
+
+```env
+NEXT_PUBLIC_PLAN_PRICE_STARTER_YEARLY_USD=120
+NEXT_PUBLIC_PLAN_PRICE_PRO_YEARLY_USD=240
+NEXT_PUBLIC_PLAN_PRICE_TEAM_YEARLY_USD=690
+```
+
+If omitted, defaults are **$120 / $240 / $690** per year (~two months less than paying monthly ×12).
 
 ---
 

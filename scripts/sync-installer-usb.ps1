@@ -14,20 +14,24 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $RepoRoot
 
-if (-not $DriveLetter -and $env:BABYGPT_USB_LETTER) {
-  $DriveLetter = $env:BABYGPT_USB_LETTER.TrimEnd(":")
+if (-not $DriveLetter) {
+  if ($env:BBGPT_USB_LETTER) { $DriveLetter = $env:BBGPT_USB_LETTER.TrimEnd(":") }
+  elseif ($env:BABYGPT_USB_LETTER) { $DriveLetter = $env:BABYGPT_USB_LETTER.TrimEnd(":") }
 }
-if ($env:BABYGPT_USB_SKIP_STANDALONE -match '^(1|true|yes)$') {
+if (
+  $env:BBGPT_USB_SKIP_STANDALONE -match '^(1|true|yes)$' -or
+  $env:BABYGPT_USB_SKIP_STANDALONE -match '^(1|true|yes)$'
+) {
   $SkipStandalone = $true
 }
 
 if (-not $DriveLetter) {
   $rem = @(Get-Volume | Where-Object { $_.DriveType -eq "Removable" -and $_.DriveLetter })
   if ($rem.Count -eq 0) {
-    Write-Error "No removable drive found. Set BABYGPT_USB_LETTER=E or pass -DriveLetter E."
+    Write-Error "No removable drive found. Set BBGPT_USB_LETTER=E or pass -DriveLetter E."
   }
   if ($rem.Count -gt 1) {
-    Write-Error "Multiple removable drives: set BABYGPT_USB_LETTER or pass -DriveLetter. Found: $($rem.DriveLetter -join ', ')"
+    Write-Error "Multiple removable drives: set BBGPT_USB_LETTER or pass -DriveLetter. Found: $($rem.DriveLetter -join ', ')"
   }
   $DriveLetter = [string]$rem[0].DriveLetter
   Write-Host "Using removable drive ${DriveLetter}: (only one detected)." -ForegroundColor Cyan

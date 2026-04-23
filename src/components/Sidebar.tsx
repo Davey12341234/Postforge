@@ -174,7 +174,7 @@ export function Sidebar({
       <div
         className={`border-t ${hairline} p-3 text-[11px] ${appearance === "light" ? "text-zinc-600" : "text-zinc-600"}`}
       >
-        History uses <span className={appearance === "light" ? "text-zinc-500" : "text-zinc-400"}>babygpt_</span> keys
+        History uses <span className={appearance === "light" ? "text-zinc-500" : "text-zinc-400"}>bbgpt_</span> keys
       </div>
     </aside>
   );

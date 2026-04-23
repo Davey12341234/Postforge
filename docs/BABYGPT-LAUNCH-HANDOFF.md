@@ -195,8 +195,10 @@ Used when the **gate is off**. When the **gate is on**, plan/balance for the app
 
 ## 10. Pre-launch checklist
 
-- [ ] `npm run lint` / `npm run test` / `npm run build` green (local and CI)
-- [ ] `.env` / host secrets: LLM keys, gate secrets, `NEXT_PUBLIC_APP_URL`, Stripe keys and Price IDs, webhook secret, optional `NEXT_PUBLIC_PLAN_PRICE_*_USD` for list prices in the Plans modal
+- [ ] **`npm run env:scaffold`** once (adds missing `KEY=` lines to `.env.local`); then paste secrets
+- [ ] **`npm run env:scaffold`** once (adds missing empty `KEY=` lines to `.env.local`); then paste secrets from Stripe / LLM providers
+- [ ] **`npm run prod:ready`** green — runs lint, tests, production build, and **`npm run finish:billing`** (gate + Stripe required keys in `.env.local`). Fix code or env until it passes.
+- [ ] `.env` / host secrets: LLM keys (`Z_AI_API_KEY` / `OPENAI_API_KEY`), gate secrets, `NEXT_PUBLIC_APP_URL`, Stripe keys and monthly Price IDs + webhook secret; optional yearly `STRIPE_PRICE_*_YEARLY`, optional `NEXT_PUBLIC_PLAN_PRICE_*_USD` and `*_YEARLY_USD` for exact list prices in the Plans modal
 - [ ] Stripe Dashboard: webhook endpoint `https://<production-host>/api/stripe/webhook` with subscription + checkout events
 - [ ] Smoke test: login → chat → Plans → test Checkout (test mode) → confirm plan in UI → Portal cancel/downgrade
 - [ ] Decide whether `.data/` persistence is acceptable on your host or migrate wallet/billing to a database

@@ -77,7 +77,7 @@ export async function runReactAgentLoop(opts: {
   );
 
   const system = [
-    "You are BabyGPT in AGENT mode (ReAct).",
+    "You are bbGPT in AGENT mode (ReAct).",
     "You must reply with ONE JSON object ONLY (no markdown fences). Schema:",
     `{"thought":"string","finish":boolean,"finalAnswer":"string (when finish)","toolCalls":[{"name":"tool_id","arguments":{}}]}`,
     "If finish is true, put the user-facing answer in finalAnswer.",

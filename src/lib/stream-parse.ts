@@ -9,6 +9,7 @@ export function extractSseTextDelta(line: string): string {
     const j = JSON.parse(payload) as {
       schrodinger?: boolean;
       winner?: string;
+      bbgpt_agent?: unknown;
       babygpt_agent?: unknown;
       choices?: { delta?: { content?: string }; message?: { content?: string } }[];
     };
@@ -30,6 +31,7 @@ export function extractSseThinkingDelta(line: string): string {
   try {
     const j = JSON.parse(payload) as {
       schrodinger?: boolean;
+      bbgpt_agent?: unknown;
       babygpt_agent?: unknown;
       choices?: {
         delta?: {
@@ -38,7 +40,7 @@ export function extractSseThinkingDelta(line: string): string {
         };
       }[];
     };
-    if (j.schrodinger || j.babygpt_agent) return "";
+    if (j.schrodinger || j.bbgpt_agent || j.babygpt_agent) return "";
     const d = j.choices?.[0]?.delta;
     if (!d) return "";
     const t = d.reasoning_content ?? d.thinking ?? "";
@@ -61,17 +63,23 @@ export function parseSseAgentMeta(line: string): AgentStreamMeta | null {
   if (!payload) return null;
   try {
     const j = JSON.parse(payload) as {
+      bbgpt_agent?: {
+        toolCalls?: ToolCall[];
+        errorCorrectionLog?: ErrorCorrectionLogEntry[];
+        routingReason?: string;
+      };
       babygpt_agent?: {
         toolCalls?: ToolCall[];
         errorCorrectionLog?: ErrorCorrectionLogEntry[];
         routingReason?: string;
       };
     };
-    if (!j.babygpt_agent) return null;
+    const agent = j.bbgpt_agent ?? j.babygpt_agent;
+    if (!agent) return null;
     return {
-      toolCalls: j.babygpt_agent.toolCalls ?? [],
-      errorCorrectionLog: j.babygpt_agent.errorCorrectionLog ?? [],
-      routingReason: j.babygpt_agent.routingReason ?? "",
+      toolCalls: agent.toolCalls ?? [],
+      errorCorrectionLog: agent.errorCorrectionLog ?? [],
+      routingReason: agent.routingReason ?? "",
     };
   } catch {
     return null;

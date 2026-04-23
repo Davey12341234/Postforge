@@ -4,8 +4,8 @@
  */
 
 module.exports.REQUIRED_FOR_CHECKOUT = [
-  { group: "Gate", key: "BABYGPT_APP_PASSWORD", note: "Shared login password" },
-  { group: "Gate", key: "BABYGPT_SESSION_SECRET", note: "Long random string for JWT cookies" },
+  { group: "Gate", key: "BBGPT_APP_PASSWORD", note: "Shared login password (legacy: BABYGPT_APP_PASSWORD)" },
+  { group: "Gate", key: "BBGPT_SESSION_SECRET", note: "Long random string for JWT cookies (legacy: BABYGPT_SESSION_SECRET)" },
   { group: "Stripe", key: "STRIPE_SECRET_KEY", note: "sk_live_... or sk_test_..." },
   { group: "Stripe", key: "STRIPE_WEBHOOK_SECRET", note: "whsec_... from Dashboard → Webhooks" },
   { group: "Stripe", key: "STRIPE_PRICE_STARTER", note: "price_... recurring monthly" },
@@ -16,8 +16,17 @@ module.exports.REQUIRED_FOR_CHECKOUT = [
 
 module.exports.OPTIONAL_LIST_PRICES = [
   { group: "List prices (modal)", key: "NEXT_PUBLIC_PLAN_PRICE_STARTER_USD", note: "e.g. 12" },
-  { group: "List prices (modal)", key: "NEXT_PUBLIC_PLAN_PRICE_PRO_USD", note: "e.g. 29" },
-  { group: "List prices (modal)", key: "NEXT_PUBLIC_PLAN_PRICE_TEAM_USD", note: "e.g. 79" },
+  { group: "List prices (modal)", key: "NEXT_PUBLIC_PLAN_PRICE_PRO_USD", note: "e.g. 24" },
+  { group: "List prices (modal)", key: "NEXT_PUBLIC_PLAN_PRICE_TEAM_USD", note: "e.g. 69" },
+  { group: "List prices annual (modal)", key: "NEXT_PUBLIC_PLAN_PRICE_STARTER_YEARLY_USD", note: "e.g. 120" },
+  { group: "List prices annual (modal)", key: "NEXT_PUBLIC_PLAN_PRICE_PRO_YEARLY_USD", note: "e.g. 240" },
+  { group: "List prices annual (modal)", key: "NEXT_PUBLIC_PLAN_PRICE_TEAM_YEARLY_USD", note: "e.g. 690" },
+];
+
+module.exports.OPTIONAL_STRIPE_YEARLY_PRICE_IDS = [
+  { group: "Stripe yearly checkout", key: "STRIPE_PRICE_STARTER_YEARLY", note: "price_... recurring yearly" },
+  { group: "Stripe yearly checkout", key: "STRIPE_PRICE_PRO_YEARLY", note: "price_..." },
+  { group: "Stripe yearly checkout", key: "STRIPE_PRICE_TEAM_YEARLY", note: "price_..." },
 ];
 
 module.exports.OPTIONAL_STRIPE_TUNING = [
@@ -30,5 +39,6 @@ module.exports.OPTIONAL_STRIPE_TUNING = [
 module.exports.ALL_ROWS = [
   ...module.exports.REQUIRED_FOR_CHECKOUT,
   ...module.exports.OPTIONAL_LIST_PRICES,
+  ...module.exports.OPTIONAL_STRIPE_YEARLY_PRICE_IDS,
   ...module.exports.OPTIONAL_STRIPE_TUNING,
 ];

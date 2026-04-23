@@ -8,7 +8,7 @@ export const FILE_SIZE_PRESETS: { id: string; label: string; bytes: number }[] =
   { id: "512", label: "512 MB", bytes: 512 * 1024 * 1024 },
 ];
 
-/** Default when env is unset — practical for typical serverless hosts; raise via BABYGPT_MAX_FILE_BYTES. */
+/** Default when env is unset — practical for typical serverless hosts; raise via BBGPT_MAX_FILE_BYTES (legacy BABYGPT_MAX_FILE_BYTES). */
 export const DEFAULT_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
 export function nearestPresetBytes(bytes: number): number {

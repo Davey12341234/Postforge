@@ -28,7 +28,7 @@ export const webReaderTool: ToolDefinition = {
       const res = await fetch(url, {
         signal: ac.signal,
         headers: {
-          "User-Agent": "BabyGPT-Agent/1.0 (educational)",
+          "User-Agent": "bbGPT-Agent/1.0 (educational)",
           Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
         },
       });

@@ -5,7 +5,7 @@ import { readServerBilling } from "@/lib/server-billing";
 import { requestAppOrigin } from "@/lib/request-origin";
 import { getStripe } from "@/lib/stripe-client";
 import { isStripeConfigured, stripePriceIdForPlan } from "@/lib/stripe-config";
-import type { PlanId } from "@/lib/plans";
+import type { PlanBillingCadence, PlanId } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -25,14 +25,15 @@ export async function POST(req: NextRequest) {
     return denied;
   }
 
-  let body: { planId?: PlanId };
+  let body: { planId?: PlanId; billing?: PlanBillingCadence };
   try {
-    body = (await req.json()) as { planId?: PlanId };
+    body = (await req.json()) as { planId?: PlanId; billing?: PlanBillingCadence };
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   const planId = body.planId;
+  const cadence: PlanBillingCadence = body.billing === "annual" ? "annual" : "monthly";
   if (!planId || planId === "free") {
     return NextResponse.json(
       {
@@ -43,26 +44,34 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const priceId = stripePriceIdForPlan(planId);
+  const priceId = stripePriceIdForPlan(planId, cadence);
   if (!priceId) {
     const envName =
-      planId === "starter"
-        ? "STRIPE_PRICE_STARTER"
-        : planId === "pro"
-          ? "STRIPE_PRICE_PRO"
-          : planId === "team"
-            ? "STRIPE_PRICE_TEAM"
-            : "STRIPE_PRICE_*";
+      cadence === "annual"
+        ? planId === "starter"
+          ? "STRIPE_PRICE_STARTER_YEARLY"
+          : planId === "pro"
+            ? "STRIPE_PRICE_PRO_YEARLY"
+            : planId === "team"
+              ? "STRIPE_PRICE_TEAM_YEARLY"
+              : "STRIPE_PRICE_*_YEARLY"
+        : planId === "starter"
+          ? "STRIPE_PRICE_STARTER"
+          : planId === "pro"
+            ? "STRIPE_PRICE_PRO"
+            : planId === "team"
+              ? "STRIPE_PRICE_TEAM"
+              : "STRIPE_PRICE_*";
     return NextResponse.json(
       {
-        error: `Missing Stripe Price for ${planId}. Set ${envName} to the Price ID from the Stripe Dashboard.`,
+        error: `Missing Stripe Price for ${planId} (${cadence}). Set ${envName} to the recurring Price ID from the Stripe Dashboard.`,
       },
       { status: 500 },
     );
   }
 
   const origin = requestAppOrigin(req);
-  const billing = readServerBilling();
+  const billingRecord = readServerBilling();
 
   const stripe = getStripe();
   const autoTax = process.env.STRIPE_CHECKOUT_AUTO_TAX?.trim() === "1";
@@ -71,13 +80,13 @@ export async function POST(req: NextRequest) {
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    customer: billing.customerId ?? undefined,
+    customer: billingRecord.customerId ?? undefined,
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/?checkout=canceled`,
-    metadata: { planId },
+    metadata: { planId, billingCadence: cadence },
     subscription_data: {
-      metadata: { planId },
+      metadata: { planId, billingCadence: cadence },
       ...(trialDays > 0 && !Number.isNaN(trialDays) ? { trial_period_days: trialDays } : {}),
     },
     allow_promotion_codes: true,

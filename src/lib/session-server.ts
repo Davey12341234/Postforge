@@ -1,11 +1,11 @@
-import { cookies } from "next/headers";
+import { LEGACY_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-cookie";
 import { jwtVerify } from "jose";
 import { getApiSecret, getSessionSecret, isGateEnabled } from "@/lib/server-config";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 /**
- * True when gate is off, or JWT cookie is valid, or Authorization Bearer matches BABYGPT_API_SECRET.
+ * True when gate is off, or JWT cookie is valid, or Authorization Bearer matches BBGPT_API_SECRET (legacy BABYGPT_*).
  */
 export async function isRequestAuthorized(request: NextRequest): Promise<boolean> {
   if (!isGateEnabled()) {
@@ -23,7 +23,9 @@ export async function isRequestAuthorized(request: NextRequest): Promise<boolean
     return false;
   }
 
-  const token = (await cookies()).get("babygpt_token")?.value;
+  const token =
+    request.cookies.get(SESSION_COOKIE_NAME)?.value ??
+    request.cookies.get(LEGACY_SESSION_COOKIE_NAME)?.value;
   if (!token) {
     return false;
   }

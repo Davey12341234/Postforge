@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generates docs/BabyGPT-Cursor-Context.docx — architecture, API map, storage keys,
+ * Generates docs/bbGPT-Cursor-Context.docx — architecture, API map, storage keys,
  * button/interaction map, known issues, Cursor handoff (continuity, commands, warnings),
  * file tree, and full source under src/ (+ key config files).
  *
@@ -14,8 +14,8 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel, PageBreak } from "d
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
-const OUT = path.join(ROOT, "docs", "BabyGPT-Cursor-Context.docx");
-const OUT_MD = path.join(ROOT, "docs", "BabyGPT-Cursor-Context.md");
+const OUT = path.join(ROOT, "docs", "bbGPT-Cursor-Context.docx");
+const OUT_MD = path.join(ROOT, "docs", "bbGPT-Cursor-Context.md");
 const META_OUT = path.join(ROOT, "docs", "cursor-context-meta.json");
 
 const MAX_LINES_PER_FILE = 4000;
@@ -90,9 +90,9 @@ function rel(p) {
   return path.relative(ROOT, p).replace(/\\/g, "/");
 }
 
-/** Curated: BabyGPT shipped UI (not _archive). */
+/** Curated: bbGPT shipped UI (not _archive). */
 const BUTTON_AND_INTERACTION_MAP = `
-BabyGPTClient.tsx
+BbGPTClient.tsx
 - Billing alert (amber): "Manage billing" → POST /api/stripe/portal then redirect; "Dismiss" → sessionStorage + local hide.
 - Header "Plans" → opens SubscriptionModal (plans, Stripe, AI billing help).
 - "Sign out" (server mode) → POST /api/auth/logout, /login.
@@ -148,25 +148,25 @@ SettingsPanel.tsx
 `.trim();
 
 const STORAGE_KEYS_DOC = `
-localStorage prefix: babygpt_ (see src/lib/storage.ts lsKey)
+localStorage prefix: bbgpt_ (legacy babygpt_* migrated once; see src/lib/storage.ts lsKey)
 
 Resolved keys in shipped code:
-- babygpt_conversations — Conversation[] (BabyGPTClient)
-- babygpt_active_conversation_id — string | null
-- babygpt_credits_v1 — CreditsStateV1 (credits-store.ts)
-- babygpt_agent_memory_v1 — agent memory blob (agent-memory.ts)
-- babygpt_skills_v1 — custom skills (skills.ts)
-- babygpt_reminders_v1 — reminders list (reminders.ts)
-- babygpt_ui_prefs_v1 — UiPreferences: fontScale, appearance, notificationsEnabled (ui-preferences.ts)
-- babygpt_time_capsule_v1 — scheduled messages (time-capsule.ts; UI in SettingsPanel)
+- bbgpt_conversations — Conversation[] (BbGPTClient)
+- bbgpt_active_conversation_id — string | null
+- bbgpt_credits_v1 — CreditsStateV1 (credits-store.ts)
+- bbgpt_agent_memory_v1 — agent memory blob (agent-memory.ts)
+- bbgpt_skills_v1 — custom skills (skills.ts)
+- bbgpt_reminders_v1 — reminders list (reminders.ts)
+- bbgpt_ui_prefs_v1 — UiPreferences: fontScale, appearance, notificationsEnabled (ui-preferences.ts)
+- bbgpt_time_capsule_v1 — scheduled messages (time-capsule.ts; UI in SettingsPanel)
 
-Cookie (not localStorage): babygpt_token — session JWT when gate enabled.
+Cookie (not localStorage): bbgpt_token — session JWT when gate enabled (legacy babygpt_token cleared on logout).
 
 Server files (not localStorage): .data/wallet.json, .data/billing.json when gate + Stripe features are used.
 `.trim();
 
 const KNOWN_ISSUES_DOC = `
-Verified for this repository (BabyGPT / postforge):
+Verified for this repository (bbGPT / postforge):
 
 • Community API (GET/POST /api/community) is in-memory only — data is lost on server restart.
 • Server wallet and billing JSON under .data/ are single-tenant — not suitable for multi-user production without redesign.
@@ -174,7 +174,7 @@ Verified for this repository (BabyGPT / postforge):
 • Stripe webhook must include events the handler uses (e.g. invoice.paid, invoice.payment_failed) for billing alerts.
 • Chat / API routes have no built-in per-IP rate limiting — add if exposing publicly.
 
-UI notes: Font scale is applied via CSS variable --babygpt-font-scale on document root (see globals.css + ui-preferences applyUiPreferencesToDom). SettingsPanel includes time-capsule CRUD. Life-coach copy lives in companion-onboarding.ts + WelcomeScreen; billing FAQ is Stripe-only (billing-faq.ts). Full Clarity Engine / realignment product notes: docs/BabyGPT-Onboarding-Paths-Spec.md.
+UI notes: Font scale is applied via CSS variable --bbgpt-font-scale on document root (see globals.css + ui-preferences applyUiPreferencesToDom). SettingsPanel includes time-capsule CRUD. Life-coach copy lives in companion-onboarding.ts + WelcomeScreen; billing FAQ is Stripe-only (billing-faq.ts). Full Clarity Engine / realignment product notes: docs/BabyGPT-Onboarding-Paths-Spec.md (product spec filenames still use BabyGPT-era names).
 `.trim();
 
 /** Continuity block for Cursor — merge with sprint notes; regenerate updates timestamp only. */
@@ -191,7 +191,7 @@ ARCHITECTURE SNAPSHOT — Complete tree and every source file appear in Sections
 RECENT FIXES & QA (examples — extend in your tracker)
 • SubscriptionModal: static billing FAQ + search available without server wallet; life-coach content removed from Plans — moved to WelcomeScreen.
 • src/lib/companion-onboarding.ts: intro 7, journey 7, MESSAGE_MODE_PREFIXES; billing-faq.ts is Stripe/subscription only.
-• API: /api/billing/support and /translate optional auth when BABYGPT_APP_PASSWORD unset; support prompt is billing-only.
+• API: /api/billing/support and /translate optional auth when BBGPT_APP_PASSWORD unset; support prompt is billing-only.
 • SettingsPanel: refresh-on-open uses startTransition for ESLint react-hooks rule.
 • cursor-context-generator: removed unused h3 helper.
 (Document additional PR-level bug list in your changelog if you keep one.)
@@ -201,7 +201,7 @@ Verified as documented in docs/BabyGPT-Onboarding-Paths-Spec.md + docs/FINAL-LAU
 
 KEY TECHNICAL DETAILS
 • localStorage: full key list in Section 6 (includes ui_prefs_v1, time_capsule_v1).
-• CSS: --babygpt-font-scale applied on :root; globals.css uses calc(14px * var(--babygpt-font-scale, 1)).
+• CSS: --bbgpt-font-scale applied on :root; globals.css uses calc(14px * var(--bbgpt-font-scale, 1)).
 • AI SDK: z-ai-web-dev-sdk used from server Route Handlers only (chat, agent, schrodinger, billing LLM helpers); OpenAI fallback where configured.
 • Time capsule: src/lib/time-capsule.ts (list/add/remove); SettingsPanel surfaces list + form.
 • Companion onboarding: src/lib/companion-onboarding.ts + WelcomeScreen. Clarity / realignment as full product: docs/BabyGPT-Onboarding-Paths-Spec.md — not a separate route yet.
@@ -289,7 +289,7 @@ function apiRouteList() {
 
 function buildMarkdownHeader(pkg, treeLines) {
   const iso = new Date().toISOString();
-  let md = `# BabyGPT — Cursor context\n\n`;
+  let md = `# bbGPT — Cursor context\n\n`;
   md += `Generated: ${iso}\n\n`;
   md += `Repository root: \`${ROOT.replace(/\\/g, "/")}\`\n\n`;
   md += `## 1. Project overview\n\n`;
@@ -297,13 +297,13 @@ function buildMarkdownHeader(pkg, treeLines) {
   md += `- Stack: Next.js App Router, React 19, Tailwind 4, Stripe, jose (JWT), z-ai-web-dev-sdk + OpenAI fallback.\n`;
   md += `- Scripts: \`npm run dev\` | \`build\` | \`lint\` | \`test\` | \`verify:billing\` | \`finish:billing\`\n\n`;
   md += `## 2. Architecture\n\n`;
-  md += `Entry: \`src/app/page.tsx\` renders BabyGPTClient. Gated deploy: middleware protects routes except /login, /api/auth/*, /api/stripe/webhook; session cookie \`babygpt_token\`.\n\n`;
+  md += `Entry: \`src/app/page.tsx\` renders BbGPTClient. Gated deploy: middleware protects routes except /login, /api/auth/*, /api/stripe/webhook; session cookie \`bbgpt_token\`.\n\n`;
   md += `## 3. API routes\n\n`;
   for (const line of apiRouteList()) {
     md += `- ${line}\n`;
   }
   md += `\n## 4. Component map (summary)\n\n`;
-  md += `Main shell: BabyGPTClient orchestrates Sidebar, ChatArea (WelcomeScreen when empty), ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.\n\n`;
+  md += `Main shell: BbGPTClient orchestrates Sidebar, ChatArea (WelcomeScreen when empty), ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.\n\n`;
   md += `## 5. Button & interaction map\n\n`;
   md += mdFenced("text", BUTTON_AND_INTERACTION_MAP);
   md += `## 6. Storage & data model\n\n`;
@@ -327,7 +327,7 @@ async function main() {
 
   const children = [];
 
-  children.push(h1("BabyGPT — Cursor context document"));
+  children.push(h1("bbGPT — Cursor context document"));
   children.push(p(`Generated: ${new Date().toISOString()}`));
   children.push(p(`Repository root: ${ROOT}`));
   children.push(new Paragraph({ children: [new PageBreak()] }));
@@ -341,10 +341,10 @@ async function main() {
   children.push(h1("2. Architecture"));
   children.push(
     p(
-      "Entry: src/app/page.tsx renders BabyGPTClient. Gated deploy: middleware protects routes except /login, /api/auth/*, /api/stripe/webhook; session cookie babygpt_token.",
+      "Entry: src/app/page.tsx renders BbGPTClient. Gated deploy: middleware protects routes except /login, /api/auth/*, /api/stripe/webhook; session cookie bbgpt_token.",
     ),
   );
-  children.push(p("Chat: POST /api/chat streams SSE; credits enforced when BABYGPT_APP_PASSWORD is set (server wallet)."));
+  children.push(p("Chat: POST /api/chat streams SSE; credits enforced when BBGPT_APP_PASSWORD is set (server wallet)."));
   children.push(p("Billing: Stripe Checkout → /checkout/return → finalize; webhooks sync .data/billing.json; Customer Portal for self-serve."));
   children.push(p("Hydration: conversations and credits can start in localStorage; server mode replaces with GET /api/credits."));
 
@@ -356,7 +356,7 @@ async function main() {
   children.push(h1("4. Component map (summary)"));
   children.push(
     p(
-      "Main shell: BabyGPTClient orchestrates Sidebar, ChatArea (WelcomeScreen when no messages), ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.",
+      "Main shell: BbGPTClient orchestrates Sidebar, ChatArea (WelcomeScreen when no messages), ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.",
     ),
   );
   children.push(p("See Section 10 for the file tree and Section 11 for full source under src/."));

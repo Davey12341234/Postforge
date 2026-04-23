@@ -1,18 +1,18 @@
-# BabyGPT — Cursor context
+# bbGPT — Cursor context
 
-Generated: 2026-04-13T22:10:01.145Z
+Generated: 2026-04-23T02:50:58.334Z
 
 Repository root: `C:/Users/mckel/postforge`
 
 ## 1. Project overview
 
-- Name: **babygpt** v0.1.0
+- Name: **bbgpt** v0.1.0
 - Stack: Next.js App Router, React 19, Tailwind 4, Stripe, jose (JWT), z-ai-web-dev-sdk + OpenAI fallback.
 - Scripts: `npm run dev` | `build` | `lint` | `test` | `verify:billing` | `finish:billing`
 
 ## 2. Architecture
 
-Entry: `src/app/page.tsx` renders BabyGPTClient. Gated deploy: middleware protects routes except /login, /api/auth/*, /api/stripe/webhook; session cookie `babygpt_token`.
+Entry: `src/app/page.tsx` renders BbGPTClient. Gated deploy: middleware protects routes except /login, /api/auth/*, /api/stripe/webhook; session cookie `bbgpt_token`.
 
 ## 3. API routes
 
@@ -34,12 +34,12 @@ Entry: `src/app/page.tsx` renders BabyGPTClient. Gated deploy: middleware protec
 
 ## 4. Component map (summary)
 
-Main shell: BabyGPTClient orchestrates Sidebar, ChatArea (WelcomeScreen when empty), ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.
+Main shell: BbGPTClient orchestrates Sidebar, ChatArea (WelcomeScreen when empty), ChatInput, QuantumControls, CommunityPanel, SkillsPanel, SearchOverlay, SubscriptionModal, ProactiveToast, billing banner.
 
 ## 5. Button & interaction map
 
 ```text
-BabyGPTClient.tsx
+BbGPTClient.tsx
 - Billing alert (amber): "Manage billing" → POST /api/stripe/portal then redirect; "Dismiss" → sessionStorage + local hide.
 - Header "Plans" → opens SubscriptionModal (plans, Stripe, AI billing help).
 - "Sign out" (server mode) → POST /api/auth/logout, /login.
@@ -96,19 +96,19 @@ SettingsPanel.tsx
 ## 6. Storage & data model
 
 ```text
-localStorage prefix: babygpt_ (see src/lib/storage.ts lsKey)
+localStorage prefix: bbgpt_ (legacy babygpt_* migrated once; see src/lib/storage.ts lsKey)
 
 Resolved keys in shipped code:
-- babygpt_conversations — Conversation[] (BabyGPTClient)
-- babygpt_active_conversation_id — string | null
-- babygpt_credits_v1 — CreditsStateV1 (credits-store.ts)
-- babygpt_agent_memory_v1 — agent memory blob (agent-memory.ts)
-- babygpt_skills_v1 — custom skills (skills.ts)
-- babygpt_reminders_v1 — reminders list (reminders.ts)
-- babygpt_ui_prefs_v1 — UiPreferences: fontScale, appearance, notificationsEnabled (ui-preferences.ts)
-- babygpt_time_capsule_v1 — scheduled messages (time-capsule.ts; UI in SettingsPanel)
+- bbgpt_conversations — Conversation[] (BbGPTClient)
+- bbgpt_active_conversation_id — string | null
+- bbgpt_credits_v1 — CreditsStateV1 (credits-store.ts)
+- bbgpt_agent_memory_v1 — agent memory blob (agent-memory.ts)
+- bbgpt_skills_v1 — custom skills (skills.ts)
+- bbgpt_reminders_v1 — reminders list (reminders.ts)
+- bbgpt_ui_prefs_v1 — UiPreferences: fontScale, appearance, notificationsEnabled (ui-preferences.ts)
+- bbgpt_time_capsule_v1 — scheduled messages (time-capsule.ts; UI in SettingsPanel)
 
-Cookie (not localStorage): babygpt_token — session JWT when gate enabled.
+Cookie (not localStorage): bbgpt_token — session JWT when gate enabled (legacy babygpt_token cleared on logout).
 
 Server files (not localStorage): .data/wallet.json, .data/billing.json when gate + Stripe features are used.
 ```
@@ -119,7 +119,7 @@ Plans & models: src/lib/plans.ts, model-tier.ts, usage-cost.ts. Stripe: stripe-c
 ## 8. Known issues & follow-ups
 
 ```text
-Verified for this repository (BabyGPT / postforge):
+Verified for this repository (bbGPT / postforge):
 
 • Community API (GET/POST /api/community) is in-memory only — data is lost on server restart.
 • Server wallet and billing JSON under .data/ are single-tenant — not suitable for multi-user production without redesign.
@@ -127,7 +127,7 @@ Verified for this repository (BabyGPT / postforge):
 • Stripe webhook must include events the handler uses (e.g. invoice.paid, invoice.payment_failed) for billing alerts.
 • Chat / API routes have no built-in per-IP rate limiting — add if exposing publicly.
 
-UI notes: Font scale is applied via CSS variable --babygpt-font-scale on document root (see globals.css + ui-preferences applyUiPreferencesToDom). SettingsPanel includes time-capsule CRUD. Life-coach copy lives in companion-onboarding.ts + WelcomeScreen; billing FAQ is Stripe-only (billing-faq.ts). Full Clarity Engine / realignment product notes: docs/BabyGPT-Onboarding-Paths-Spec.md.
+UI notes: Font scale is applied via CSS variable --bbgpt-font-scale on document root (see globals.css + ui-preferences applyUiPreferencesToDom). SettingsPanel includes time-capsule CRUD. Life-coach copy lives in companion-onboarding.ts + WelcomeScreen; billing FAQ is Stripe-only (billing-faq.ts). Full Clarity Engine / realignment product notes: docs/BabyGPT-Onboarding-Paths-Spec.md (product spec filenames still use BabyGPT-era names).
 ```
 ## 9. Cursor handoff & continuity
 
@@ -144,7 +144,7 @@ ARCHITECTURE SNAPSHOT — Complete tree and every source file appear in Sections
 RECENT FIXES & QA (examples — extend in your tracker)
 • SubscriptionModal: static billing FAQ + search available without server wallet; life-coach content removed from Plans — moved to WelcomeScreen.
 • src/lib/companion-onboarding.ts: intro 7, journey 7, MESSAGE_MODE_PREFIXES; billing-faq.ts is Stripe/subscription only.
-• API: /api/billing/support and /translate optional auth when BABYGPT_APP_PASSWORD unset; support prompt is billing-only.
+• API: /api/billing/support and /translate optional auth when BBGPT_APP_PASSWORD unset; support prompt is billing-only.
 • SettingsPanel: refresh-on-open uses startTransition for ESLint react-hooks rule.
 • cursor-context-generator: removed unused h3 helper.
 (Document additional PR-level bug list in your changelog if you keep one.)
@@ -154,7 +154,7 @@ Verified as documented in docs/BabyGPT-Onboarding-Paths-Spec.md + docs/FINAL-LAU
 
 KEY TECHNICAL DETAILS
 • localStorage: full key list in Section 6 (includes ui_prefs_v1, time_capsule_v1).
-• CSS: --babygpt-font-scale applied on :root; globals.css uses calc(14px * var(--babygpt-font-scale, 1)).
+• CSS: --bbgpt-font-scale applied on :root; globals.css uses calc(14px * var(--bbgpt-font-scale, 1)).
 • AI SDK: z-ai-web-dev-sdk used from server Route Handlers only (chat, agent, schrodinger, billing LLM helpers); OpenAI fallback where configured.
 • Time capsule: src/lib/time-capsule.ts (list/add/remove); SettingsPanel surfaces list + form.
 • Companion onboarding: src/lib/companion-onboarding.ts + WelcomeScreen. Clarity / realignment as full product: docs/BabyGPT-Onboarding-Paths-Spec.md — not a separate route yet.
@@ -200,24 +200,80 @@ npm run finish:billing
 [dir] .vercel
   [file] project.json
   [file] README.txt
+[file] .vercelignore
 [dir] .vscode
   [file] settings.json
 [file] AGENTS.md
 [file] CLAUDE.md
+[dir] deploy
+  [file] CANNOT-AUTOMATE.md
+  [file] OPERATOR-only-you-can-do-this.txt
+  [dir] proliant
+    [file] AUTOINSTALL-SIMPLE.txt
+    [dir] automation
+      [file] ilo-redfish-notes.md
+      [dir] nocloud
+        [file] meta-data
+        [file] user-data
+        [file] user-data.template.yaml
+      [file] README.md
+      [file] VERIFICATION.md
+    [file] babygpt.service
+    [file] BACKUP-PLAN.md
+    [file] BEGINNER-FULL-PATH.md
+    [file] BOOT-USB-README.txt
+    [file] bootstrap.sh
+    [file] bring-online.sh
+    [file] cloudflared-quick-tunnel.sh
+    [file] DIRECT-LINK.md
+    [file] diskpart-assign-esp-t.txt
+    [file] diskpart-assign-t-esp.txt
+    [file] diskpart-boot-stub-usb-fill.txt
+    [file] diskpart-boot-stub-usb-finish.txt
+    [file] diskpart-boot-stub-usb-part2.txt
+    [file] diskpart-boot-stub-usb.txt
+    [file] diskpart-esp-only-disk1.txt
+    [file] diskpart-fix-bootstub-part1-fat32.txt
+    [file] diskpart-fix-efi-fat32-label.txt
+    [file] diskpart-label-t-babygptboot.txt
+    [file] diskpart-reflash-boot-stub-usb.txt
+    [file] DL360P-GEN8-RBSU.md
+    [file] GRUB-FLASH-THEN-RESET.md
+    [file] HANDOFF-DL360P-G8-STORAGE-BOOT.md
+    [file] HELP-STEPS.md
+    [file] install-tailscale.sh
+    [file] README.md
+    [file] RUFUS-GEN8-LEGACY.txt
+    [file] RUNBOOK.md
+    [dir] staging
+      [file] babygpt-src.zip
+      [file] babygpt.service
+      [file] bootstrap.sh
+      [file] bring-online.sh
+      [file] cloudflared-quick-tunnel.sh
+      [file] install-tailscale.sh
+      [file] README.md
+      [file] ubuntu-22.04-live-server-amd64.iso
+      [file] ubuntu-live-server-amd64.iso
+      [file] win11-usb-build.log
 [dir] docs
   [file] BabyGPT-App-Diagnostic.md
-  [file] BabyGPT-Cursor-Context.docx
-  [file] BabyGPT-Cursor-Context.md
   [file] BABYGPT-LAUNCH-HANDOFF.md
   [file] BabyGPT-Onboarding-Paths-Spec.md
   [file] babygpt-system.manifest.json
+  [file] bbGPT-Cursor-Context.docx
+  [file] bbGPT-Cursor-Context.md
   [file] BILLING-AND-NAMING.md
   [file] CURSOR-BABYGPT-HANDOFF.md
   [file] cursor-context-meta.json
   [file] cursor-review-snapshot.json
   [file] FINAL-LAUNCH-COPY.md
   [file] HANDOFF-AI-NEXT-REVIEW.md
+  [file] STRIPE-ACCOUNT-SETUP.md
+[file] ELEVATE-ESP-FIX.bat
 [file] eslint.config.mjs
+[file] ESP-FIX-Admin.cmd
+[file] fix-bootstub-usb.bat
 [dir] games
   [dir] enchanted_forest
     [dir] __pycache__
@@ -233,23 +289,68 @@ npm run finish:billing
 [file] postcss.config.mjs
 [dir] public
   [file] babygpt-logo.png
+  [file] bbgpt-logo.png
 [file] README.md
 [dir] scripts
+  [file] archive-babygpt-for-server.ps1
+  [file] assert-proliant-staging-location.ps1
   [file] billing-env-keys.cjs
+  [file] build-offline-windows-install-usb.ps1
   [file] check-billing-env.cjs
   [file] cursor-context-generator.mjs
+  [file] deploy-babygpt-to-server.ps1
+  [file] export-standalone-to-usb.ps1
   [file] finish-billing-setup.cjs
+  [file] finish-bootstub-usb.cmd
+  [file] finish-bootstub-usb.ps1
+  [file] fix-bootstub-esp.cmd
+  [file] fix-bootstub-esp.ps1
+  [file] flash-proliant-windows-usb.ps1
+  [file] full-usb-deploy.ps1
   [file] generate-review.cjs
+  [file] go-live-next-steps.cjs
+  [file] launch-fix-bootstub-admin.ps1
+  [file] launch-rufus-ubuntu-installer.ps1
   [file] load-env-files.cjs
+  [file] open-env-local.ps1
+  [file] open-rufus-mbr-legacy.ps1
+  [file] prepare-autoinstall-seed.ps1
+  [file] prepare-boot-stub-usb.ps1
+  [file] prepare-complement-usb.ps1
+  [file] prepare-official-proliant-path.ps1
+  [file] prepare-proliant-babygpt.ps1
+  [file] prepare-proliant-backup-boot.ps1
   [file] prepare-server-install-usb.ps1
+  [file] production-ready.cjs
+  [file] proliant-install-remote-access.ps1
+  [file] proliant-usb-only-prep.ps1
+  [file] run-offline-windows-usb-build-as-admin.ps1
+  [file] scaffold-env-local.cjs
   [file] scan-usb-peers.ps1
+  [file] serve-babygpt-staging-http.ps1
+  [file] serve-babygpt-staging-http.py
   [file] set-babygpt-vercel-prod-env.ps1
+  [file] set-bootstub-label.ps1
+  [file] set-direct-link-ethernet.ps1
+  [file] setup-direct-link-simple.ps1
+  [file] start-seed-listener.ps1
+  [file] stripe-ensure-babygpt-prices.cjs
+  [file] stripe-secret-valid.cjs
+  [file] stripe-update-product-copy.cjs
+  [file] sync-installer-usb.ps1
   [file] usb-add-linklocal-secondary.ps1
   [file] usb-direct-nic-apply-once.ps1
   [file] usb-direct-nic-setup-ELEVATE.cmd
   [file] usb-direct-nic-setup.ps1
   [file] usb-direct-peer-linux.sh
+  [file] usb-forward-all.ps1
   [file] vercel-env-add-one.ps1
+  [file] vercel-push-prod-env.cjs
+  [file] verify-boot-stub-usb.cmd
+  [file] verify-boot-stub-usb.ps1
+  [file] verify-proliant-usb-deploy.ps1
+  [file] verify-windows-installer-usb.ps1
+  [file] write-hybrid-iso-to-usb.ps1
 [dir] src
   [dir] app
     [dir] api
@@ -268,6 +369,8 @@ npm run finish:billing
       [dir] chat
         [dir] agent
           [file] route.ts
+        [dir] gemini
+          [file] route.ts
         [file] route.ts
         [dir] schrodinger
           [file] route.ts
@@ -277,6 +380,11 @@ npm run finish:billing
         [file] route.ts
       [dir] credits
         [file] route.ts
+      [dir] gemini
+        [dir] files
+          [file] route.ts
+        [dir] image
+          [file] route.ts
       [dir] stripe
         [dir] checkout
           [file] route.ts
@@ -296,7 +404,7 @@ npm run finish:billing
       [file] page.tsx
     [file] page.tsx
   [dir] components
-    [file] BabyGPTClient.tsx
+    [file] BbGPTClient.tsx
     [file] BlochSphere.tsx
     [file] ChatArea.tsx
     [file] ChatInput.tsx
@@ -305,6 +413,7 @@ npm run finish:billing
     [file] CostPreview.tsx
     [file] InstantTemplates.tsx
     [file] MessageBubble.tsx
+    [file] OnboardingIntakeModal.tsx
     [file] PostCard.tsx
     [file] ProactiveToast.tsx
     [file] QuantumControls.tsx
@@ -316,6 +425,7 @@ npm run finish:billing
     [file] SubscriptionModal.tsx
     [file] ThinkingCanvas.tsx
     [file] TimeCapsuleReveal.tsx
+    [file] VoiceModeOverlay.tsx
     [file] WelcomeScreen.tsx
   [dir] hooks
     [file] useDialogA11y.ts
@@ -325,19 +435,29 @@ npm run finish:billing
     [file] agent-loop.ts
     [file] agent-memory.ts
     [file] app-version.ts
+    [file] attachment-config.ts
+    [file] attachment-presets.ts
+    [file] auth-cookie.ts
     [file] billing-faq.ts
     [file] billing-llm.ts
     [file] billing-usage-hints.ts
     [file] built-in-skills.ts
+    [file] chat-layout.ts
     [file] chat-route-guard.test.ts
     [file] chat-route-guard.ts
     [file] comment-analysis.ts
+    [file] community-visitor.ts
     [file] community.ts
     [file] companion-onboarding.ts
     [file] credits-store.ts
     [file] entanglement.ts
     [file] fetch-chat.test.ts
     [file] fetch-chat.ts
+    [file] file-attachments.ts
+    [file] gemini-contents.test.ts
+    [file] gemini-contents.ts
+    [file] gemini-files.ts
+    [file] gemini-server.ts
     [file] heartbeat.ts
     [file] holographic-context.ts
     [file] instant-templates.ts
@@ -346,7 +466,9 @@ npm run finish:billing
     [file] model-tier.test.ts
     [file] model-tier.ts
     [file] mood-engine.ts
+    [file] onboarding-intake-storage.ts
     [file] openai-api.ts
+    [file] openai-thinking.ts
     [file] plan-pricing-display.test.ts
     [file] plan-pricing-display.ts
     [file] plans.ts
@@ -363,6 +485,9 @@ npm run finish:billing
     [file] session-server.ts
     [file] skill-model.ts
     [file] skills.ts
+    [file] speech-recognition.ts
+    [file] speech-synthesis.test.ts
+    [file] speech-synthesis.ts
     [file] storage.ts
     [file] stream-parse.test.ts
     [file] stream-parse.ts
@@ -370,6 +495,7 @@ npm run finish:billing
     [file] stripe-client.ts
     [file] stripe-config.test.ts
     [file] stripe-config.ts
+    [file] stripe-secret-valid.ts
     [file] stripe-sync.test.ts
     [file] stripe-sync.ts
     [file] time-capsule.ts
@@ -381,15 +507,33 @@ npm run finish:billing
       [file] web-reader.ts
       [file] web-search.ts
     [file] types.ts
+    [file] ui-diagnostics.ts
     [file] ui-preferences.ts
+    [file] usage-cost.test.ts
     [file] usage-cost.ts
     [file] user-dna.ts
     [file] zai.ts
   [file] middleware.ts
   [dir] types
+    [file] speech-dom.d.ts
     [file] z-ai-web-dev-sdk.d.ts
 [file] tsconfig.json
 [file] tsconfig.tsbuildinfo
+[dir] usb-forward-output
+  [dir] babygpt-server-kit
+    [file] babygpt-src.zip
+    [file] babygpt.service
+    [file] bootstrap.sh
+    [file] bring-online.sh
+    [file] HANDOFF-DL360P-G8-STORAGE-BOOT.md
+    [file] README.md
+    [file] RUFUS-GEN8-LEGACY.txt
+    [file] RUNBOOK.md
+  [file] RUFUS-GEN8-LEGACY.txt
+  [file] SEED-PASSWORD.txt
+  [file] START-BABYGPT.txt
+  [file] USB-START-HERE.txt
+[file] verify-bootstub-usb.bat
 [file] vitest.config.ts
 ```
 ## 11. Complete source listing
@@ -432,7 +576,14 @@ export default eslintConfig;
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Enables `.next/standalone` for copying a self-contained build to USB / server (see scripts/export-standalone-to-usb.ps1).
+  output: "standalone",
+  experimental: {
+    /** Large multimodal JSON bodies (self-hosted Node). Vercel still imposes lower request limits. */
+    serverActions: {
+      bodySizeLimit: "512mb",
+    },
+  },
 };
 
 export default nextConfig;
@@ -442,7 +593,7 @@ export default nextConfig;
 
 ```json
 {
-  "name": "babygpt",
+  "name": "bbgpt",
   "version": "0.1.0",
   "private": true,
   "packageManager": "npm@10.9.2",
@@ -454,15 +605,51 @@ export default nextConfig;
     "dev:raw": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint src scripts --max-warnings 0",
+    "lint:full": "eslint . --max-warnings 0",
     "test": "vitest run",
+    "verify": "npm run lint && npm test && npm run build",
+    "prod:ready": "node scripts/production-ready.cjs",
+    "ship": "npm run env:scaffold && npm run prod:ready",
+    "verify:ui": "vitest run src/lib/usage-cost.test.ts src/lib/chat-route-guard.test.ts src/lib/schrodinger-pair.test.ts",
     "verify:billing": "node scripts/check-billing-env.cjs",
     "finish:billing": "node scripts/finish-billing-setup.cjs",
+    "online:steps": "node scripts/go-live-next-steps.cjs",
+    "deploy:prod": "npx vercel deploy --prod --yes",
+    "deploy:prod:fresh": "npx vercel deploy --prod --yes --force",
+    "env:open": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/open-env-local.ps1",
+    "env:scaffold": "node scripts/scaffold-env-local.cjs",
+    "env:status": "node scripts/finish-billing-setup.cjs",
+    "stripe:sync-product-copy": "node scripts/stripe-update-product-copy.cjs",
+    "stripe:ensure-prices": "node scripts/stripe-ensure-babygpt-prices.cjs",
+    "stripe:bootstrap": "node scripts/stripe-ensure-babygpt-prices.cjs --create-product",
+    "stripe:bootstrap:tiers": "node scripts/stripe-ensure-babygpt-prices.cjs --three-products",
+    "stripe:ensure-prices:monthly": "node scripts/stripe-ensure-babygpt-prices.cjs --monthly-only",
+    "stripe:ensure-prices:yearly": "node scripts/stripe-ensure-babygpt-prices.cjs --yearly-only",
     "context:docx": "node scripts/cursor-context-generator.mjs",
     "context:review": "node scripts/generate-review.cjs",
-    "vercel:env:prod": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set-babygpt-vercel-prod-env.ps1"
+    "vercel:env:prod": "node scripts/vercel-push-prod-env.cjs",
+    "proliant:stage": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-proliant-babygpt.ps1 -SkipRufus",
+    "proliant:prepare-official": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-official-proliant-path.ps1",
+    "proliant:prepare-official-download": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-official-proliant-path.ps1 -SkipRufus",
+    "proliant:rufus": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-rufus-ubuntu-installer.ps1",
+    "proliant:complement-usb": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-complement-usb.ps1",
+    "proliant:quick-usb": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/proliant-usb-only-prep.ps1",
+    "proliant:verify-usb": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-boot-stub-usb.ps1 -DiskNumber 1",
+    "proliant:fix-bootstub-elevate": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-fix-bootstub-admin.ps1",
+    "proliant:usb-sync": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-installer-usb.ps1",
+    "proliant:usb-sync:e": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-installer-usb.ps1 -DriveLetter E",
+    "proliant:verify-usb-deploy": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-proliant-usb-deploy.ps1",
+    "proliant:verify-usb-deploy:e": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-proliant-usb-deploy.ps1 -DriveLetter E",
+    "proliant:usb-sync-and-verify:e": "npm run proliant:usb-sync:e && npm run proliant:verify-usb-deploy:e",
+    "proliant:serve-seed": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-seed-listener.ps1 -Port 8080",
+    "proliant:usb-forward": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/usb-forward-all.ps1",
+    "deploy:server": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-babygpt-to-server.ps1",
+    "proliant:tailscale": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/proliant-install-remote-access.ps1 -Mode Tailscale",
+    "proliant:trycloudflare": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/proliant-install-remote-access.ps1 -Mode Cloudflared"
   },
   "dependencies": {
+    "@google/genai": "^1.50.0",
     "highlight.js": "^11.11.1",
     "jose": "^6.2.2",
     "next": "16.2.2",
@@ -510,6 +697,7 @@ export default config;
 ```typescript
 import { SignJWT } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
+import { SESSION_COOKIE_NAME } from "@/lib/auth-cookie";
 import { getAppPassword, getSessionSecret } from "@/lib/server-config";
 
 export const runtime = "nodejs";
@@ -517,7 +705,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   const expected = getAppPassword();
   if (!expected) {
-    return NextResponse.json({ error: "BABYGPT_APP_PASSWORD is not configured." }, { status: 400 });
+    return NextResponse.json({ error: "BBGPT_APP_PASSWORD is not configured." }, { status: 400 });
   }
 
   let body: { password?: string };
@@ -535,7 +723,7 @@ export async function POST(req: NextRequest) {
   const secret = getSessionSecret();
   if (!secret) {
     return NextResponse.json(
-      { error: "Set BABYGPT_SESSION_SECRET (long random string) when using BABYGPT_APP_PASSWORD." },
+      { error: "Set BBGPT_SESSION_SECRET (long random string) when using BBGPT_APP_PASSWORD." },
       { status: 500 },
     );
   }
@@ -548,7 +736,7 @@ export async function POST(req: NextRequest) {
     .sign(key);
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set("babygpt_token", token, {
+  res.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -562,19 +750,23 @@ export async function POST(req: NextRequest) {
 ### src/app/api/auth/logout/route.ts
 
 ```typescript
+import { LEGACY_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-cookie";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+const cleared = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: 0,
+};
+
 export async function POST() {
   const res = NextResponse.json({ ok: true });
-  res.cookies.set("babygpt_token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
+  res.cookies.set(SESSION_COOKIE_NAME, "", cleared);
+  res.cookies.set(LEGACY_SESSION_COOKIE_NAME, "", cleared);
   return res;
 }
 
@@ -624,7 +816,7 @@ export async function POST(req: NextRequest) {
   }
 
   const system = [
-    "You are BabyGPT's billing helper.",
+    "You are bbGPT's billing helper.",
     "Answer ONLY using the FACTS block below plus general knowledge of how Stripe subscriptions and the Customer Portal work.",
     "Never invent invoice amounts, dates, or card details. If FACTS are insufficient, tell the user to open Plans → Manage billing (Stripe Customer Portal).",
     "Keep answers under 180 words, plain language.",
@@ -683,7 +875,7 @@ export async function POST(req: NextRequest) {
 
   const faqBlock = matches.map((e) => `## ${e.title}\n${e.body}`).join("\n\n");
   const system = [
-    "You help BabyGPT users with billing and subscription questions (Stripe, plans, credits, invoices, cancellation).",
+    "You help bbGPT users with billing and subscription questions (Stripe, plans, credits, invoices, cancellation).",
     "Ground your answer in the FAQ excerpts below. Do not contradict them.",
     "If the excerpts do not fully answer the question, say what is known from them. For account-specific Stripe actions, suggest Manage billing in the app.",
     "Under 160 words. Plain language.",
@@ -742,7 +934,7 @@ export async function POST(req: NextRequest) {
 
   const system = [
     `Translate the user's string to ${targetLocale} for a billing/subscription UI.`,
-    "Keep product names: BabyGPT, Stripe, OpenAI unchanged unless a locale convention requires transliteration.",
+    "Keep product names: bbGPT, Stripe, OpenAI unchanged unless a locale convention requires transliteration.",
     "Output only the translation text — no quotes or preamble.",
   ].join(" ");
 
@@ -814,6 +1006,13 @@ export async function POST(req: NextRequest) {
     model,
     thinking: thinking === "on",
     mode: "agent",
+    quantum: quantum
+      ? {
+          kolmogorov: Boolean(quantum.kolmogorov),
+          holographic: Boolean(quantum.holographic),
+          dna: Boolean(quantum.dna),
+        }
+      : undefined,
   });
   if (gated) {
     return gated;
@@ -863,7 +1062,7 @@ export async function POST(req: NextRequest) {
           enc.encode(
             sseData({
               choices: [{ delta: { content: "" } }],
-              babygpt_agent: {
+              bbgpt_agent: {
                 toolCalls: result.toolCalls,
                 errorCorrectionLog: result.errorCorrectionLog,
                 routingReason: result.routingReason,
@@ -892,13 +1091,172 @@ export async function POST(req: NextRequest) {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
-        "X-BabyGPT-Model": result.plannerModel,
-        "X-BabyGPT-Routing-Reason": encodeURIComponent(result.routingReason),
-        "X-BabyGPT-Provider": llm.provider,
+        "X-bbGPT-Model": result.plannerModel,
+        "X-bbGPT-Routing-Reason": encodeURIComponent(result.routingReason),
+        "X-bbGPT-Provider": llm.provider,
       },
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Agent failed";
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
+}
+
+```
+### src/app/api/chat/gemini/route.ts
+
+```typescript
+import { NextResponse, type NextRequest } from "next/server";
+import { guardChatSend } from "@/lib/chat-route-guard";
+import { bbgptMessagesToGeminiContents, type PayloadMessage } from "@/lib/gemini-contents";
+import { createGeminiClient, getGeminiChatModel } from "@/lib/gemini-server";
+import type { GoogleGenAI } from "@google/genai";
+import { getServerMaxFileBytes } from "@/lib/attachment-config";
+import { parseModelTierBody } from "@/lib/model-tier";
+import type { ModelTier } from "@/lib/types";
+
+export const runtime = "nodejs";
+export const maxDuration = 300;
+
+function sseOpenAiDelta(text: string): string {
+  return `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`;
+}
+
+function validateAttachments(messages: PayloadMessage[], maxBytes: number): string | null {
+  for (const m of messages) {
+    for (const a of m.attachments ?? []) {
+      if (a.sizeBytes > maxBytes) {
+        return `File "${a.name}" exceeds max size (${maxBytes} bytes).`;
+      }
+      const hasInline = Boolean(a.dataBase64?.length);
+      const hasRef = Boolean(a.geminiFileName?.trim());
+      if (!hasInline && !hasRef) {
+        return `Attachment "${a.name}" is missing data.`;
+      }
+      if (hasInline && a.dataBase64) {
+        const approx = Math.ceil((a.dataBase64.length * 3) / 4);
+        if (approx > maxBytes * 1.05) {
+          return `File "${a.name}" payload too large.`;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+async function hydrateGeminiFileRefs(ai: GoogleGenAI, messages: PayloadMessage[]): Promise<string | null> {
+  for (const m of messages) {
+    for (const a of m.attachments ?? []) {
+      if (a.dataBase64) continue;
+      if (!a.geminiFileName?.trim()) {
+        return `Attachment "${a.name}" needs a Gemini file reference.`;
+      }
+      try {
+        const f = await ai.files.get({ name: a.geminiFileName });
+        if (String(f.state) !== "ACTIVE" || !f.uri) {
+          return `File "${a.name}" is not ready (${String(f.state)}).`;
+        }
+        a.geminiFileUri = f.uri;
+      } catch {
+        return `Could not verify "${a.name}" with Gemini.`;
+      }
+    }
+  }
+  return null;
+}
+
+type Body = {
+  messages: PayloadMessage[];
+  model: ModelTier;
+  memoryPrompt?: string;
+  skillPrompt?: string;
+};
+
+export async function POST(req: NextRequest) {
+  let body: Body;
+  try {
+    body = (await req.json()) as Body;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const model = parseModelTierBody(body as { model: ModelTier });
+  if (!Array.isArray(body.messages) || !model) {
+    return NextResponse.json({ error: "messages[] and model required" }, { status: 400 });
+  }
+
+  const ai = createGeminiClient();
+  if (!ai) {
+    return NextResponse.json(
+      { error: "Gemini is not configured. Set GEMINI_API_KEY for file uploads and multimodal chat." },
+      { status: 503 },
+    );
+  }
+
+  const maxFile = getServerMaxFileBytes();
+  const attachErr = validateAttachments(body.messages, maxFile);
+  if (attachErr) {
+    return NextResponse.json({ error: attachErr }, { status: 413 });
+  }
+
+  const hydrateErr = await hydrateGeminiFileRefs(ai, body.messages);
+  if (hydrateErr) {
+    return NextResponse.json({ error: hydrateErr }, { status: 400 });
+  }
+
+  const memorySkill = [body.memoryPrompt, body.skillPrompt].filter(Boolean).join("\n\n");
+
+  const gated = await guardChatSend(req, {
+    model,
+    thinking: false,
+    mode: "chat",
+  });
+  if (gated) return gated;
+
+  const { contents, systemInstruction } = bbgptMessagesToGeminiContents(body.messages, memorySkill);
+
+  const chatModel = getGeminiChatModel();
+
+  try {
+    const stream = await ai.models.generateContentStream({
+      model: chatModel,
+      contents,
+      config: {
+        systemInstruction: systemInstruction || undefined,
+      },
+    });
+
+    const enc = new TextEncoder();
+    const readable = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const text = chunk.text;
+            if (text) {
+              controller.enqueue(enc.encode(sseOpenAiDelta(text)));
+            }
+          }
+          controller.enqueue(enc.encode("data: [DONE]\n\n"));
+          controller.close();
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Gemini stream failed";
+          controller.enqueue(enc.encode(sseOpenAiDelta(`\n\n[Error] ${msg}`)));
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "X-bbGPT-Provider": "gemini",
+        "X-bbGPT-Model": chatModel,
+      },
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Gemini request failed";
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 }
@@ -911,6 +1269,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { buildHolographicMessages } from "@/lib/holographic-context";
 import { resolveLlm } from "@/lib/llm-resolve";
 import { mapTierToOpenAIModel, streamOpenAIChat } from "@/lib/openai-api";
+import { mergeOpenAiThinkingDirective } from "@/lib/openai-thinking";
 import { routeWithKolmogorovDetailed } from "@/lib/kolmogorov-router";
 import { extractStyleDNA } from "@/lib/user-dna";
 import { adiabaticSystemPrompt } from "@/lib/adiabatic-prompt";
@@ -958,6 +1317,13 @@ export async function POST(req: NextRequest) {
     model,
     thinking: thinking === "on",
     mode: "chat",
+    quantum: quantum
+      ? {
+          kolmogorov: Boolean(quantum.kolmogorov),
+          holographic: Boolean(quantum.holographic),
+          dna: Boolean(quantum.dna),
+        }
+      : undefined,
   });
   if (gated) {
     return gated;
@@ -994,8 +1360,8 @@ export async function POST(req: NextRequest) {
     "Content-Type": "text/event-stream; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
     Connection: "keep-alive" as const,
-    "X-BabyGPT-Model": routed,
-    "X-BabyGPT-Routing-Reason": encodeURIComponent(routingReason),
+    "X-bbGPT-Model": routed,
+    "X-bbGPT-Routing-Reason": encodeURIComponent(routingReason),
   };
 
   try {
@@ -1013,7 +1379,7 @@ export async function POST(req: NextRequest) {
         return new Response(result, {
           headers: {
             ...commonHeaders,
-            "X-BabyGPT-Provider": "zai",
+            "X-bbGPT-Provider": "zai",
           },
         });
       }
@@ -1021,17 +1387,24 @@ export async function POST(req: NextRequest) {
     }
 
     const omodel = mapTierToOpenAIModel(routed);
+    let openaiMsgs = msgs.map((m) => ({
+      role: m.role as "system" | "user" | "assistant",
+      content: m.content,
+    }));
+    if (thinking === "on") {
+      openaiMsgs = mergeOpenAiThinkingDirective(openaiMsgs);
+    }
     const stream = await streamOpenAIChat({
       apiKey: llm.apiKey,
       model: omodel,
-      messages: msgs.map((m) => ({ role: m.role, content: m.content })),
+      messages: openaiMsgs,
     });
 
     return new Response(stream, {
       headers: {
         ...commonHeaders,
-        "X-BabyGPT-Provider": "openai",
-        "X-BabyGPT-OpenAI-Model": omodel,
+        "X-bbGPT-Provider": "openai",
+        "X-bbGPT-OpenAI-Model": omodel,
       },
     });
   } catch (e) {
@@ -1080,6 +1453,7 @@ export async function POST(req: NextRequest) {
     model: modelA,
     thinking: false,
     mode: "schrodinger",
+    secondaryModel: modelB,
   });
   if (gated) {
     return gated;
@@ -1172,8 +1546,8 @@ function mergeSchrodingerStreams(
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
-      "X-BabyGPT-Schrodinger": "1",
-      "X-BabyGPT-Provider": provider,
+      "X-bbGPT-Schrodinger": "1",
+      "X-bbGPT-Provider": provider,
     },
   });
 }
@@ -1274,11 +1648,13 @@ export async function POST(req: NextRequest) {
 ```typescript
 import { NextResponse, type NextRequest } from "next/server";
 import { guardApi } from "@/lib/chat-route-guard";
-import { analyzeCommentSentiment } from "@/lib/comment-analysis";
+import { analyzeCommentSentiment, shouldRejectCommunityComment } from "@/lib/comment-analysis";
 import { resonanceScore } from "@/lib/resonance";
 import {
   addComment,
   addPost,
+  appreciatePost,
+  attachViewerAppreciationFlags,
   listPosts,
   updateResonance,
   type CommunityPost,
@@ -1291,7 +1667,9 @@ export async function GET(req: NextRequest) {
   if (denied) {
     return denied;
   }
-  return NextResponse.json({ posts: listPosts() as CommunityPost[] });
+  const visitorKey = req.headers.get("x-community-visitor") ?? undefined;
+  const posts = attachViewerAppreciationFlags(listPosts(), visitorKey);
+  return NextResponse.json({ posts: posts as CommunityPost[] });
 }
 
 export async function POST(req: NextRequest) {
@@ -1301,12 +1679,19 @@ export async function POST(req: NextRequest) {
   }
 
   const body = (await req.json()) as {
-    action: "post" | "comment";
+    action: "post" | "comment" | "appreciate";
     title?: string;
     body?: string;
     postId?: string;
     author?: string;
+    visitorKey?: string;
   };
+
+  if (body.action === "appreciate" && body.postId && body.visitorKey) {
+    const r = appreciatePost(body.postId, body.visitorKey);
+    if (!r) return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    return NextResponse.json({ appreciationCount: r.appreciationCount, duplicate: r.duplicate });
+  }
 
   if (body.action === "post" && body.title && body.body) {
     const post = addPost(body.title, body.body);
@@ -1314,7 +1699,18 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.action === "comment" && body.postId && body.body) {
-    const c = addComment(body.postId, body.author ?? "you", body.body);
+    const trimmed = body.body.trim();
+    if (shouldRejectCommunityComment(trimmed)) {
+      return NextResponse.json(
+        {
+          error:
+            "This space is for encouragement. Try rephrasing without put-downs, insults, or harsh criticism.",
+          code: "tone",
+        },
+        { status: 422 },
+      );
+    }
+    const c = addComment(body.postId, body.author ?? "you", trimmed);
     if (!c) return NextResponse.json({ error: "Post not found" }, { status: 404 });
     c.sentiment = analyzeCommentSentiment(c.body);
     const posts = listPosts();
@@ -1438,6 +1834,209 @@ export async function POST(req: NextRequest) {
 }
 
 ```
+### src/app/api/gemini/files/route.ts
+
+```typescript
+import { NextResponse, type NextRequest } from "next/server";
+import { getServerMaxFileBytes } from "@/lib/attachment-config";
+import { waitForGeminiFileActive } from "@/lib/gemini-files";
+import { guardChatSendBalanceOnly } from "@/lib/chat-route-guard";
+import { createGeminiClient } from "@/lib/gemini-server";
+import { parseModelTierBody } from "@/lib/model-tier";
+import type { ModelTier } from "@/lib/types";
+
+export const runtime = "nodejs";
+export const maxDuration = 300;
+
+export async function POST(req: NextRequest) {
+  const ai = createGeminiClient();
+  if (!ai) {
+    return NextResponse.json(
+      { error: "Set GEMINI_API_KEY to upload files to Gemini." },
+      { status: 503 },
+    );
+  }
+
+  let form: FormData;
+  try {
+    form = await req.formData();
+  } catch {
+    return NextResponse.json({ error: "Expected multipart form data." }, { status: 400 });
+  }
+
+  const tierField = form.get("model");
+  const tier = parseModelTierBody({
+    model:
+      typeof tierField === "string" && tierField.trim()
+        ? (tierField as ModelTier)
+        : ("glm-4-flash" as ModelTier),
+  });
+  if (!tier) {
+    return NextResponse.json({ error: "Invalid model tier" }, { status: 400 });
+  }
+
+  const gated = await guardChatSendBalanceOnly(req, {
+    model: tier,
+    thinking: false,
+    mode: "chat",
+  });
+  if (gated) return gated;
+
+  const rawFiles = form.getAll("file");
+  const files = rawFiles.filter((x): x is File => x instanceof File && x.size > 0);
+  if (!files.length) {
+    return NextResponse.json({ error: 'No files (use form field "file").' }, { status: 400 });
+  }
+
+  const maxBytes = getServerMaxFileBytes();
+  const out: Array<{
+    id: string;
+    name: string;
+    mimeType: string;
+    sizeBytes: number;
+    geminiFileUri: string;
+    geminiFileName: string;
+  }> = [];
+
+  try {
+    for (const blob of files) {
+      if (blob.size > maxBytes) {
+        return NextResponse.json(
+          { error: `"${blob.name}" exceeds max size (${maxBytes} bytes).` },
+          { status: 413 },
+        );
+      }
+
+      const mimeType = blob.type || "application/octet-stream";
+      const uploaded = await ai.files.upload({
+        file: blob,
+        config: {
+          mimeType,
+          displayName: blob.name,
+        },
+      });
+
+      if (!uploaded.name) {
+        return NextResponse.json({ error: "Gemini upload did not return a file name." }, { status: 502 });
+      }
+
+      const ready = await waitForGeminiFileActive(ai, uploaded.name);
+
+      out.push({
+        id: crypto.randomUUID(),
+        name: blob.name,
+        mimeType: ready.mimeType ?? mimeType,
+        sizeBytes: ready.sizeBytes ?? blob.size,
+        geminiFileUri: ready.uri,
+        geminiFileName: uploaded.name,
+      });
+    }
+
+    return NextResponse.json({ files: out });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "File upload failed";
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
+}
+
+```
+### src/app/api/gemini/image/route.ts
+
+```typescript
+import { Modality } from "@google/genai";
+import { NextResponse, type NextRequest } from "next/server";
+import { guardChatSend } from "@/lib/chat-route-guard";
+import { createGeminiClient, getGeminiImageModel } from "@/lib/gemini-server";
+import { parseModelTierBody } from "@/lib/model-tier";
+import type { ModelTier } from "@/lib/types";
+
+export const runtime = "nodejs";
+export const maxDuration = 120;
+
+type Body = {
+  prompt: string;
+  model?: ModelTier;
+};
+
+export async function POST(req: NextRequest) {
+  let body: Body;
+  try {
+    body = (await req.json()) as Body;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const prompt = body.prompt?.trim();
+  if (!prompt) {
+    return NextResponse.json({ error: "prompt is required" }, { status: 400 });
+  }
+
+  const tier = parseModelTierBody({ model: body.model ?? "glm-4-flash" });
+  if (!tier) {
+    return NextResponse.json({ error: "Invalid model tier" }, { status: 400 });
+  }
+
+  const ai = createGeminiClient();
+  if (!ai) {
+    return NextResponse.json(
+      { error: "Set GEMINI_API_KEY to generate images with Gemini." },
+      { status: 503 },
+    );
+  }
+
+  const gated = await guardChatSend(req, {
+    model: tier,
+    thinking: false,
+    mode: "chat",
+  });
+  if (gated) return gated;
+
+  const imageModel = getGeminiImageModel();
+
+  try {
+    const response = await ai.models.generateContent({
+      model: imageModel,
+      contents: prompt,
+      config: {
+        // Image-capable models expect image (and optionally text) in the response modalities.
+        responseModalities: [Modality.TEXT, Modality.IMAGE],
+      },
+    });
+
+    let mimeType = "image/png";
+    let base64: string | null = null;
+
+    const parts = response.candidates?.[0]?.content?.parts ?? [];
+    for (const part of parts) {
+      if (part.inlineData?.data) {
+        base64 = part.inlineData.data;
+        mimeType = part.inlineData.mimeType ?? mimeType;
+        break;
+      }
+    }
+
+    if (!base64) {
+      const textFallback = response.text?.trim();
+      return NextResponse.json(
+        {
+          error: textFallback || "No image returned — try a different prompt or GEMINI_IMAGE_MODEL.",
+        },
+        { status: 502 },
+      );
+    }
+
+    return NextResponse.json({
+      mimeType,
+      imageBase64: base64,
+      model: imageModel,
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Image generation failed";
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
+}
+
+```
 ### src/app/api/stripe/checkout/route.ts
 
 ```typescript
@@ -1448,7 +2047,7 @@ import { readServerBilling } from "@/lib/server-billing";
 import { requestAppOrigin } from "@/lib/request-origin";
 import { getStripe } from "@/lib/stripe-client";
 import { isStripeConfigured, stripePriceIdForPlan } from "@/lib/stripe-config";
-import type { PlanId } from "@/lib/plans";
+import type { PlanBillingCadence, PlanId } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -1468,14 +2067,15 @@ export async function POST(req: NextRequest) {
     return denied;
   }
 
-  let body: { planId?: PlanId };
+  let body: { planId?: PlanId; billing?: PlanBillingCadence };
   try {
-    body = (await req.json()) as { planId?: PlanId };
+    body = (await req.json()) as { planId?: PlanId; billing?: PlanBillingCadence };
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   const planId = body.planId;
+  const cadence: PlanBillingCadence = body.billing === "annual" ? "annual" : "monthly";
   if (!planId || planId === "free") {
     return NextResponse.json(
       {
@@ -1486,26 +2086,34 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const priceId = stripePriceIdForPlan(planId);
+  const priceId = stripePriceIdForPlan(planId, cadence);
   if (!priceId) {
     const envName =
-      planId === "starter"
-        ? "STRIPE_PRICE_STARTER"
-        : planId === "pro"
-          ? "STRIPE_PRICE_PRO"
-          : planId === "team"
-            ? "STRIPE_PRICE_TEAM"
-            : "STRIPE_PRICE_*";
+      cadence === "annual"
+        ? planId === "starter"
+          ? "STRIPE_PRICE_STARTER_YEARLY"
+          : planId === "pro"
+            ? "STRIPE_PRICE_PRO_YEARLY"
+            : planId === "team"
+              ? "STRIPE_PRICE_TEAM_YEARLY"
+              : "STRIPE_PRICE_*_YEARLY"
+        : planId === "starter"
+          ? "STRIPE_PRICE_STARTER"
+          : planId === "pro"
+            ? "STRIPE_PRICE_PRO"
+            : planId === "team"
+              ? "STRIPE_PRICE_TEAM"
+              : "STRIPE_PRICE_*";
     return NextResponse.json(
       {
-        error: `Missing Stripe Price for ${planId}. Set ${envName} to the Price ID from the Stripe Dashboard.`,
+        error: `Missing Stripe Price for ${planId} (${cadence}). Set ${envName} to the recurring Price ID from the Stripe Dashboard.`,
       },
       { status: 500 },
     );
   }
 
   const origin = requestAppOrigin(req);
-  const billing = readServerBilling();
+  const billingRecord = readServerBilling();
 
   const stripe = getStripe();
   const autoTax = process.env.STRIPE_CHECKOUT_AUTO_TAX?.trim() === "1";
@@ -1514,13 +2122,13 @@ export async function POST(req: NextRequest) {
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    customer: billing.customerId ?? undefined,
+    customer: billingRecord.customerId ?? undefined,
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/?checkout=canceled`,
-    metadata: { planId },
+    metadata: { planId, billingCadence: cadence },
     subscription_data: {
-      metadata: { planId },
+      metadata: { planId, billingCadence: cadence },
       ...(trialDays > 0 && !Number.isNaN(trialDays) ? { trial_period_days: trialDays } : {}),
     },
     allow_promotion_codes: true,
@@ -1803,7 +2411,7 @@ export default function CheckoutReturnClient() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-950 px-4 text-center">
         <p className="text-sm text-red-400">Missing checkout session. Return to the app and try again.</p>
         <Link href="/" className="text-sm text-cyan-400 underline">
-          Back to BabyGPT
+          Back to bbGPT
         </Link>
       </div>
     );
@@ -1814,7 +2422,7 @@ export default function CheckoutReturnClient() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-950 px-4 text-center">
         <p className="text-sm text-red-400">{finalizeError}</p>
         <Link href="/" className="text-sm text-cyan-400 underline">
-          Back to BabyGPT
+          Back to bbGPT
         </Link>
       </div>
     );
@@ -1872,32 +2480,69 @@ body {
 }
 
 html {
-  font-size: calc(14px * var(--babygpt-font-scale, 1));
+  font-size: calc(14px * var(--bbgpt-font-scale, 1));
 }
 
-html.babygpt-appearance-light body {
+html.bbgpt-appearance-light body {
   @apply bg-zinc-100 text-zinc-900;
 }
 
-html.babygpt-appearance-oled body {
+html.bbgpt-appearance-oled body {
   @apply bg-black text-zinc-100;
 }
 
 /* Header icon buttons: light shell */
-html.babygpt-appearance-light .babygpt-app-root header .babygpt-header-btn {
+html.bbgpt-appearance-light .bbgpt-app-root header .bbgpt-header-btn {
   @apply bg-white text-zinc-900 ring-zinc-300 hover:bg-zinc-100;
 }
 
-.babygpt-markdown pre {
+.bbgpt-markdown pre {
   @apply overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/80 p-3 text-sm;
 }
 
-.babygpt-markdown code {
+.bbgpt-markdown code {
   @apply rounded bg-zinc-800 px-1 py-0.5 text-[0.9em];
 }
 
-.babygpt-markdown pre code {
+.bbgpt-markdown pre code {
   @apply bg-transparent p-0;
+}
+
+/* Voice overlay — Grok-like eyes + waveform (see VoiceModeOverlay) */
+@keyframes bbgpt-voice-blink {
+  0%,
+  86%,
+  100% {
+    transform: scaleY(1);
+  }
+  88%,
+  92% {
+    transform: scaleY(0.1);
+  }
+}
+
+.bbgpt-voice-eye--active {
+  animation: bbgpt-voice-blink 3.4s ease-in-out infinite;
+}
+
+.bbgpt-voice-eye--lag.bbgpt-voice-eye--active {
+  animation-delay: 0.12s;
+}
+
+@keyframes bbgpt-voice-wave {
+  0%,
+  100% {
+    height: 0.25rem;
+    opacity: 0.45;
+  }
+  50% {
+    height: 2rem;
+    opacity: 1;
+  }
+}
+
+.bbgpt-voice-bar {
+  animation: bbgpt-voice-wave 0.52s ease-in-out infinite;
 }
 
 ```
@@ -1908,10 +2553,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BabyGPT — AI Chat Assistant",
+  title: "bbGPT — AI Chat Assistant",
   description:
-    "BabyGPT — a dark conversational assistant with quantum-inspired controls. Not affiliated with OpenAI.",
-  icons: { icon: "/babygpt-logo.png" },
+    "bbGPT — a dark conversational assistant with quantum-inspired controls. Not affiliated with OpenAI.",
+  icons: { icon: "/bbgpt-logo.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -1936,6 +2581,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1966,7 +2612,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-zinc-950 px-4">
       <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 shadow-xl ring-1 ring-white/5">
-        <h1 className="text-center text-lg font-semibold text-zinc-100">BabyGPT</h1>
+        <h1 className="text-center text-lg font-semibold text-zinc-100">bbGPT</h1>
         <p className="mt-2 text-center text-xs text-zinc-500">
           Sign in with the app password from <code className="text-zinc-400">BABYGPT_APP_PASSWORD</code>. Use the same host
           you use for the app (e.g. only <code className="text-zinc-400">127.0.0.1</code> or only{" "}
@@ -1992,6 +2638,38 @@ export default function LoginPage() {
           >
             {busy ? "Signing in…" : "Sign in"}
           </button>
+          <button
+            type="button"
+            onClick={() => setForgotOpen((open) => !open)}
+            aria-expanded={forgotOpen}
+            aria-controls="forgot-password-panel"
+            className="w-full pt-1 text-center text-sm font-medium text-cyan-500/90 underline-offset-2 hover:text-cyan-400 hover:underline"
+          >
+            Forgot password?
+          </button>
+          {forgotOpen ? (
+            <div
+              id="forgot-password-panel"
+              className="rounded-xl border border-zinc-700/80 bg-zinc-950/60 p-4 text-left text-xs leading-relaxed text-zinc-400"
+            >
+              <p className="font-medium text-zinc-300">Resetting your access</p>
+              <p className="mt-2">
+                bbGPT uses one shared login password configured on the server (<code className="text-zinc-300">BABYGPT_APP_PASSWORD</code>),
+                not per-user accounts. There is nothing to retrieve from this screen.
+              </p>
+              <ul className="mt-3 list-disc space-y-2 pl-4 marker:text-zinc-600">
+                <li>
+                  <strong className="font-medium text-zinc-400">You run this app:</strong> set a new password in{" "}
+                  <code className="text-zinc-300">.env.local</code>, save, restart the dev server or redeploy.
+                </li>
+                <li>
+                  <strong className="font-medium text-zinc-400">Someone else hosts it:</strong> ask them for the current password or to
+                  update <code className="text-zinc-300">BABYGPT_APP_PASSWORD</code> for you on their host (e.g. Vercel → Environment
+                  Variables).
+                </li>
+              </ul>
+            </div>
+          ) : null}
         </form>
       </div>
     </div>
@@ -2002,14 +2680,14 @@ export default function LoginPage() {
 ### src/app/page.tsx
 
 ```typescript
-import BabyGPTClient from "@/components/BabyGPTClient";
+import BbGPTClient from "@/components/BbGPTClient";
 
 export default function Home() {
-  return <BabyGPTClient />;
+  return <BbGPTClient />;
 }
 
 ```
-### src/components/BabyGPTClient.tsx
+### src/components/BbGPTClient.tsx
 
 ```typescript
 "use client";
@@ -2019,11 +2697,19 @@ import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import {
+  clearCompanionIntake,
   generateMemoryPrompt,
   loadMemory,
   saveMemory,
+  setCompanionIntakeFromQuestionnaire,
   updateMemoryFromConversation,
 } from "@/lib/agent-memory";
+import { INTRO_SEVEN_QUESTIONS } from "@/lib/companion-onboarding";
+import {
+  clearIntroIntake,
+  isIntroIntakeComplete,
+  saveIntroIntake,
+} from "@/lib/onboarding-intake-storage";
 import { startHeartbeat } from "@/lib/heartbeat";
 import { addReminder, parseReminderFromMessage } from "@/lib/reminders";
 import {
@@ -2034,7 +2720,11 @@ import {
 import type { Skill } from "@/lib/skill-model";
 import { lsKey } from "@/lib/storage";
 import { skillSystemPrompt, suggestSkillForMessage } from "@/lib/skills";
-import type { ChatMessage, Conversation, ModelTier } from "@/lib/types";
+import { getClientMaxFileBytes } from "@/lib/attachment-config";
+import { DEFAULT_ATTACHMENT_BYTES, nearestPresetBytes } from "@/lib/attachment-presets";
+import { filesToChatAttachments } from "@/lib/file-attachments";
+import { speakAssistantMessage } from "@/lib/speech-synthesis";
+import type { ChatAttachment, ChatMessage, Conversation, ModelTier } from "@/lib/types";
 import {
   adjustBalance,
   creditMonthKey,
@@ -2060,8 +2750,9 @@ import {
   appRootBgClass,
   type UiPreferences,
 } from "@/lib/ui-preferences";
-import { PLANS, planAllowsModel, type PlanId, type PlanDefinition } from "@/lib/plans";
+import { PLANS, planAllowsModel, type PlanBillingCadence, type PlanId, type PlanDefinition } from "@/lib/plans";
 import { schrodingerPair } from "@/lib/schrodinger-pair";
+import { uiDiag } from "@/lib/ui-diagnostics";
 import {
   describeCost,
   estimateSendCredits,
@@ -2081,6 +2772,7 @@ import { SkillsPanel } from "./SkillsPanel";
 import { SettingsPanel } from "./SettingsPanel";
 import { SubscriptionModal, type StripeBillingInfo } from "./SubscriptionModal";
 import { TimeCapsuleReveal } from "./TimeCapsuleReveal";
+import { OnboardingIntakeModal } from "./OnboardingIntakeModal";
 
 const CONV_KEY = lsKey("conversations");
 const ACTIVE_KEY = lsKey("active_conversation_id");
@@ -2104,7 +2796,7 @@ function loadConvos(): Conversation[] {
   }
 }
 
-export default function BabyGPTClient() {
+export default function BbGPTClient() {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -2128,10 +2820,19 @@ export default function BabyGPTClient() {
   const [skillHint, setSkillHint] = useState<Skill | null>(null);
   /** Composer text — drives skills, mood, and templates */
   const [chatDraft, setChatDraft] = useState("");
+  /** Optional image-only prompt when the main composer is empty (ChatGPT-style image flow). */
+  const [imagePromptExtra, setImagePromptExtra] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [readAloud, setReadAloud] = useState(false);
+  const readAloudRef = useRef(false);
+  const [attachmentLimitBytes, setAttachmentLimitBytes] = useState(DEFAULT_ATTACHMENT_BYTES);
   const [streamingAssistantId, setStreamingAssistantId] = useState<string | null>(null);
   /** Aborts in-flight chat SSE when starting a new send or clicking Stop. */
   const streamAbortRef = useRef<AbortController | null>(null);
   const [toasts, setToasts] = useState<Array<{ id: string; title: string; body: string; draft: string; open: boolean }>>([]);
+  const [introGateOpen, setIntroGateOpen] = useState(false);
+  /** Mirrors local questionnaire + memory; drives Welcome copy and Settings redo. */
+  const [introIntakeDone, setIntroIntakeDone] = useState(false);
   const [credits, setCredits] = useState<CreditsStateV1 | null>(null);
   /** Server wallet + login gate (when BABYGPT_APP_PASSWORD is set). */
   const [serverCredits, setServerCredits] = useState(false);
@@ -2150,6 +2851,12 @@ export default function BabyGPTClient() {
     const p = loadUiPreferences();
     applyUiPreferences(p);
     setUiPrefs(p);
+  }, []);
+
+  useEffect(() => {
+    const done = isIntroIntakeComplete();
+    setIntroGateOpen(!done);
+    setIntroIntakeDone(done);
   }, []);
 
   useEffect(() => {
@@ -2175,20 +2882,62 @@ export default function BabyGPTClient() {
   const showBillingBanner = useMemo(() => {
     if (!billingAlert || billingAlertLocalDismiss) return false;
     if (typeof sessionStorage !== "undefined") {
-      if (sessionStorage.getItem(`babygpt_dismiss_billing_${billingAlert.at}`) === "1") return false;
+      if (
+        sessionStorage.getItem(`bbgpt_dismiss_billing_${billingAlert.at}`) === "1" ||
+        sessionStorage.getItem(`babygpt_dismiss_billing_${billingAlert.at}`) === "1"
+      )
+        return false;
     }
     return true;
   }, [billingAlert, billingAlertLocalDismiss]);
 
   const dismissBillingAlert = useCallback(() => {
     if (!billingAlert) return;
-    sessionStorage.setItem(`babygpt_dismiss_billing_${billingAlert.at}`, "1");
+    sessionStorage.setItem(`bbgpt_dismiss_billing_${billingAlert.at}`, "1");
     setBillingAlertLocalDismiss(true);
   }, [billingAlert]);
 
   useEffect(() => {
     setConversations(loadConvos());
     setActiveId(localStorage.getItem(ACTIVE_KEY));
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (
+        localStorage.getItem("bbgpt_read_aloud") === "1" ||
+        localStorage.getItem("babygpt_read_aloud") === "1"
+      )
+        setReadAloud(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    readAloudRef.current = readAloud;
+  }, [readAloud]);
+
+  useEffect(() => {
+    setAttachmentLimitBytes(nearestPresetBytes(getClientMaxFileBytes()));
+  }, []);
+
+  const setAttachmentLimitPersist = useCallback((bytes: number) => {
+    try {
+      localStorage.setItem("bbgpt_max_file_bytes_override", String(bytes));
+    } catch {
+      /* ignore */
+    }
+    setAttachmentLimitBytes(nearestPresetBytes(bytes));
+  }, []);
+
+  const setReadAloudPersist = useCallback((v: boolean) => {
+    setReadAloud(v);
+    try {
+      localStorage.setItem("bbgpt_read_aloud", v ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -2262,12 +3011,13 @@ export default function BabyGPTClient() {
     };
   }, []);
 
-  const openStripeCheckout = useCallback(async (planId: Exclude<PlanId, "free">) => {
+  const openStripeCheckout = useCallback(
+    async (planId: Exclude<PlanId, "free">, billing: PlanBillingCadence = "monthly") => {
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ planId }),
+      body: JSON.stringify({ planId, billing }),
     });
     const data = (await res.json()) as { error?: string; url?: string };
     if (!res.ok) {
@@ -2301,7 +3051,7 @@ export default function BabyGPTClient() {
   }, []);
 
   const scrollToQuantumBar = useCallback(() => {
-    document.getElementById("babygpt-quantum-bar")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("bbgpt-quantum-bar")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
   const activePlanId = credits?.planId;
@@ -2335,12 +3085,18 @@ export default function BabyGPTClient() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        if (introGateOpen) return;
         setSearchOpen((v) => !v);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [introGateOpen]);
+
+  /** Keep search closed while connection intake is blocking (avoids hidden overlay under the modal). */
+  useEffect(() => {
+    if (introGateOpen) setSearchOpen(false);
+  }, [introGateOpen]);
 
   const convRef = useRef(conversations);
   const activeRef = useRef(activeId);
@@ -2359,7 +3115,10 @@ export default function BabyGPTClient() {
         return last?.content ?? null;
       },
       onSuggest: (s) => {
-        setToasts((prev) => [...prev, { ...s, open: true }]);
+        setToasts((prev) => {
+          const base = s.id.startsWith("retro-") ? prev.filter((x) => !x.id.startsWith("retro-")) : prev;
+          return [...base, { ...s, open: true }];
+        });
         if (
           typeof window !== "undefined" &&
           "Notification" in window &&
@@ -2467,7 +3226,12 @@ export default function BabyGPTClient() {
     async (text: string, options?: { regenerate?: boolean }) => {
       const regenerate = options?.regenerate === true;
       const trimmed = text.trim();
-      if (!regenerate && !trimmed) return;
+      if (!regenerate && !trimmed && pendingFiles.length === 0) return;
+
+      if (!isIntroIntakeComplete()) {
+        setBanner("Finish the connection questionnaire to start chatting.");
+        return;
+      }
 
       if (!credits) {
         setBanner("Loading credits… try again in a moment.");
@@ -2477,19 +3241,65 @@ export default function BabyGPTClient() {
       const planDef = PLANS[credits.planId];
       const useSchrodinger = schrodinger && !agentMode;
       const mode: SendMode = agentMode ? "agent" : useSchrodinger ? "schrodinger" : "chat";
-      const costInput = { model, thinking, mode };
+      const schPair = schrodingerPair(model, planDef.allowedModels);
+      /** Multimodal attachments always use `/api/chat/gemini` (billed as chat, thinking off) — match labels + credit math. */
+      const attachmentMultimodal = !regenerate && pendingFiles.length > 0;
+      if (attachmentMultimodal && (agentMode || useSchrodinger)) {
+        setBanner("File attachments use Gemini — turn off Agent and Two models for this chat.");
+        return;
+      }
+      const costMode: SendMode = attachmentMultimodal ? "chat" : mode;
+      const costThinking = attachmentMultimodal ? false : thinking;
+      const costInput = {
+        model,
+        thinking: costThinking,
+        mode: costMode,
+        quantum: {
+          kolmogorov: quantum.kolmogorov,
+          holographic: quantum.holographic,
+          dna: quantum.dna,
+        },
+        secondaryModel: costMode === "schrodinger" ? schPair.modelB : undefined,
+      };
       if (!planPermitsSend(planDef, costInput)) {
+        uiDiag("send.planGate", "fail", {
+          planId: planDef.id,
+          model,
+          mode: costMode,
+          quantum: costInput.quantum,
+          secondaryModel: costInput.secondaryModel,
+        });
         setBanner(
-          `Not included on ${planDef.label}: adjust model or modes, or open Plans to upgrade.`,
+          `Not included on ${planDef.label}: adjust model, modes, or quantum toggles — or open Plans to upgrade.`,
         );
         return;
       }
-      const cost = estimateSendCredits(costInput);
+      uiDiag("send.planGate", "ok", {
+        planId: planDef.id,
+        model,
+        mode: costMode,
+        quantum: costInput.quantum,
+        secondaryModel: costInput.secondaryModel,
+      });
+      const costCore = { model, thinking: costThinking, mode: costMode };
+      const cost = estimateSendCredits(costCore);
       if (credits.balance < cost) {
+        uiDiag("send.credits", "fail", { need: cost, balance: credits.balance });
         setBanner(
-          `Need ${cost} credits for this send (${describeCost(costInput, cost)}). Balance: ${credits.balance}. Open Plans.`,
+          `Need ${cost} credits for this send (${describeCost(costCore, cost)}). Balance: ${credits.balance}. Open Plans.`,
         );
         return;
+      }
+
+      let loadedAttachments: ChatAttachment[] | undefined;
+      if (!regenerate && pendingFiles.length > 0) {
+        const conv = await filesToChatAttachments(pendingFiles, { modelTier: model });
+        if (!conv.ok) {
+          setBanner(conv.error);
+          return;
+        }
+        loadedAttachments = conv.attachments;
+        setPendingFiles([]);
       }
 
       let reminderForBanner: ReturnType<typeof parseReminderFromMessage> = null;
@@ -2573,8 +3383,9 @@ export default function BabyGPTClient() {
         const userMsg: ChatMessage = {
           id: uuidv4(),
           role: "user",
-          content: trimmed,
+          content: trimmed || (loadedAttachments?.length ? "📎 Attached files" : ""),
           createdAt: Date.now(),
+          attachments: loadedAttachments,
         };
 
         const base: Conversation =
@@ -2622,34 +3433,47 @@ export default function BabyGPTClient() {
       const payloadMessages = withUser.messages.map((m) => ({
         role: m.role,
         content: m.content,
+        attachments: m.attachments,
       }));
 
-      const endpoint = useSchrodinger
-        ? "/api/chat/schrodinger"
-        : agentMode
-          ? "/api/chat/agent"
-          : "/api/chat";
+      const useGemini = withUser.messages.some(
+        (m) => m.role === "user" && (m.attachments?.length ?? 0) > 0,
+      );
 
-      const schPair = schrodingerPair(model, PLANS[credits.planId].allowedModels);
-      const body = useSchrodinger
+      const endpoint = useGemini
+        ? "/api/chat/gemini"
+        : useSchrodinger
+          ? "/api/chat/schrodinger"
+          : agentMode
+            ? "/api/chat/agent"
+            : "/api/chat";
+
+      const body = useGemini
         ? JSON.stringify({
             messages: payloadMessages,
-            modelA: schPair.modelA,
-            modelB: schPair.modelB,
-          })
-        : JSON.stringify({
-            messages: payloadMessages,
             model,
-            thinking: thinking ? "on" : "off",
             memoryPrompt,
             skillPrompt: skillPrompt || undefined,
-            quantum: {
-              kolmogorov: quantum.kolmogorov,
-              holographic: quantum.holographic,
-              dna: quantum.dna,
-              adiabatic: quantum.adiabatic,
-            },
-          });
+          })
+        : useSchrodinger
+          ? JSON.stringify({
+              messages: payloadMessages,
+              modelA: schPair.modelA,
+              modelB: schPair.modelB,
+            })
+          : JSON.stringify({
+              messages: payloadMessages,
+              model,
+              thinking: thinking ? "on" : "off",
+              memoryPrompt,
+              skillPrompt: skillPrompt || undefined,
+              quantum: {
+                kolmogorov: quantum.kolmogorov,
+                holographic: quantum.holographic,
+                dna: quantum.dna,
+                adiabatic: quantum.adiabatic,
+              },
+            });
 
       let res: Response;
       try {
@@ -2664,23 +3488,28 @@ export default function BabyGPTClient() {
         setStreamingAssistantId(null);
         streamAbortRef.current = null;
         if (e instanceof DOMException && e.name === "AbortError") {
+          uiDiag("send.fetch", "skip", { reason: "abort" });
           setBanner("Generation stopped.");
           return;
         }
+        uiDiag("send.fetch", "fail", { error: String(e) });
         setBanner("Network error — check your connection and try again.");
         return;
       }
 
-      const rr = res.headers.get("X-BabyGPT-Routing-Reason");
+      const rr =
+        res.headers.get("X-bbGPT-Routing-Reason") ?? res.headers.get("X-BabyGPT-Routing-Reason");
       if (rr) setRoutingReason(decodeURIComponent(rr));
 
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
+        uiDiag("send.http", "fail", { endpoint, status: res.status, error: err.error });
         setBanner(formatChatError(res.status, err.error));
         setBusy(false);
         streamAbortRef.current = null;
         return;
       }
+      uiDiag("send.http", "ok", { endpoint, status: res.status });
 
       const reader = res.body?.getReader();
       if (!reader) {
@@ -2696,6 +3525,7 @@ export default function BabyGPTClient() {
       let buffer = "";
       let acc = "";
       let thinkingAcc = "";
+      let streamCompleted = false;
 
       try {
         while (true) {
@@ -2713,7 +3543,7 @@ export default function BabyGPTClient() {
             try {
               const j = JSON.parse(payload) as { schrodinger?: boolean; winner?: string };
               if (j.schrodinger && j.winner) {
-                setBanner(`Schrödinger winner: ${j.winner}`);
+                setBanner(`Two models · winning stream: ${j.winner}`);
               }
             } catch {
               // ignore
@@ -2836,6 +3666,8 @@ export default function BabyGPTClient() {
             });
           })();
         }
+
+        streamCompleted = true;
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") {
           setBanner("Generation stopped.");
@@ -2843,6 +3675,9 @@ export default function BabyGPTClient() {
           setBanner("Stream interrupted — try again.");
         }
       } finally {
+        if (streamCompleted && readAloudRef.current && acc.trim()) {
+          speakAssistantMessage(assistantId, acc);
+        }
         setBusy(false);
         setStreamingAssistantId(null);
         streamAbortRef.current = null;
@@ -2855,6 +3690,7 @@ export default function BabyGPTClient() {
       conversations,
       credits,
       model,
+      pendingFiles,
       quantum,
       schrodinger,
       serverCredits,
@@ -2862,6 +3698,157 @@ export default function BabyGPTClient() {
       upsertConversation,
     ],
   );
+
+  const runGenerateImage = useCallback(async () => {
+    const prompt = chatDraft.trim() || imagePromptExtra.trim();
+    if (!isIntroIntakeComplete()) {
+      setBanner("Finish the connection questionnaire first.");
+      return;
+    }
+    if (introGateOpen) return;
+    if (!credits) {
+      setBanner("Loading credits… try again in a moment.");
+      return;
+    }
+    if (!prompt) {
+      setBanner("Describe the image in the message box or in the image prompt field next to Create image.");
+      return;
+    }
+
+    const planDef = PLANS[credits.planId];
+    const mode: SendMode = "chat";
+    const costInput = {
+      model,
+      thinking: false,
+      mode,
+      quantum: {
+        kolmogorov: quantum.kolmogorov,
+        holographic: quantum.holographic,
+        dna: quantum.dna,
+      },
+    };
+    if (!planPermitsSend(planDef, costInput)) {
+      setBanner(`Not included on ${planDef.label} — open Plans.`);
+      return;
+    }
+    const costCore = { model, thinking: false, mode };
+    const cost = estimateSendCredits(costCore);
+    if (credits.balance < cost) {
+      setBanner(`Need ${cost} credits. Balance: ${credits.balance}.`);
+      return;
+    }
+
+    setBusy(true);
+    setBanner(null);
+    try {
+      const res = await fetch("/api/gemini/image", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, model }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        imageBase64?: string;
+        mimeType?: string;
+      };
+      if (!res.ok) {
+        setBanner(data.error ?? "Image generation failed.");
+        return;
+      }
+      if (!data.imageBase64 || !data.mimeType) {
+        setBanner("No image returned.");
+        return;
+      }
+
+      const convId = activeId ?? uuidv4();
+      const prev = conversations.find((c) => c.id === convId);
+      const md = `![Generated](data:${data.mimeType};base64,${data.imageBase64})`;
+      const userMsg: ChatMessage = {
+        id: uuidv4(),
+        role: "user",
+        content: `Create image: ${prompt}`,
+        createdAt: Date.now(),
+      };
+      const assistantMsg: ChatMessage = {
+        id: uuidv4(),
+        role: "assistant",
+        content: `Here’s your image.\n\n${md}`,
+        createdAt: Date.now(),
+        toolCalls: [],
+        errorCorrectionLog: [],
+      };
+      const next: Conversation = {
+        id: convId,
+        title: prev?.title === "New chat" || !prev ? `Image: ${prompt.slice(0, 40)}` : prev.title,
+        updatedAt: Date.now(),
+        messages: [...(prev?.messages ?? []), userMsg, assistantMsg],
+      };
+      upsertConversation(next);
+      setActiveId(convId);
+      setChatDraft("");
+      setImagePromptExtra("");
+
+      if (!serverCredits) {
+        setCredits((prev) => {
+          if (!prev) return prev;
+          const nextCredits = adjustBalance(prev, -cost);
+          saveCreditsState(nextCredits);
+          return nextCredits;
+        });
+      } else {
+        void (async () => {
+          const r = await fetch("/api/credits", { credentials: "include" });
+          if (!r.ok) return;
+          const d = (await r.json()) as {
+            source?: string;
+            planId?: PlanId;
+            balance?: number;
+            accrualMonth?: string;
+            welcomeApplied?: boolean;
+          };
+          if (d.source !== "server" || typeof d.balance !== "number" || !d.planId) return;
+          setCredits({
+            version: 1,
+            planId: d.planId,
+            balance: d.balance,
+            accrualMonth: d.accrualMonth ?? creditMonthKey(),
+            welcomeApplied: Boolean(d.welcomeApplied),
+          });
+        })();
+      }
+    } catch {
+      setBanner("Image request failed.");
+    } finally {
+      setBusy(false);
+    }
+  }, [
+    activeId,
+    chatDraft,
+    imagePromptExtra,
+    conversations,
+    credits,
+    introGateOpen,
+    model,
+    quantum,
+    serverCredits,
+    upsertConversation,
+  ]);
+
+  const onIntroIntakeComplete = useCallback((answers: string[]) => {
+    saveIntroIntake(answers);
+    setCompanionIntakeFromQuestionnaire(INTRO_SEVEN_QUESTIONS, answers);
+    setIntroGateOpen(false);
+    setIntroIntakeDone(true);
+  }, []);
+
+  const redoConnectionQuestionnaire = useCallback(() => {
+    clearIntroIntake();
+    clearCompanionIntake();
+    setIntroIntakeDone(false);
+    setIntroGateOpen(true);
+    setSettingsOpen(false);
+  }, []);
 
   const regenerateLastResponse = useCallback(() => {
     void sendMessage("", { regenerate: true });
@@ -2883,11 +3870,17 @@ export default function BabyGPTClient() {
     [sendMessage],
   );
 
-  const previewMode: SendMode = agentMode ? "agent" : schrodinger && !agentMode ? "schrodinger" : "chat";
+  const useSchrodingerPreview = schrodinger && !agentMode;
+  const previewMode: SendMode =
+    pendingFiles.length > 0 ? "chat" : agentMode ? "agent" : useSchrodingerPreview ? "schrodinger" : "chat";
+  const previewThinking = pendingFiles.length > 0 ? false : thinking;
   const appearance = uiPrefs?.appearance ?? "dark";
 
   return (
-    <div className={`babygpt-app-root flex h-[100dvh] w-full flex-col ${appRootBgClass(appearance)}`}>
+    <div className={`bbgpt-app-root flex h-[100dvh] w-full flex-col ${appRootBgClass(appearance)}`}>
+      {introGateOpen ? (
+        <OnboardingIntakeModal appearance={appearance} onComplete={onIntroIntakeComplete} />
+      ) : null}
       {showBillingBanner && billingAlert ? (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-900/45 bg-amber-950/35 px-4 py-2">
           <p className="min-w-0 text-xs text-amber-100/95">{billingAlert.message}</p>
@@ -2915,7 +3908,7 @@ export default function BabyGPTClient() {
             <div
               className={`truncate text-sm font-semibold ${appearance === "light" ? "text-zinc-900" : "text-zinc-100"}`}
             >
-              BabyGPT
+              bbGPT
             </div>
             <span
               className={`hidden items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ring-1 sm:inline-flex ${mood.accentClass}`}
@@ -2930,9 +3923,12 @@ export default function BabyGPTClient() {
                   ? "bg-zinc-200 text-zinc-700 ring-zinc-300"
                   : "bg-zinc-900 text-zinc-500 ring-zinc-800"
               }`}
-              title={routingReason ?? "Model routing appears after each reply when Kolmogorov routing is on."}
+              title={
+                routingReason ??
+                "Every chat response includes a routing note: either Kolmogorov’s pick or “router off — using selected model.”"
+              }
             >
-              {routingReason ? routingReason : "Model reason"}
+              {routingReason ? routingReason : "Model routing (see after send)"}
             </span>
           </div>
           <div
@@ -2942,7 +3938,7 @@ export default function BabyGPTClient() {
           </div>
         </div>
         <QuantumControls
-          id="babygpt-quantum-bar"
+          id="bbgpt-quantum-bar"
           plan={credits ? PLANS[credits.planId] : PLANS.free}
           model={model}
           onModel={setModel}
@@ -2960,7 +3956,7 @@ export default function BabyGPTClient() {
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            className="babygpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
             title="Font size, theme, notifications, time capsule"
           >
             Settings
@@ -2968,7 +3964,7 @@ export default function BabyGPTClient() {
           <button
             type="button"
             onClick={() => setSubscriptionOpen(true)}
-            className="babygpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
             title="Subscription tiers, model access, and credit balance"
           >
             Plans
@@ -2995,7 +3991,7 @@ export default function BabyGPTClient() {
                 router.push("/login");
                 router.refresh();
               }}
-              className="babygpt-header-btn hidden rounded-full bg-zinc-900 px-2 py-1 text-[10px] text-zinc-400 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:inline"
+              className="bbgpt-header-btn hidden rounded-full bg-zinc-900 px-2 py-1 text-[10px] text-zinc-400 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:inline"
             >
               Sign out
             </button>
@@ -3008,14 +4004,14 @@ export default function BabyGPTClient() {
           <button
             type="button"
             onClick={() => setSkillsOpen(true)}
-            className="babygpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
           >
             Skills
           </button>
           <button
             type="button"
             onClick={() => setCommunityOpen(true)}
-            className="babygpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
           >
             Community
           </button>
@@ -3070,6 +4066,7 @@ export default function BabyGPTClient() {
             streamingAssistantId={streamingAssistantId}
             plan={credits ? PLANS[credits.planId] : PLANS.free}
             onPickTemplate={applyPowerTemplate}
+            introIntakeComplete={introIntakeDone}
             onInsertComposerText={(text, how) => {
               if (how === "prefixFirst") {
                 setChatDraft((d) => {
@@ -3086,11 +4083,11 @@ export default function BabyGPTClient() {
               assistantText={lastAssistantText}
               lastUserText={lastUserBubble}
               onAction={runSmartAction}
-              disabled={busy || !credits}
+              disabled={busy || !credits || introGateOpen}
             />
           ) : null}
           <ChatInput
-            disabled={busy || !credits}
+            disabled={busy || !credits || introGateOpen}
             value={chatDraft}
             onValueChange={setChatDraft}
             onSend={sendMessage}
@@ -3098,13 +4095,28 @@ export default function BabyGPTClient() {
             onUseSkill={() => {
               if (skillHint) setActiveSkill(skillHint);
             }}
+            pendingFiles={pendingFiles}
+            onPendingFilesChange={setPendingFiles}
+            onGenerateImage={runGenerateImage}
+            imagePromptExtra={imagePromptExtra}
+            onImagePromptExtraChange={setImagePromptExtra}
+            geminiEnabled
+            readAloud={readAloud}
+            onReadAloudChange={setReadAloudPersist}
+            attachmentLimitBytes={attachmentLimitBytes}
+            onAttachmentLimitChange={setAttachmentLimitPersist}
           >
             {credits ? (
               <CostPreview
                 balance={credits.balance}
                 model={model}
-                thinking={thinking}
+                thinking={previewThinking}
                 mode={previewMode}
+                contextHint={
+                  pendingFiles.length > 0
+                    ? "Pending files: priced as one Gemini multimodal send (chat credits, Thinking off)."
+                    : undefined
+                }
               />
             ) : null}
           </ChatInput>
@@ -3251,6 +4263,8 @@ export default function BabyGPTClient() {
           applyUiPreferences(p);
           setUiPrefs(p);
         }}
+        introIntakeComplete={introIntakeDone}
+        onRedoConnectionQuestionnaire={redoConnectionQuestionnaire}
       />
       {timeCapsuleReveal ? (
         <TimeCapsuleReveal
@@ -3263,10 +4277,10 @@ export default function BabyGPTClient() {
           }}
         />
       ) : null}
-      <footer className={footerShellClass(appearance)}>
+      <footer className={`${footerShellClass(appearance)} text-[9px] leading-tight sm:text-[10px]`}>
         <span className="text-zinc-500">v{APP_VERSION}</span>
         {" · "}
-        BabyGPT is not affiliated with or endorsed by OpenAI. &quot;ChatGPT&quot; is a trademark of OpenAI.
+        bbGPT is not affiliated with or endorsed by OpenAI. &quot;ChatGPT&quot; is a trademark of OpenAI.
       </footer>
     </div>
   );
@@ -3305,6 +4319,7 @@ import { MessageBubble } from "./MessageBubble";
 import { WelcomeScreen } from "./WelcomeScreen";
 import type { PlanDefinition } from "@/lib/plans";
 import type { PowerTemplate } from "@/lib/instant-templates";
+import { CHAT_COLUMN_CLASS } from "@/lib/chat-layout";
 
 export function ChatArea({
   messages,
@@ -3317,6 +4332,7 @@ export function ChatArea({
   plan,
   onPickTemplate,
   onInsertComposerText,
+  introIntakeComplete,
 }: {
   messages: ChatMessage[];
   empty: boolean;
@@ -3329,6 +4345,8 @@ export function ChatArea({
   onPickTemplate: (t: PowerTemplate) => void;
   /** replace = set draft; prefixFirst = put text at start of composer (for mode prefixes). */
   onInsertComposerText: (text: string, how?: "replace" | "prefixFirst") => void;
+  /** False until the blocking connection questionnaire has been completed in this browser. */
+  introIntakeComplete?: boolean;
 }) {
   const endRef = useRef<HTMLDivElement | null>(null);
   const lastContent = messages.at(-1)?.content ?? "";
@@ -3339,7 +4357,7 @@ export function ChatArea({
 
   if (empty) {
     return (
-      <div className="flex-1 overflow-auto">
+      <div className="flex min-h-0 flex-1 overflow-auto">
         <WelcomeScreen
           onOpenPlans={onOpenPlans}
           onOpenSearch={onOpenSearch}
@@ -3347,14 +4365,15 @@ export function ChatArea({
           plan={plan}
           onPickTemplate={onPickTemplate}
           onInsertComposerText={onInsertComposerText}
+          introIntakeComplete={introIntakeComplete}
         />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-auto px-4 py-6">
-      <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      <div className="flex min-h-0 flex-1 overflow-auto px-3 py-4 sm:px-4 sm:py-5">
+      <div className={`flex flex-col gap-3 ${CHAT_COLUMN_CLASS}`}>
         {messages.map((m) => (
           <MessageBubble
             key={m.id}
@@ -3381,7 +4400,13 @@ export function ChatArea({
 ```typescript
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { FILE_SIZE_PRESETS, nearestPresetBytes } from "@/lib/attachment-presets";
+import { formatBytes } from "@/lib/file-attachments";
+import { getInlineAttachmentMaxBytes } from "@/lib/attachment-config";
+import { getSpeechRecognitionConstructor } from "@/lib/speech-recognition";
+import { CHAT_COLUMN_CLASS } from "@/lib/chat-layout";
+import { VoiceModeOverlay } from "./VoiceModeOverlay";
 
 export function ChatInput({
   disabled,
@@ -3392,6 +4417,16 @@ export function ChatInput({
   value: controlledValue,
   onValueChange,
   children,
+  pendingFiles,
+  onPendingFilesChange,
+  onGenerateImage,
+  imagePromptExtra = "",
+  onImagePromptExtraChange,
+  geminiEnabled,
+  readAloud,
+  onReadAloudChange,
+  attachmentLimitBytes,
+  onAttachmentLimitChange,
 }: {
   disabled?: boolean;
   onSend: (text: string) => void | Promise<void>;
@@ -3403,29 +4438,148 @@ export function ChatInput({
   onValueChange?: (text: string) => void;
   /** e.g. CostPreview above the textarea */
   children?: ReactNode;
+  pendingFiles: File[];
+  onPendingFilesChange: (files: File[]) => void;
+  /** Opens Gemini image generation (requires GEMINI_API_KEY on server). */
+  onGenerateImage?: () => void;
+  /** When the main composer is empty, user can type here for image-only generation. */
+  imagePromptExtra?: string;
+  onImagePromptExtraChange?: (v: string) => void;
+  geminiEnabled?: boolean;
+  /** When true, new assistant replies are read with browser text-to-speech after streaming completes. */
+  readAloud?: boolean;
+  onReadAloudChange?: (next: boolean) => void;
+  /** Effective per-file max (from env + user preset in localStorage). */
+  attachmentLimitBytes: number;
+  onAttachmentLimitChange: (bytes: number) => void;
 }) {
   const [internal, setInternal] = useState("");
   const controlled = controlledValue !== undefined;
   const value = controlled ? controlledValue! : internal;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recRef = useRef<SpeechRecognition | null>(null);
+  const valueRef = useRef("");
+  const [listening, setListening] = useState(false);
+  const [voicePanelOpen, setVoicePanelOpen] = useState(false);
+  const [interimText, setInterimText] = useState("");
+  const inlineMax = getInlineAttachmentMaxBytes();
+  /** Browser-only API: server snapshot null, client uses live constructor after hydration. */
+  const voiceCtor = useSyncExternalStore(
+    () => () => {
+      /* no external store; capability is fixed per document */
+    },
+    () => getSpeechRecognitionConstructor(),
+    () => null,
+  );
 
-  function setValue(next: string) {
-    if (controlled) onValueChange?.(next);
-    else setInternal(next);
-    onDraftChange?.(next);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  const setValue = useCallback(
+    (next: string) => {
+      if (controlled) onValueChange?.(next);
+      else setInternal(next);
+      onDraftChange?.(next);
+    },
+    [controlled, onDraftChange, onValueChange],
+  );
+
+  const stopVoice = useCallback(() => {
+    try {
+      recRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+    recRef.current = null;
+    setListening(false);
+    setInterimText("");
+  }, []);
+
+  useEffect(() => () => stopVoice(), [stopVoice]);
+
+  const startVoice = useCallback(() => {
+    const Ctor = getSpeechRecognitionConstructor();
+    if (!Ctor || disabled) return;
+    stopVoice();
+    const rec = new Ctor();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = typeof navigator !== "undefined" ? navigator.language : "en-US";
+    rec.onresult = (ev: SpeechRecognitionEvent) => {
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const r = ev.results[i];
+        if (!r?.[0]) continue;
+        const t = r[0].transcript;
+        if (r.isFinal && t.trim()) {
+          const cur = valueRef.current.trim();
+          const sep = cur && !cur.endsWith(" ") ? " " : "";
+          setValue(`${cur}${sep}${t.trim()}`);
+        }
+      }
+      let interimBuf = "";
+      for (let i = 0; i < ev.results.length; i++) {
+        if (!ev.results[i].isFinal) interimBuf += ev.results[i][0]?.transcript ?? "";
+      }
+      setInterimText(interimBuf.trim());
+    };
+    rec.onerror = () => {
+      stopVoice();
+      setVoicePanelOpen(false);
+    };
+    rec.onend = () => {
+      setListening(false);
+      recRef.current = null;
+    };
+    recRef.current = rec;
+    setListening(true);
+    try {
+      rec.start();
+    } catch {
+      stopVoice();
+      setVoicePanelOpen(false);
+    }
+  }, [disabled, setValue, stopVoice]);
+
+  function openVoiceMode() {
+    if (!voiceCtor || disabled) return;
+    setVoicePanelOpen(true);
+    startVoice();
+  }
+
+  function closeVoiceMode() {
+    stopVoice();
+    setVoicePanelOpen(false);
   }
 
   async function submit() {
     const t = value.trim();
-    if (!t || disabled) return;
+    if ((!t && pendingFiles.length === 0) || disabled) return;
     setValue("");
     await onSend(t);
   }
 
+  const maxBytes = attachmentLimitBytes;
+  const presetSelectBytes = nearestPresetBytes(attachmentLimitBytes);
+
+  const col = CHAT_COLUMN_CLASS;
+
   return (
-    <div className="border-t border-zinc-900 bg-zinc-950/40 p-3">
+    <div className="shrink-0 border-t border-zinc-900 bg-zinc-950/40 px-2 py-2 sm:px-3">
+      <VoiceModeOverlay
+        open={voicePanelOpen}
+        listening={listening}
+        interimText={interimText}
+        readAloud={readAloud}
+        onReadAloudChange={onReadAloudChange}
+        onDone={closeVoiceMode}
+      />
+
       {children}
       {skillSuggestion ? (
-        <div className="mx-auto mb-2 flex max-w-3xl items-center justify-between gap-2 rounded-2xl border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-400">
+        <div
+          className={`mb-1.5 flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-950/60 px-2.5 py-1.5 text-xs text-zinc-400 ${col}`}
+        >
           <span>
             Use skill: <span className="text-zinc-200">{skillSuggestion.name}</span>?
           </span>
@@ -3438,7 +4592,94 @@ export function ChatInput({
           </button>
         </div>
       ) : null}
-      <div className="mx-auto flex max-w-3xl gap-2">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const list = e.target.files;
+          if (!list?.length) return;
+          onPendingFilesChange([...pendingFiles, ...Array.from(list)]);
+          e.target.value = "";
+        }}
+      />
+      {pendingFiles.length > 0 ? (
+        <div className={`mb-1.5 flex flex-wrap gap-1.5 ${col}`}>
+          {pendingFiles.map((f, i) => (
+            <span
+              key={`${f.name}-${i}`}
+              className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-1 text-[11px] text-zinc-300 ring-1 ring-zinc-800"
+            >
+              <span className="max-w-[200px] truncate">{f.name}</span>
+              <span className="text-zinc-500">({formatBytes(f.size)})</span>
+              <button
+                type="button"
+                className="text-zinc-500 hover:text-zinc-200"
+                onClick={() => onPendingFilesChange(pendingFiles.filter((_, j) => j !== i))}
+                aria-label="Remove file"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {/* Attach + max size + create image on one row */}
+      <div className={`mb-1.5 flex flex-wrap items-center gap-1.5 text-[11px] ${col}`}>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex items-center gap-1 rounded-lg bg-zinc-900/90 px-2.5 py-1.5 font-medium text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 disabled:opacity-40"
+          title={`Add files (max ${formatBytes(maxBytes)} each)`}
+        >
+          <span className="text-sm leading-none text-zinc-400">+</span>
+          Attach
+        </button>
+        <label className="inline-flex items-center gap-1.5 text-zinc-500">
+          <span className="hidden sm:inline">Max</span>
+          <select
+            disabled={disabled}
+            value={presetSelectBytes}
+            onChange={(e) => onAttachmentLimitChange(Number(e.target.value))}
+            className="cursor-pointer rounded-lg border-0 bg-zinc-900/90 py-1.5 pl-2 pr-7 text-[11px] font-medium text-zinc-300 ring-1 ring-zinc-800 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 disabled:opacity-40"
+            title="Per-file size limit (stored on this device)"
+          >
+            {FILE_SIZE_PRESETS.map((p) => (
+              <option key={p.id} value={p.bytes}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {onGenerateImage && geminiEnabled ? (
+          <>
+            <input
+              type="text"
+              value={imagePromptExtra}
+              onChange={(e) => onImagePromptExtraChange?.(e.target.value)}
+              disabled={disabled}
+              placeholder="Image prompt…"
+              className="min-w-0 max-w-[200px] flex-1 rounded-lg border-0 bg-zinc-900/90 px-2 py-1.5 text-[11px] text-zinc-200 ring-1 ring-zinc-800 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/25 disabled:opacity-40 sm:max-w-xs"
+              title="Optional: describe the image here if you do not want to use the main message box above"
+              aria-label="Image generation prompt"
+            />
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={onGenerateImage}
+              className="rounded-lg bg-fuchsia-950/50 px-2.5 py-1.5 text-[11px] font-semibold text-fuchsia-100/95 ring-1 ring-fuchsia-900/60 hover:bg-fuchsia-950/80 disabled:opacity-40"
+              title="Generate an image with Gemini (uses one chat credit; needs GEMINI_API_KEY on the server)"
+            >
+              Create image
+            </button>
+          </>
+        ) : null}
+      </div>
+
+      <div className={`flex flex-wrap items-end gap-1.5 ${col}`}>
         <textarea
           value={value}
           disabled={disabled}
@@ -3451,21 +4692,65 @@ export function ChatInput({
               void submit();
             }
           }}
-          rows={3}
-          placeholder="Message BabyGPT…"
-          className="min-h-[52px] flex-1 resize-none rounded-2xl bg-zinc-900/60 px-4 py-3 text-sm text-zinc-100 outline-none ring-1 ring-zinc-800 placeholder:text-zinc-600 focus:ring-cyan-500/30 disabled:opacity-50"
+          rows={2}
+          placeholder="Message bbGPT…"
+          className="min-h-[44px] min-w-0 flex-1 resize-y rounded-2xl bg-zinc-900/60 px-3 py-2.5 text-sm leading-relaxed text-zinc-100 outline-none ring-1 ring-zinc-800 placeholder:text-zinc-600 focus:ring-cyan-500/30 disabled:opacity-50"
         />
+
+        {/* ChatGPT-style circular voice control */}
         <button
           type="button"
-          disabled={disabled || !value.trim()}
+          disabled={disabled || !voiceCtor}
+          onClick={openVoiceMode}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition sm:h-12 sm:w-12 ${
+            voicePanelOpen
+              ? "border-cyan-500/60 bg-cyan-950/50 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.25)]"
+              : "border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800"
+          } disabled:cursor-not-allowed disabled:opacity-40`}
+          title={
+            voiceCtor
+              ? "Voice dictation — opens the voice panel; speak to insert text into the message box"
+              : "Voice dictation is not supported in this browser"
+          }
+          aria-label={voicePanelOpen ? "Voice panel open" : "Open voice dictation"}
+          aria-pressed={voicePanelOpen}
+        >
+          <svg className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          disabled={disabled || (!value.trim() && pendingFiles.length === 0)}
           onClick={() => void submit()}
-          className="h-[52px] shrink-0 rounded-2xl bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-11 shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40 sm:h-12 sm:px-5"
         >
           Send
         </button>
       </div>
-      <div className="mx-auto mt-2 max-w-3xl text-[11px] text-zinc-600">
-        Enter sends · Shift+Enter newline
+
+      <div
+        className={`mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-zinc-900/80 pt-1.5 text-[10px] text-zinc-600 ${col}`}
+      >
+        <p
+          className="min-w-0 flex-1 leading-snug"
+          title={`Enter sends · Shift+Enter newline · Inline attach up to ${formatBytes(inlineMax)} · Max per file from menu above · Host may cap lower`}
+        >
+          <span className="text-zinc-500">Enter</span> send · <span className="text-zinc-500">Shift+Enter</span> newline ·
+          Inline cap {formatBytes(inlineMax)}
+        </p>
+        {onReadAloudChange ? (
+          <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-zinc-500 hover:text-zinc-400">
+            <input
+              type="checkbox"
+              checked={readAloud ?? false}
+              onChange={(e) => onReadAloudChange(e.target.checked)}
+              className="rounded border-zinc-700 bg-zinc-900 accent-cyan-600"
+            />
+            Read aloud
+          </label>
+        ) : null}
       </div>
     </div>
   );
@@ -3477,12 +4762,20 @@ export function ChatInput({
 ```typescript
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
+import { getCommunityVisitorId } from "@/lib/community-visitor";
 import { fetchChatWithRetry } from "@/lib/fetch-chat";
 import type { CommunityPost } from "@/lib/community";
 import { COMMUNITY_DEBATE_COST } from "@/lib/usage-cost";
 import { PostCard } from "./PostCard";
+
+function communityFetchHeaders(): HeadersInit {
+  const vid = getCommunityVisitorId();
+  const h: Record<string, string> = {};
+  if (vid.length >= 8) h["X-Community-Visitor"] = vid;
+  return h;
+}
 
 export function CommunityPanel({
   open,
@@ -3510,18 +4803,21 @@ export function CommunityPanel({
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogA11y(open, panelRef, onClose);
 
-  async function refresh() {
-    const res = await fetchChatWithRetry("/api/community", { method: "GET" });
+  const refresh = useCallback(async () => {
+    const res = await fetchChatWithRetry("/api/community", {
+      method: "GET",
+      headers: communityFetchHeaders(),
+    });
     const data = (await res.json()) as { posts: CommunityPost[] };
     setPosts(data.posts ?? []);
-  }
+  }, []);
 
   useEffect(() => {
     if (!open) return;
     /* eslint-disable react-hooks/set-state-in-effect -- load posts when panel opens */
     void refresh();
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [open]);
+  }, [open, refresh]);
 
   async function createPost() {
     const t = title.trim();
@@ -3529,7 +4825,7 @@ export function CommunityPanel({
     if (!t || !b) return;
     await fetchChatWithRetry("/api/community", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...communityFetchHeaders() },
       body: JSON.stringify({ action: "post", title: t, body: b }),
     });
     setTitle("");
@@ -3537,14 +4833,52 @@ export function CommunityPanel({
     await refresh();
   }
 
-  async function addComment(postId: string, text: string) {
-    await fetchChatWithRetry("/api/community", {
+  async function addComment(postId: string, text: string): Promise<string | undefined> {
+    const res = await fetchChatWithRetry("/api/community", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...communityFetchHeaders() },
       body: JSON.stringify({ action: "comment", postId, body: text, author: "you" }),
     });
+    if (res.status === 422) {
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      return j.error ?? "Please keep comments constructive.";
+    }
+    if (!res.ok) return "Could not post comment.";
     await refresh();
+    return undefined;
   }
+
+  async function appreciate(postId: string) {
+    const visitorKey = getCommunityVisitorId();
+    if (visitorKey.length < 8) return;
+    const res = await fetchChatWithRetry("/api/community", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...communityFetchHeaders() },
+      body: JSON.stringify({ action: "appreciate", postId, visitorKey }),
+    });
+    if (!res.ok) return;
+    const data = (await res.json()) as { appreciationCount?: number; duplicate?: boolean };
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              appreciationCount: data.appreciationCount ?? p.appreciationCount,
+              viewerHasAppreciated: true,
+            }
+          : p,
+      ),
+    );
+    if (data.duplicate) await refresh();
+  }
+
+  const spotlight = useMemo(() => {
+    const ranked = [...posts].sort((a, b) => {
+      if (b.appreciationCount !== a.appreciationCount) return b.appreciationCount - a.appreciationCount;
+      return b.createdAt - a.createdAt;
+    });
+    return ranked.slice(0, 5);
+  }, [posts]);
 
   async function runDebate() {
     const topic = debateTopic.trim();
@@ -3587,22 +4921,54 @@ export function CommunityPanel({
         className="h-[min(92vh,860px)] w-full max-w-lg overflow-auto rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl ring-1 ring-white/5"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="babygpt-community-title"
+        aria-labelledby="bbgpt-community-title"
       >
-        <div className="sticky top-0 flex items-center justify-between border-b border-zinc-900 bg-zinc-950/90 px-4 py-3 backdrop-blur">
-          <div id="babygpt-community-title" className="text-sm font-semibold text-zinc-100">
-            Community
+        <div className="sticky top-0 z-10 flex flex-col gap-1 border-b border-zinc-900 bg-zinc-950/90 px-4 py-3 backdrop-blur">
+          <div className="flex items-center justify-between gap-2">
+            <div id="bbgpt-community-title" className="text-sm font-semibold text-zinc-100">
+              Community
+            </div>
+            <button
+              type="button"
+              className="rounded-lg px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              onClick={onClose}
+            >
+              Close
+            </button>
           </div>
-          <button
-            type="button"
-            className="rounded-lg px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-            onClick={onClose}
-          >
-            Close
-          </button>
+          <p className="text-[11px] leading-relaxed text-zinc-500">
+            A shared board for everyone on this deployment. Rankings use{" "}
+            <span className="text-zinc-400">appreciations</span> only — no downvotes. Comments stay
+            constructive; harsh or insulting lines are gently blocked.
+          </p>
         </div>
 
         <div className="space-y-4 p-4">
+          {spotlight.length ? (
+            <div className="rounded-2xl border border-amber-900/35 bg-amber-950/20 p-3 ring-1 ring-amber-900/25">
+              <div className="text-xs font-semibold text-amber-100/95">Community spotlight</div>
+              <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                Posts with the most ✦ appreciations surface here for all visitors.
+              </p>
+              <ol className="mt-3 space-y-2">
+                {spotlight.map((p, i) => (
+                  <li
+                    key={p.id}
+                    className="flex items-start justify-between gap-2 rounded-xl bg-zinc-950/50 px-2.5 py-2 text-sm ring-1 ring-zinc-800/80"
+                  >
+                    <span className="min-w-0">
+                      <span className="text-[11px] font-medium text-zinc-500">{i + 1}. </span>
+                      <span className="text-zinc-200">{p.title}</span>
+                    </span>
+                    <span className="shrink-0 text-xs font-medium text-amber-200/90">
+                      ✦ {p.appreciationCount ?? 0}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
+
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-3">
             <div className="text-xs font-medium text-zinc-300">AI debate</div>
             <input
@@ -3659,7 +5025,12 @@ export function CommunityPanel({
 
           <div className="space-y-3">
             {posts.map((p) => (
-              <PostCard key={p.id} post={p} onComment={(id, t) => void addComment(id, t)} />
+              <PostCard
+                key={p.id}
+                post={p}
+                onComment={addComment}
+                onAppreciate={appreciate}
+              />
             ))}
             {!posts.length ? (
               <div className="text-sm text-zinc-600">No posts yet — add one above.</div>
@@ -3715,6 +5086,7 @@ export function ConversationTopology({ active = 3 }: { active?: number }) {
 ```typescript
 "use client";
 
+import { CHAT_COLUMN_CLASS } from "@/lib/chat-layout";
 import { estimateSendCreditsBreakdown } from "@/lib/usage-cost";
 import type { SendMode } from "@/lib/usage-cost";
 import type { ModelTier } from "@/lib/types";
@@ -3724,11 +5096,14 @@ export function CostPreview({
   model,
   thinking,
   mode,
+  contextHint,
 }: {
   balance: number;
   model: ModelTier;
   thinking: boolean;
   mode: SendMode;
+  /** Shown when pricing differs from header toggles (e.g. file attachments → Gemini chat). */
+  contextHint?: string;
 }) {
   const { lines, total } = estimateSendCreditsBreakdown({ model, thinking, mode });
   const after = Math.max(0, balance - total);
@@ -3743,43 +5118,49 @@ export function CostPreview({
       : "bg-gradient-to-r from-cyan-500 to-emerald-500";
 
   return (
-    <div className="mx-auto mb-2 w-full max-w-3xl rounded-2xl border border-zinc-800/90 bg-zinc-950/60 px-4 py-3 ring-1 ring-white/5">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-            This send
-          </div>
-          <div className="mt-1 font-mono text-lg font-semibold text-zinc-100">{total} cr</div>
+    <div
+      className={`mb-1.5 rounded-xl border border-zinc-800/90 bg-zinc-950/60 px-3 py-2 ring-1 ring-white/5 ${CHAT_COLUMN_CLASS}`}
+    >
+      {contextHint ? (
+        <p className="mb-1 text-[10px] leading-snug text-cyan-500/95">{contextHint}</p>
+      ) : null}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">This send</span>
+          <span className="font-mono text-base font-semibold text-zinc-100">{total} cr</span>
         </div>
-        <div className="text-right text-[11px] text-zinc-500">
-          Balance <span className="font-mono text-zinc-300">{balance}</span>
+        <div className="text-[10px] text-zinc-500">
+          Bal <span className="font-mono text-zinc-300">{balance}</span>
           {blocked ? (
-            <span className="ml-2 text-rose-400">Not enough credits</span>
+            <span className="ml-1.5 text-rose-400">Insufficient</span>
           ) : (
-            <span className="ml-2 text-zinc-400">
-              → <span className="font-mono text-emerald-300/90">{after}</span> left
+            <span className="ml-1.5 text-zinc-400">
+              → <span className="font-mono text-emerald-300/90">{after}</span>
             </span>
           )}
         </div>
       </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800/90">
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-800/90">
         <div
           className={`h-full rounded-full transition-all duration-300 ${barColor}`}
           style={{ width: `${Math.round(ratio * 100)}%` }}
         />
       </div>
-      <ul className="mt-2 space-y-0.5 text-[10px] text-zinc-500">
-        {lines.map((row) => (
-          <li key={row.label} className="flex justify-between gap-2">
-            <span>{row.label}</span>
-            <span className="font-mono text-zinc-400">+{row.credits}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-[10px] leading-snug text-zinc-600">
-        This is the in-app <span className="text-zinc-500">credit</span> cost for one successful reply. Stripe
-        subscription pricing (USD/month) for your plan tier is in{" "}
-        <span className="text-zinc-500">Plans</span> — separate from per-message credits.
+      <details className="mt-1.5 group">
+        <summary className="cursor-pointer list-none text-[9px] text-zinc-600 marker:content-none [&::-webkit-details-marker]:hidden hover:text-zinc-400">
+          <span className="underline decoration-zinc-700 underline-offset-2">Cost breakdown</span>
+        </summary>
+        <ul className="mt-1 space-y-0.5 text-[9px] text-zinc-500">
+          {lines.map((row) => (
+            <li key={row.label} className="flex justify-between gap-2">
+              <span>{row.label}</span>
+              <span className="font-mono text-zinc-400">+{row.credits}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <p className="mt-1 hidden text-[9px] leading-snug text-zinc-600 sm:block" title="USD subscription is separate">
+        Per-reply credits differ from monthly subscription pricing (see Plans).
       </p>
     </div>
   );
@@ -3793,6 +5174,7 @@ export function CostPreview({
 
 import type { PlanDefinition } from "@/lib/plans";
 import { POWER_TEMPLATES, planRank, type PowerTemplate } from "@/lib/instant-templates";
+import { uiDiag } from "@/lib/ui-diagnostics";
 
 export function InstantTemplates({
   plan,
@@ -3814,13 +5196,23 @@ export function InstantTemplates({
             <button
               key={t.id}
               type="button"
-              disabled={!ok}
-              title={!ok ? `Requires ${t.minPlan}+ plan` : t.description}
-              onClick={() => onPick(t)}
+              title={
+                !ok
+                  ? `Requires ${t.minPlan}+ plan — click to open Plans`
+                  : t.description
+              }
+              onClick={() => {
+                uiDiag("welcome.powerTemplate", ok ? "ok" : "skip", {
+                  planId: plan.id,
+                  templateId: t.id,
+                  minPlan: t.minPlan,
+                });
+                onPick(t);
+              }}
               className={`flex flex-col items-start rounded-xl border px-3 py-2.5 text-left text-xs transition ${
                 ok
                   ? "border-zinc-800 bg-zinc-900/50 text-zinc-200 ring-1 ring-transparent hover:border-cyan-500/30 hover:ring-cyan-500/20"
-                  : "cursor-not-allowed border-zinc-800/50 bg-zinc-950/40 text-zinc-600"
+                  : "cursor-pointer border-zinc-800/50 bg-zinc-950/40 text-zinc-500 ring-1 ring-transparent hover:border-amber-500/25 hover:text-zinc-400"
               }`}
             >
               <span className="flex items-center gap-2 font-semibold text-zinc-100">
@@ -3847,12 +5239,20 @@ export function InstantTemplates({
 ```typescript
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeHighlight from "rehype-highlight";
+import { formatBytes } from "@/lib/file-attachments";
 import type { ChatMessage } from "@/lib/types";
+import {
+  getActiveSpeechMessageId,
+  isSpeechSynthesisAvailable,
+  speakAssistantMessage,
+  stopSpeech,
+  subscribeSpeechActive,
+} from "@/lib/speech-synthesis";
 import { ThinkingCanvas } from "./ThinkingCanvas";
 
 export function MessageBubble({
@@ -3868,6 +5268,13 @@ export function MessageBubble({
 }) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
+  const speechActiveId = useSyncExternalStore(
+    subscribeSpeechActive,
+    getActiveSpeechMessageId,
+    () => null,
+  );
+  const isSpeakingThis = !isUser && speechActiveId === message.id;
+  const canSpeak = !isUser && isSpeechSynthesisAvailable();
 
   const copyAssistant = useCallback(async () => {
     if (!message.content.trim()) return;
@@ -3934,7 +5341,7 @@ export function MessageBubble({
         ) : null}
 
         {!isUser && message.content.trim() ? (
-          <div className="mb-2 flex justify-end">
+          <div className="mb-2 flex justify-end gap-2">
             <button
               type="button"
               onClick={() => void copyAssistant()}
@@ -3942,6 +5349,51 @@ export function MessageBubble({
             >
               {copied ? "Copied" : "Copy"}
             </button>
+            {canSpeak ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isSpeakingThis) {
+                    stopSpeech();
+                    return;
+                  }
+                  speakAssistantMessage(message.id, message.content);
+                }}
+                className={`rounded-lg px-2 py-1 text-[11px] font-medium ring-1 ring-zinc-800 ${
+                  isSpeakingThis
+                    ? "bg-cyan-950/80 text-cyan-200 hover:bg-cyan-900/80"
+                    : "bg-zinc-950/60 text-zinc-400 hover:text-zinc-200"
+                }`}
+                title="Read this reply aloud (browser text-to-speech)"
+              >
+                {isSpeakingThis ? "Stop" : "Speak"}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {isUser && message.attachments?.length ? (
+          <div className="mb-2 flex flex-col gap-2">
+            {message.attachments.map((a) => (
+              <div
+                key={a.id}
+                className="rounded-lg border border-zinc-800/90 bg-zinc-950/40 p-2 ring-1 ring-white/5"
+              >
+                <div className="text-[10px] text-zinc-500">
+                  {a.name} · {formatBytes(a.sizeBytes)}
+                </div>
+                {a.mimeType.startsWith("image/") && a.dataBase64 ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- user-attached preview
+                  <img
+                    src={`data:${a.mimeType};base64,${a.dataBase64}`}
+                    alt=""
+                    className="mt-1 max-h-48 max-w-full rounded-lg object-contain"
+                  />
+                ) : a.mimeType.startsWith("image/") ? (
+                  <p className="mt-1 text-[10px] text-zinc-600">Image (uploaded to Gemini — preview not stored)</p>
+                ) : null}
+              </div>
+            ))}
           </div>
         ) : null}
 
@@ -3950,7 +5402,7 @@ export function MessageBubble({
         ) : showGeneratingPlaceholder ? (
           <p className="animate-pulse text-zinc-500">Generating…</p>
         ) : (
-          <div className="babygpt-markdown prose prose-invert max-w-none prose-p:my-2 prose-headings:my-3">
+          <div className="bbgpt-markdown prose prose-invert max-w-none prose-p:my-2 prose-headings:my-3">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeSanitize, rehypeHighlight]}
@@ -3965,6 +5417,204 @@ export function MessageBubble({
 }
 
 ```
+### src/components/OnboardingIntakeModal.tsx
+
+```typescript
+"use client";
+
+import { useCallback, useMemo, useState } from "react";
+import { INTRO_SEVEN_QUESTIONS } from "@/lib/companion-onboarding";
+import { INTRO_INTAKE_MIN_CHARS } from "@/lib/onboarding-intake-storage";
+
+const WHY_CONNECTION_COPY = {
+  title: "Why connection matters",
+  lead:
+    "bbGPT is not a clinician. What we can do is use your words—goals, constraints, tone—to steer replies toward what actually fits you. That is the same reason coaches take an intake and why good product copy asks who it is for: ambiguity is expensive.",
+  bullets: [
+    {
+      label: "Coaching & counseling research",
+      text:
+        "Across decades of outcome studies, the quality of the relationship (often called “working alliance”) shows up as one of the strongest predictors of benefit—often as large as or larger than the specific method used. Intake isn’t fluff; it’s how alignment starts.",
+    },
+    {
+      label: "Human–computer interaction",
+      text:
+        "Systems that adapt to stated goals, vocabulary, and constraints are rated more useful and less frustrating. People consistently report “relevance” and “feels like it gets me” when context is explicit.",
+    },
+    {
+      label: "Large language models",
+      text:
+        "Models have no persistent memory of you unless we give it. A structured summary of your situation, urgency, stakeholders, and preferred tone reduces guesswork and helps answers stay on-narrative instead of generic.",
+    },
+  ],
+  footer:
+    "Nothing here replaces professional care if you need it. This questionnaire simply gives the model a fair shot at meeting you where you are.",
+} as const;
+
+/** Satisfies INTRO_INTAKE_MIN_CHARS so skip counts as completed intake; user can redo from Settings. */
+const INTRO_SKIP_PLACEHOLDER_ANSWER =
+  "Exploring bbGPT first — I can open the connection questionnaire from Settings when I am ready.";
+
+export function OnboardingIntakeModal({
+  appearance,
+  onComplete,
+}: {
+  appearance: "light" | "dark" | "oled";
+  onComplete: (answers: string[]) => void;
+}) {
+  const theme = appearance === "light" ? "light" : "dark";
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<string[]>(() => INTRO_SEVEN_QUESTIONS.map(() => ""));
+  const [touched, setTouched] = useState(false);
+
+  const question = INTRO_SEVEN_QUESTIONS[step]!;
+  const value = answers[step] ?? "";
+  const validLength = value.trim().length >= INTRO_INTAKE_MIN_CHARS;
+  const isLast = step === INTRO_SEVEN_QUESTIONS.length - 1;
+
+  const panelClass =
+    theme === "light"
+      ? "border-zinc-200 bg-white text-zinc-900 ring-zinc-300/80"
+      : "border-zinc-800 bg-zinc-950 text-zinc-100 ring-zinc-800/80";
+
+  const muted = theme === "light" ? "text-zinc-600" : "text-zinc-400";
+  const inputClass =
+    theme === "light"
+      ? "border-zinc-300 bg-zinc-50 text-zinc-900 placeholder:text-zinc-400 focus:ring-cyan-600/40"
+      : "border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-600 focus:ring-cyan-500/35";
+
+  const setCurrent = useCallback(
+    (next: string) => {
+      setAnswers((prev) => {
+        const copy = [...prev];
+        copy[step] = next;
+        return copy;
+      });
+    },
+    [step],
+  );
+
+  const goNext = useCallback(() => {
+    setTouched(true);
+    if (!validLength) return;
+    if (isLast) {
+      onComplete(answers.map((a, i) => (i === step ? value : a)));
+      return;
+    }
+    setStep((s) => s + 1);
+    setTouched(false);
+  }, [answers, isLast, onComplete, step, validLength, value]);
+
+  const goBack = useCallback(() => {
+    setTouched(false);
+    setStep((s) => Math.max(0, s - 1));
+  }, []);
+
+  const progress = useMemo(
+    () => `${step + 1} / ${INTRO_SEVEN_QUESTIONS.length}`,
+    [step],
+  );
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-black/70 px-3 py-8 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="intro-intake-title"
+    >
+      <div
+        className={`flex w-full max-w-lg flex-col rounded-2xl border p-5 shadow-2xl ring-1 ${panelClass}`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>
+              Before your first message · {progress}
+            </p>
+            <h2 id="intro-intake-title" className="mt-1 text-lg font-semibold tracking-tight">
+              Connection questionnaire
+            </h2>
+            <p className={`mt-2 text-xs leading-relaxed ${muted}`}>
+              Answer each question in your own words. This runs once, stays on your device, and is
+              folded into local memory so replies can match your situation and tone.
+            </p>
+            <p className="mt-3 text-center">
+              <button
+                type="button"
+                onClick={() =>
+                  onComplete(INTRO_SEVEN_QUESTIONS.map(() => INTRO_SKIP_PLACEHOLDER_ANSWER))
+                }
+                className={`text-xs font-medium underline decoration-cyan-500/50 underline-offset-2 transition hover:decoration-cyan-400 ${
+                  theme === "light" ? "text-cyan-700 hover:text-cyan-800" : "text-cyan-400/95 hover:text-cyan-300"
+                }`}
+              >
+                Skip questionnaire — start chatting
+              </button>
+            </p>
+          </div>
+        </div>
+
+        <details className={`mt-4 rounded-xl border px-3 py-2 text-xs ${theme === "light" ? "border-cyan-200 bg-cyan-50/80" : "border-cyan-900/50 bg-cyan-950/25"}`}>
+          <summary className="cursor-pointer font-medium text-cyan-200/95 [&::-webkit-details-marker]:hidden">
+            {WHY_CONNECTION_COPY.title}
+          </summary>
+          <p className={`mt-2 leading-relaxed ${muted}`}>{WHY_CONNECTION_COPY.lead}</p>
+          <ul className="mt-3 space-y-3">
+            {WHY_CONNECTION_COPY.bullets.map((b) => (
+              <li key={b.label}>
+                <span className="font-medium text-cyan-100/90">{b.label}. </span>
+                <span className={muted}>{b.text}</span>
+              </li>
+            ))}
+          </ul>
+          <p className={`mt-3 text-[11px] leading-relaxed ${muted}`}>{WHY_CONNECTION_COPY.footer}</p>
+        </details>
+
+        <label className={`mt-5 block text-sm font-medium ${theme === "light" ? "text-zinc-800" : "text-zinc-200"}`}>
+          {question}
+        </label>
+        <textarea
+          value={value}
+          onChange={(e) => setCurrent(e.target.value)}
+          rows={5}
+          className={`mt-2 w-full resize-y rounded-xl border px-3 py-2 text-sm outline-none ring-0 transition focus:ring-2 ${inputClass}`}
+          placeholder="Type a concrete answer (a few sentences is enough)."
+          autoComplete="off"
+          autoFocus
+        />
+        {touched && !validLength ? (
+          <p className="mt-1 text-[11px] text-amber-400/95">
+            Please add a bit more detail (at least {INTRO_INTAKE_MIN_CHARS} characters) so the model
+            isn’t guessing.
+          </p>
+        ) : null}
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={goBack}
+            disabled={step === 0}
+            className={`rounded-full px-4 py-2 text-xs font-medium ring-1 disabled:opacity-40 ${
+              theme === "light"
+                ? "bg-zinc-100 text-zinc-800 ring-zinc-300 hover:bg-zinc-200"
+                : "bg-zinc-900 text-zinc-200 ring-zinc-700 hover:bg-zinc-800"
+            }`}
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            className="rounded-full bg-cyan-600 px-5 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-900/30 hover:bg-cyan-500"
+          >
+            {isLast ? "Finish & start chatting" : "Next question"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
 ### src/components/PostCard.tsx
 
 ```typescript
@@ -3973,26 +5623,64 @@ export function MessageBubble({
 import { useState } from "react";
 import type { CommunityPost } from "@/lib/community";
 
+function sentimentHint(s: NonNullable<CommunityPost["comments"][number]["sentiment"]>): string | null {
+  if (s === "pos") return "encouraging";
+  if (s === "neu") return null;
+  return null;
+}
+
 export function PostCard({
   post,
   onComment,
+  onAppreciate,
 }: {
   post: CommunityPost;
-  onComment: (postId: string, body: string) => void;
+  onComment: (postId: string, body: string) => Promise<string | undefined>;
+  onAppreciate: (postId: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
+  const [commentErr, setCommentErr] = useState<string | null>(null);
+  const [busyApp, setBusyApp] = useState(false);
+
+  const appreciated = post.viewerHasAppreciated ?? false;
+  const count = post.appreciationCount ?? 0;
 
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-zinc-100">{post.title}</div>
           <div className="mt-2 whitespace-pre-wrap text-sm text-zinc-400">{post.body}</div>
         </div>
-        <div className="shrink-0 text-[11px] text-zinc-600">
-          resonance {Math.round(post.resonance)}
+        <div className="flex shrink-0 flex-col items-end gap-1 text-[11px] text-zinc-600">
+          <div className="flex items-center gap-1.5">
+            <span className="text-amber-300/90" aria-hidden>
+              ✦
+            </span>
+            <span className="font-medium text-zinc-300">{count}</span>
+            <span className="text-zinc-600">appreciation{count === 1 ? "" : "s"}</span>
+          </div>
+          <div className="text-zinc-600">thread resonance {Math.round(post.resonance)}</div>
         </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={appreciated || busyApp}
+          onClick={() => {
+            setBusyApp(true);
+            void onAppreciate(post.id).finally(() => setBusyApp(false));
+          }}
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition ${
+            appreciated
+              ? "cursor-default bg-amber-950/50 text-amber-200/90 ring-amber-800/60"
+              : "bg-zinc-900 text-amber-200/95 ring-zinc-700 hover:bg-amber-950/40 hover:ring-amber-800/50 disabled:opacity-50"
+          }`}
+        >
+          {appreciated ? "You appreciated this" : "Appreciate"}
+        </button>
       </div>
 
       <div className="mt-3 space-y-2">
@@ -4003,8 +5691,8 @@ export function PostCard({
           >
             <div className="text-[11px] text-zinc-500">
               {c.author}
-              {c.sentiment ? (
-                <span className="ml-2 text-zinc-600">· {c.sentiment}</span>
+              {c.sentiment && sentimentHint(c.sentiment) ? (
+                <span className="ml-2 text-zinc-600">· {sentimentHint(c.sentiment)}</span>
               ) : null}
             </div>
             <div className="mt-1">{c.body}</div>
@@ -4022,31 +5710,46 @@ export function PostCard({
           <button
             type="button"
             className="text-xs text-cyan-400 hover:text-cyan-300"
-            onClick={() => setOpen(true)}
+            onClick={() => {
+              setCommentErr(null);
+              setOpen(true);
+            }}
           >
-            Add comment
+            Add supportive comment
           </button>
         ) : (
-          <div className="flex gap-2">
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Write a comment…"
-              className="flex-1 rounded-xl bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 ring-1 ring-zinc-800"
-            />
-            <button
-              type="button"
-              className="rounded-xl bg-zinc-100 px-3 py-2 text-xs font-semibold text-zinc-950"
-              onClick={() => {
-                const t = draft.trim();
-                if (!t) return;
-                onComment(post.id, t);
-                setDraft("");
-                setOpen(false);
-              }}
-            >
-              Post
-            </button>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Something kind or constructive…"
+                className="flex-1 rounded-xl bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 ring-1 ring-zinc-800"
+              />
+              <button
+                type="button"
+                className="rounded-xl bg-zinc-100 px-3 py-2 text-xs font-semibold text-zinc-950"
+                onClick={() => {
+                  void (async () => {
+                    const t = draft.trim();
+                    if (!t) return;
+                    setCommentErr(null);
+                    const err = await onComment(post.id, t);
+                    if (err) {
+                      setCommentErr(err);
+                      return;
+                    }
+                    setDraft("");
+                    setOpen(false);
+                  })();
+                }}
+              >
+                Post
+              </button>
+            </div>
+            {commentErr ? (
+              <p className="text-[11px] leading-relaxed text-amber-400/95">{commentErr}</p>
+            ) : null}
           </div>
         )}
       </div>
@@ -4097,7 +5800,8 @@ export function ProactiveToast({
           <div className="mt-2 flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+              disabled={!t.draft?.trim()}
+              className="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
               onClick={() => {
                 const d = t.draft?.trim();
                 if (d) onAsk(d);
@@ -4121,6 +5825,7 @@ export function ProactiveToast({
 import type { PlanDefinition } from "@/lib/plans";
 import { planAllowsModel } from "@/lib/plans";
 import type { ModelTier } from "@/lib/types";
+import { uiDiag } from "@/lib/ui-diagnostics";
 
 export type QuantumFlags = {
   kolmogorov: boolean;
@@ -4185,9 +5890,11 @@ export function QuantumControls({
           onChange={(e) => {
             const v = e.target.value as ModelTier;
             if (!planAllowsModel(plan, v)) {
+              uiDiag("header.model", "fail", { planId: plan.id, requested: v, reason: "not_on_plan" });
               onRequestUpgrade();
               return;
             }
+            uiDiag("header.model", "ok", { planId: plan.id, model: v });
             onModel(v);
           }}
           className="max-w-[140px] rounded-lg bg-zinc-900 px-2 py-1 text-xs text-zinc-100 ring-1 ring-zinc-800"
@@ -4206,22 +5913,24 @@ export function QuantumControls({
 
       <button
         type="button"
-        disabled={!canThinking}
         title={
           canThinking
-            ? "Use chain-of-thought style reasoning when the provider supports it"
-            : "Upgrade your plan to enable Thinking"
+            ? "GLM (Z.AI): native extended-reasoning channel. OpenAI: appends a step-by-step system instruction (no separate reasoning stream)."
+            : "Upgrade your plan to enable Thinking (click to open Plans)"
         }
         onClick={() => {
           if (!canThinking) {
+            uiDiag("header.thinking", "skip", { planId: plan.id, reason: "needs_upgrade" });
             onRequestUpgrade();
             return;
           }
-          onThinking(!thinking);
+          const next = !thinking;
+          uiDiag("header.thinking", "ok", { planId: plan.id, on: next });
+          onThinking(next);
         }}
         className={`rounded-full px-3 py-1 text-xs ring-1 ${
           !canThinking
-            ? "cursor-not-allowed opacity-40"
+            ? "cursor-pointer opacity-60 hover:opacity-90"
             : thinking
               ? "bg-cyan-500/15 text-cyan-200 ring-cyan-500/30"
               : "bg-zinc-900 text-zinc-400 ring-zinc-800"
@@ -4232,53 +5941,62 @@ export function QuantumControls({
 
       <button
         type="button"
-        disabled={agentMode || !canSchrodinger}
+        disabled={agentMode}
         title={
           !canSchrodinger
-            ? "Schrödinger (dual-stream) requires Pro or Team"
+            ? "Two models (dual-stream) requires Pro or Team — click to open Plans"
             : agentMode
-              ? "Turn off Agent first — then you can enable Schrödinger dual-stream"
-              : "Run two models in parallel and keep the stronger reply"
+              ? "Turn off Agent first — then you can enable two-model dual-stream"
+              : "Run two models in parallel; keep the stronger reply stream"
         }
         onClick={() => {
+          if (agentMode) {
+            uiDiag("header.schrodinger", "skip", { planId: plan.id, reason: "agent_blocks" });
+            return;
+          }
           if (!canSchrodinger) {
+            uiDiag("header.schrodinger", "skip", { planId: plan.id, reason: "needs_upgrade" });
             onRequestUpgrade();
             return;
           }
-          if (agentMode) return;
-          onSchrodinger(!schrodinger);
+          const next = !schrodinger;
+          uiDiag("header.schrodinger", "ok", { planId: plan.id, on: next });
+          onSchrodinger(next);
         }}
         className={`rounded-full px-3 py-1 text-xs ring-1 ${
-          agentMode || !canSchrodinger
+          agentMode
             ? "cursor-not-allowed opacity-40"
-            : schrodinger
-              ? "bg-fuchsia-500/15 text-fuchsia-200 ring-fuchsia-500/30"
-              : "bg-zinc-900 text-zinc-400 ring-zinc-800"
+            : !canSchrodinger
+              ? "cursor-pointer opacity-60 hover:opacity-90"
+              : schrodinger
+                ? "bg-fuchsia-500/15 text-fuchsia-200 ring-fuchsia-500/30"
+                : "bg-zinc-900 text-zinc-400 ring-zinc-800"
         }`}
       >
-        Schrödinger
+        Two models
       </button>
 
       <button
         type="button"
-        disabled={!canAgent}
         title={
           canAgent
             ? "Tool-using agent loop (web, calculator, …)"
-            : "Upgrade to Starter or higher for Agent mode"
+            : "Upgrade to Starter or higher for Agent mode (click to open Plans)"
         }
         onClick={() => {
           if (!canAgent) {
+            uiDiag("header.agent", "skip", { planId: plan.id, reason: "needs_upgrade" });
             onRequestUpgrade();
             return;
           }
           const next = !agentMode;
+          uiDiag("header.agent", "ok", { planId: plan.id, on: next });
           onAgentMode(next);
           if (next) onSchrodinger(false);
         }}
         className={`rounded-full px-3 py-1 text-xs ring-1 ${
           !canAgent
-            ? "cursor-not-allowed opacity-40"
+            ? "cursor-pointer opacity-60 hover:opacity-90"
             : agentMode
               ? "bg-amber-500/15 text-amber-200 ring-amber-500/30"
               : "bg-zinc-900 text-zinc-400 ring-zinc-800"
@@ -4291,76 +6009,139 @@ export function QuantumControls({
         <summary className="cursor-pointer list-none rounded-full bg-zinc-900 px-3 py-1 text-xs text-zinc-300 ring-1 ring-zinc-800">
           Quantum
         </summary>
-        <div className="absolute right-0 z-40 mt-2 w-[280px] rounded-2xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300 shadow-xl ring-1 ring-white/5">
-          <label className="flex items-center justify-between gap-2 py-1">
-            <span title="Auto-pick model tier from prompt complexity">Kolmogorov router</span>
-            <input
-              type="checkbox"
-              disabled={!canK}
-              checked={canK && quantum.kolmogorov}
-              onChange={(e) => {
-                if (!canK) {
-                  onRequestUpgrade();
-                  return;
-                }
-                onQuantum({ ...quantum, kolmogorov: e.target.checked });
-              }}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-2 py-1">
-            <span title="Fold long context for leaner prompts">Holographic context</span>
-            <input
-              type="checkbox"
-              disabled={!canH}
-              checked={canH && quantum.holographic}
-              onChange={(e) => {
-                if (!canH) {
-                  onRequestUpgrade();
-                  return;
-                }
-                onQuantum({ ...quantum, holographic: e.target.checked });
-              }}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-2 py-1">
-            <span title="Lock style from recent turns">Eigenresponse / DNA</span>
-            <input
-              type="checkbox"
-              disabled={!canDna}
-              checked={canDna && quantum.dna}
-              onChange={(e) => {
-                if (!canDna) {
-                  onRequestUpgrade();
-                  return;
-                }
-                onQuantum({ ...quantum, dna: e.target.checked });
-              }}
-            />
-          </label>
-          <label className="mt-2 block text-zinc-500">
-            Adiabatic morph
+        <div className="absolute right-0 z-40 mt-2 w-[min(100vw-2rem,320px)] rounded-2xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300 shadow-xl ring-1 ring-white/5">
+          <p className="mb-3 text-[10px] leading-relaxed text-zinc-500">
+            The names are thematic. Each switch below changes the real HTTP request: which model tier runs,
+            how much chat history is kept, and extra system text — not quantum hardware.
+          </p>
+
+          <div className="space-y-3 border-b border-zinc-800/80 pb-3">
+            <label className="block">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium text-zinc-200">Kolmogorov router</span>
+                <input
+                  type="checkbox"
+                  className={!canK ? "cursor-pointer opacity-60" : undefined}
+                  checked={canK && quantum.kolmogorov}
+                  onChange={(e) => {
+                    if (!canK) {
+                      uiDiag("header.quantum.kolmogorov", "skip", { planId: plan.id, reason: "needs_upgrade" });
+                      onRequestUpgrade();
+                      return;
+                    }
+                    uiDiag("header.quantum.kolmogorov", "ok", { planId: plan.id, on: e.target.checked });
+                    onQuantum({ ...quantum, kolmogorov: e.target.checked });
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+                When on, the server picks a model tier from your <strong className="font-medium text-zinc-400">last user</strong>{" "}
+                message using topic keywords and length (not formal Kolmogorov complexity — a routing heuristic). It overrides
+                the Model dropdown for that send. A short reason appears in the header after each reply.
+              </p>
+            </label>
+
+            <label className="block">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium text-zinc-200">Holographic context</span>
+                <input
+                  type="checkbox"
+                  className={!canH ? "cursor-pointer opacity-60" : undefined}
+                  checked={canH && quantum.holographic}
+                  onChange={(e) => {
+                    if (!canH) {
+                      uiDiag("header.quantum.holographic", "skip", { planId: plan.id, reason: "needs_upgrade" });
+                      onRequestUpgrade();
+                      return;
+                    }
+                    uiDiag("header.quantum.holographic", "ok", { planId: plan.id, on: e.target.checked });
+                    onQuantum({ ...quantum, holographic: e.target.checked });
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+                Only matters when the transcript is long (~12k+ characters). Older turns are folded or truncated so the
+                outgoing prompt stays within a size budget.
+              </p>
+            </label>
+
+            <label className="block">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium text-zinc-200">Eigenresponse / DNA</span>
+                <input
+                  type="checkbox"
+                  className={!canDna ? "cursor-pointer opacity-60" : undefined}
+                  checked={canDna && quantum.dna}
+                  onChange={(e) => {
+                    if (!canDna) {
+                      uiDiag("header.quantum.dna", "skip", { planId: plan.id, reason: "needs_upgrade" });
+                      onRequestUpgrade();
+                      return;
+                    }
+                    uiDiag("header.quantum.dna", "ok", { planId: plan.id, on: e.target.checked });
+                    onQuantum({ ...quantum, dna: e.target.checked });
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+                Adds one short system line inferred from your last few <strong className="font-medium text-zinc-400">assistant</strong>{" "}
+                messages (right now: concise vs detailed + mirror formality).
+              </p>
+            </label>
+          </div>
+
+          <label className="mt-3 block text-zinc-400">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium text-zinc-200">Adiabatic morph</span>
+              {canDna ? (
+                <span className="text-[10px] text-cyan-500/90">
+                  {quantum.adiabatic < 1 / 3
+                    ? "explore"
+                    : quantum.adiabatic < 2 / 3
+                      ? "balance"
+                      : "commit"}
+                </span>
+              ) : (
+                <span className="text-[10px] text-zinc-600">Pro</span>
+              )}
+            </div>
             <input
               type="range"
               min={0}
               max={100}
               disabled={!canDna}
-              title={canDna ? "Blend strength for adiabatic prompt morph" : "Unlock with Pro (DNA feature)"}
+              title={
+                canDna
+                  ? "Maps to explore / balance / commit text merged into the system prompt"
+                  : "Unlock with Pro — Eigenresponse / DNA — click to open Plans"
+              }
               value={canDna ? Math.round(quantum.adiabatic * 100) : 50}
               onChange={(e) => {
                 if (!canDna) {
+                  uiDiag("header.quantum.adiabatic", "skip", { planId: plan.id, reason: "needs_upgrade" });
                   onRequestUpgrade();
                   return;
                 }
-                onQuantum({ ...quantum, adiabatic: Number(e.target.value) / 100 });
+                const a = Number(e.target.value) / 100;
+                uiDiag("header.quantum.adiabatic", "ok", { planId: plan.id, value: a });
+                onQuantum({ ...quantum, adiabatic: a });
               }}
-              className="mt-1 w-full disabled:opacity-40"
+              className={`mt-1 w-full ${!canDna ? "cursor-pointer opacity-60" : ""}`}
             />
+            <p className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+              Slider position picks a stance label merged into the system prompt: lower ≈ explore ideas, middle ≈ balance,
+              higher ≈ commit to a direction (wording only — not a physics simulation).
+            </p>
           </label>
+
           {!canK || !canH || !canDna ? (
             <button
               type="button"
-              className="mt-2 w-full rounded-lg bg-zinc-900 py-1.5 text-[11px] text-cyan-300 ring-1 ring-zinc-800 hover:bg-zinc-800"
-              onClick={onRequestUpgrade}
+              className="mt-3 w-full rounded-lg bg-zinc-900 py-1.5 text-[11px] text-cyan-300 ring-1 ring-zinc-800 hover:bg-zinc-800"
+              onClick={() => {
+                uiDiag("header.quantum.viewPlans", "ok", { planId: plan.id });
+                onRequestUpgrade();
+              }}
             >
               View plans for full quantum stack
             </button>
@@ -4485,16 +6266,23 @@ import {
   removeTimeCapsule,
   type TimeCapsule,
 } from "@/lib/time-capsule";
+import { getUiDiagnosticsEnabled, setUiDiagnosticsEnabled } from "@/lib/ui-diagnostics";
 
 export function SettingsPanel({
   open,
   onClose,
   onPreferencesSaved,
+  introIntakeComplete,
+  onRedoConnectionQuestionnaire,
 }: {
   open: boolean;
   onClose: () => void;
   /** Called after user saves so parent can re-apply theme/font. */
   onPreferencesSaved: (p: UiPreferences) => void;
+  /** When true, user may redo the blocking seven-question connection flow from Settings. */
+  introIntakeComplete?: boolean;
+  /** Clears saved intake and reopens the questionnaire modal. */
+  onRedoConnectionQuestionnaire?: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useDialogA11y(open, ref, onClose);
@@ -4503,12 +6291,14 @@ export function SettingsPanel({
   const [capsules, setCapsules] = useState<TimeCapsule[]>([]);
   const [capMessage, setCapMessage] = useState("");
   const [capDate, setCapDate] = useState("");
+  const [uiDiagLog, setUiDiagLog] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     startTransition(() => {
       setPrefs(loadUiPreferences());
       setCapsules(listTimeCapsules());
+      setUiDiagLog(getUiDiagnosticsEnabled());
     });
   }, [open]);
 
@@ -4520,11 +6310,11 @@ export function SettingsPanel({
         ref={ref}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="babygpt-settings-title"
+        aria-labelledby="bbgpt-settings-title"
         className="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl ring-1 ring-white/5"
       >
         <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
-          <h2 id="babygpt-settings-title" className="text-sm font-semibold text-zinc-100">
+          <h2 id="bbgpt-settings-title" className="text-sm font-semibold text-zinc-100">
             Settings
           </h2>
           <button
@@ -4573,6 +6363,46 @@ export function SettingsPanel({
           </section>
 
           <section>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Diagnostics</h3>
+            <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+              When enabled, header controls and chat sends log structured lines to the browser console (
+              <span className="font-mono text-zinc-400">[bbGPT UI]</span>
+              ). Also set <span className="font-mono text-zinc-400">NEXT_PUBLIC_UI_DIAGNOSTICS=true</span> at build
+              time to default on.
+            </p>
+            <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-zinc-300">
+              <input
+                type="checkbox"
+                checked={uiDiagLog}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setUiDiagnosticsEnabled(on);
+                  setUiDiagLog(on);
+                }}
+                className="rounded border-zinc-600"
+              />
+              Log UI control &amp; send diagnostics
+            </label>
+          </section>
+
+          {introIntakeComplete && onRedoConnectionQuestionnaire ? (
+            <section>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Connection</h3>
+              <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+                You completed the seven-question intake at first launch. Redo clears those answers and the
+                companion-intake block in local memory, then walks you through again before you can chat.
+              </p>
+              <button
+                type="button"
+                onClick={onRedoConnectionQuestionnaire}
+                className="mt-2 rounded-lg bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700"
+              >
+                Redo connection questionnaire
+              </button>
+            </section>
+          ) : null}
+
+          <section>
             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Notifications</h3>
             <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-zinc-300">
               <input
@@ -4606,7 +6436,7 @@ export function SettingsPanel({
           <section>
             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Time capsule</h3>
             <p className="mt-1 text-[11px] leading-snug text-zinc-500">
-              Save a note to your future self. When the time passes, BabyGPT shows it in a popup (stored in this
+              Save a note to your future self. When the time passes, bbGPT shows it in a popup (stored in this
               browser only).
             </p>
             <textarea
@@ -4765,7 +6595,7 @@ export function Sidebar({
   const rowText = appearance === "light" ? "text-zinc-800" : "text-zinc-300";
 
   return (
-    <aside className={`flex h-full w-[300px] shrink-0 flex-col border-r ${shell}`}>
+    <aside className={`flex h-full w-[min(13.5rem,30vw)] shrink-0 flex-col border-r sm:w-52 ${shell}`}>
       <div className={`flex border-b ${hairline} p-2`}>
         <button
           type="button"
@@ -4881,7 +6711,7 @@ export function Sidebar({
       <div
         className={`border-t ${hairline} p-3 text-[11px] ${appearance === "light" ? "text-zinc-600" : "text-zinc-600"}`}
       >
-        History uses <span className={appearance === "light" ? "text-zinc-500" : "text-zinc-400"}>babygpt_</span> keys
+        History uses <span className={appearance === "light" ? "text-zinc-500" : "text-zinc-400"}>bbgpt_</span> keys
       </div>
     </aside>
   );
@@ -4958,10 +6788,10 @@ export function SkillsPanel({
         className="h-[min(90vh,820px)] w-full max-w-4xl overflow-auto rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl ring-1 ring-white/5"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="babygpt-skills-title"
+        aria-labelledby="bbgpt-skills-title"
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-zinc-900 bg-zinc-950/90 px-4 py-3 backdrop-blur">
-          <div id="babygpt-skills-title" className="text-sm font-semibold text-zinc-100">
+          <div id="bbgpt-skills-title" className="text-sm font-semibold text-zinc-100">
             Skills
           </div>
           <button
@@ -5057,6 +6887,7 @@ export function SkillsPanel({
 ````typescript
 "use client";
 
+import { CHAT_COLUMN_CLASS } from "@/lib/chat-layout";
 import { useMemo } from "react";
 
 export type SmartAction = { id: string; label: string; prompt: string };
@@ -5110,19 +6941,19 @@ export function SmartActions({
   if (!assistantText.trim() || actions.length === 0) return null;
 
   return (
-    <div className="border-t border-zinc-800/80 bg-zinc-950/30 px-4 py-3">
-      <div className="mx-auto flex max-w-3xl flex-col gap-2">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+    <div className="shrink-0 border-t border-zinc-800/80 bg-zinc-950/30 px-3 py-2">
+      <div className={`flex flex-col gap-1.5 ${CHAT_COLUMN_CLASS}`}>
+        <div className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
           Smart actions
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {actions.map((act) => (
             <button
               key={act.id}
               type="button"
               disabled={disabled}
               onClick={() => onAction(act.prompt)}
-              className="rounded-full bg-zinc-900/90 px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-700/80 transition hover:bg-zinc-800 hover:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-full bg-zinc-900/90 px-2.5 py-1 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-700/80 transition hover:bg-zinc-800 hover:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {act.label}
             </button>
@@ -5142,8 +6973,12 @@ export function SmartActions({
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { UsageHint } from "@/lib/billing-usage-hints";
-import { FIRST_VISIT_CREDIT_BONUS, PLANS, type PlanId } from "@/lib/plans";
-import { formatPlanMoneyHeadline, planPriceConfigured } from "@/lib/plan-pricing-display";
+import { FIRST_VISIT_CREDIT_BONUS, PLAN_IDS_IN_UI_ORDER, PLANS, type PlanBillingCadence, type PlanId } from "@/lib/plans";
+import {
+  formatPlanMoneyHeadline,
+  planAnnualPriceConfigured,
+  planPriceConfigured,
+} from "@/lib/plan-pricing-display";
 import { BILLING_FAQ, BILLING_SUGGESTED_QUESTIONS } from "@/lib/billing-faq";
 
 export type StripeBillingInfo = {
@@ -5173,7 +7008,7 @@ export function SubscriptionModal({
   serverCredits?: boolean;
   /** Present when credits API returned stripe payload. */
   stripeBilling?: StripeBillingInfo | null;
-  onCheckout?: (id: Exclude<PlanId, "free">) => void | Promise<void>;
+  onCheckout?: (id: Exclude<PlanId, "free">, billing: PlanBillingCadence) => void | Promise<void>;
   onManageBilling?: () => void | Promise<void>;
   /** Heuristic hints from GET /api/credits (low credits, payment retry, etc.). */
   usageHints?: UsageHint[];
@@ -5190,6 +7025,7 @@ export function SubscriptionModal({
   const [trOut, setTrOut] = useState<string | null>(null);
   const [trBusy, setTrBusy] = useState(false);
   const [faqPick, setFaqPick] = useState<string | null>(null);
+  const [billingCadence, setBillingCadence] = useState<PlanBillingCadence>("monthly");
 
   useEffect(() => {
     if (!open) return;
@@ -5197,6 +7033,7 @@ export function SubscriptionModal({
     setSupportA(null);
     setTrOut(null);
     setFaqPick(null);
+    setBillingCadence("monthly");
   }, [open]);
 
   useDialogA11y(open, dialogRef, onClose);
@@ -5204,7 +7041,14 @@ export function SubscriptionModal({
   if (!open) return null;
 
   const stripeMode = Boolean(serverCredits && stripeBilling?.configured);
-  const missingPublicPrices = stripeMode && (["starter", "pro", "team"] as const).some((id) => !planPriceConfigured(id));
+  const missingPublicPrices =
+    stripeMode &&
+    billingCadence === "monthly" &&
+    (["starter", "pro", "team"] as const).some((id) => !planPriceConfigured(id));
+  const missingPublicAnnualPrices =
+    stripeMode &&
+    billingCadence === "annual" &&
+    (["starter", "pro", "team"] as const).some((id) => !planAnnualPriceConfigured(id));
 
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-auto bg-black/60 p-4 pt-12 backdrop-blur-sm">
@@ -5213,20 +7057,22 @@ export function SubscriptionModal({
         className="w-full max-w-4xl rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl ring-1 ring-white/5"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="babygpt-plans-title"
+        aria-labelledby="bbgpt-plans-title"
       >
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-900 px-5 py-4">
           <div>
-            <div id="babygpt-plans-title" className="text-sm font-semibold text-zinc-100">
+            <div id="bbgpt-plans-title" className="text-sm font-semibold text-zinc-100">
               Plans & credits
             </div>
             <p className="mt-1 max-w-xl text-xs text-zinc-500">
               {stripeMode ? (
                 <>
-                  Paid tiers use <span className="text-zinc-300">Stripe Checkout</span> — you&apos;ll confirm tax,
-                  currency, and the final total on Stripe&apos;s page. The table below is your public list price (set{" "}
-                  <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span>) plus monthly credits
-                  included in-app.
+                  Paid tiers use <span className="text-zinc-300">Stripe Checkout</span> — confirm tax and total on
+                  Stripe. Use <span className="font-mono text-zinc-400">Monthly</span> /{" "}
+                  <span className="font-mono text-zinc-400">Annual</span> above: list prices come from{" "}
+                  <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span> or{" "}
+                  <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_YEARLY_USD</span>; credits stay
+                  monthly per plan.
                 </>
               ) : (
                 <>
@@ -5239,8 +7085,15 @@ export function SubscriptionModal({
             {missingPublicPrices && stripeMode ? (
               <p className="mt-2 text-[11px] text-amber-400/90">
                 Set <span className="font-mono">NEXT_PUBLIC_PLAN_PRICE_STARTER_USD</span>,{" "}
-                <span className="font-mono">PRO</span>, and <span className="font-mono">TEAM</span> so list prices show
-                here (Checkout still shows Stripe&apos;s authoritative amount).
+                <span className="font-mono">PRO</span>, and <span className="font-mono">TEAM</span> so monthly list
+                prices show here (Checkout still shows Stripe&apos;s authoritative amount).
+              </p>
+            ) : null}
+            {missingPublicAnnualPrices && stripeMode ? (
+              <p className="mt-2 text-[11px] text-amber-400/90">
+                Set <span className="font-mono">NEXT_PUBLIC_PLAN_PRICE_STARTER_YEARLY_USD</span>,{" "}
+                <span className="font-mono">PRO_YEARLY</span>, and <span className="font-mono">TEAM_YEARLY</span> so
+                annual list prices match your Stripe yearly Prices.
               </p>
             ) : null}
             {serverCredits && !stripeBilling?.configured ? (
@@ -5274,43 +7127,87 @@ export function SubscriptionModal({
           </div>
         </div>
 
-        {stripeMode ? (
-          <div className="border-b border-zinc-900 bg-zinc-950/90 px-5 py-3">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Price breakdown (USD)</div>
-            <div className="mt-2 overflow-x-auto">
-              <table className="w-full min-w-[320px] text-left text-[11px] text-zinc-400">
-                <thead>
-                  <tr className="border-b border-zinc-800 text-zinc-500">
-                    <th className="py-1.5 pr-2 font-medium">Plan</th>
-                    <th className="py-1.5 pr-2 font-medium">List price</th>
-                    <th className="py-1.5 font-medium">Credits / month</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(Object.keys(PLANS) as PlanId[]).map((id) => {
-                    const p = PLANS[id];
-                    return (
-                      <tr key={id} className="border-b border-zinc-800/80 last:border-0">
-                        <td className="py-2 pr-2 text-zinc-200">{p.label}</td>
-                        <td className="py-2 pr-2 font-mono text-emerald-300/95">{formatPlanMoneyHeadline(id)}</td>
-                        <td className="py-2 font-mono text-zinc-300">{p.monthlyCredits.toLocaleString()}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+        <div className="border-b border-zinc-900 bg-zinc-950/90 px-5 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Price breakdown (USD)
             </div>
-            <p className="mt-2 text-[10px] text-zinc-600">
-              Subscription charges are processed by Stripe. Per-message credits are drawn from your wallet after each
-              successful reply (see composer preview).
-            </p>
-            <p className="mt-2 text-[10px] text-zinc-500">
-              Reference only (US consumer, changes often): ChatGPT Plus is commonly around $20/mo from OpenAI — not a
-              feature comparison. Your list prices come from{" "}
-              <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span>.
-            </p>
+            <div className="flex rounded-full bg-zinc-900 p-0.5 ring-1 ring-zinc-800">
+              <button
+                type="button"
+                onClick={() => setBillingCadence("monthly")}
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                  billingCadence === "monthly"
+                    ? "bg-zinc-100 text-zinc-950"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCadence("annual")}
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                  billingCadence === "annual"
+                    ? "bg-emerald-900/90 text-emerald-50 ring-1 ring-emerald-700/60"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                Annual (save vs monthly ×12)
+              </button>
+            </div>
           </div>
-        ) : null}
+          <p className="mt-2 text-[10px] leading-snug text-zinc-600">
+            Annual checkout uses separate <span className="font-mono text-zinc-500">STRIPE_PRICE_*_YEARLY</span> Prices in
+            Stripe (recurring yearly). Same plan benefits — billed once per year.
+          </p>
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full min-w-[320px] text-left text-[11px] text-zinc-400">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-500">
+                  <th className="py-1.5 pr-2 font-medium">Plan</th>
+                  <th className="py-1.5 pr-2 font-medium">
+                    List price ({billingCadence === "annual" ? "per year" : "per month"})
+                  </th>
+                  <th className="py-1.5 font-medium">Credits / month</th>
+                </tr>
+              </thead>
+              <tbody>
+                {PLAN_IDS_IN_UI_ORDER.map((id) => {
+                  const p = PLANS[id];
+                  return (
+                    <tr key={id} className="border-b border-zinc-800/80 last:border-0">
+                      <td className="py-2 pr-2 text-zinc-200">{p.label}</td>
+                      <td className="py-2 pr-2 font-mono text-emerald-300/95">
+                        {formatPlanMoneyHeadline(id, billingCadence)}
+                      </td>
+                      <td className="py-2 font-mono text-zinc-300">{p.monthlyCredits.toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-[10px] text-zinc-600">
+            {stripeMode ? (
+              <>
+                Subscription charges are processed by Stripe. Per-message credits are drawn from your wallet after each
+                successful reply (see composer preview).
+              </>
+            ) : (
+              <>
+                Monthly list defaults: $12 / $24 / $69 (Starter / Pro / Team). Annual defaults: $120 / $240 / $690 per
+                year (~two months off vs paying monthly ×12). Override with{" "}
+                <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span> and{" "}
+                <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_YEARLY_USD</span>.
+              </>
+            )}
+          </p>
+          <p className="mt-2 text-[10px] text-zinc-500">
+            Reference only: ChatGPT Plus is often ~$20/mo — not a feature comparison. Set{" "}
+            <span className="font-mono text-zinc-400">NEXT_PUBLIC_PLAN_PRICE_*_USD</span> for exact public list prices.
+          </p>
+        </div>
 
         <div className="border-b border-zinc-900 bg-zinc-950/80 px-5 py-3">
           <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-400">
@@ -5335,7 +7232,7 @@ export function SubscriptionModal({
         </div>
 
         <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4">
-          {(Object.keys(PLANS) as PlanId[]).map((id) => {
+          {PLAN_IDS_IN_UI_ORDER.map((id) => {
             const p = PLANS[id];
             const active = id === currentPlanId;
             const paid = id !== "free";
@@ -5363,7 +7260,7 @@ export function SubscriptionModal({
                   disabled={active || !onCheckout}
                   onClick={() => {
                     if (active || !onCheckout) return;
-                    void onCheckout(id);
+                    void onCheckout(id, billingCadence);
                   }}
                   className={`mt-4 w-full rounded-xl py-2 text-xs font-semibold ${
                     active
@@ -5415,7 +7312,9 @@ export function SubscriptionModal({
               >
                 <div className="text-sm font-semibold text-zinc-100">{p.label}</div>
                 <div className="mt-1 text-[11px] text-zinc-500">{p.subtitle}</div>
-                <div className="mt-2 text-base font-semibold text-emerald-300/95">{formatPlanMoneyHeadline(id)}</div>
+                <div className="mt-2 text-base font-semibold text-emerald-300/95">
+                  {formatPlanMoneyHeadline(id, billingCadence)}
+                </div>
                 <div className="mt-1 text-xs text-zinc-400">
                   <span className="font-mono text-zinc-200">{p.monthlyCredits.toLocaleString()}</span> credits / month
                 </div>
@@ -5426,7 +7325,7 @@ export function SubscriptionModal({
                   <li>
                     Agent: {p.features.agent ? <span className="text-emerald-400">yes</span> : <span className="text-zinc-600">no</span>}
                     {" · "}
-                    Schrödinger:{" "}
+                    Two models:{" "}
                     {p.features.schrodinger ? <span className="text-emerald-400">yes</span> : <span className="text-zinc-600">no</span>}
                   </li>
                   <li>
@@ -5801,6 +7700,153 @@ export function TimeCapsuleReveal({
 }
 
 ```
+### src/components/VoiceModeOverlay.tsx
+
+```typescript
+"use client";
+
+import { useEffect } from "react";
+
+/**
+ * Voice capture overlay — Grok-inspired “eyes” + ChatGPT-style soft orb / waveform.
+ * Browser SpeechRecognition only; visual pattern follows common consumer chat apps.
+ */
+export function VoiceModeOverlay({
+  open,
+  listening,
+  interimText,
+  readAloud,
+  onReadAloudChange,
+  onDone,
+}: {
+  open: boolean;
+  listening: boolean;
+  interimText: string;
+  readAloud?: boolean;
+  onReadAloudChange?: (next: boolean) => void;
+  onDone: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onDone();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, onDone]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+      {/* Dimmed backdrop — click outside panel to dismiss (ChatGPT-style) */}
+      <button
+        type="button"
+        className="absolute inset-0 bg-zinc-950/85 backdrop-blur-xl"
+        aria-label="Close voice mode"
+        onClick={onDone}
+      />
+
+      <div
+        className="relative z-10 flex w-full max-w-lg flex-col items-center px-6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bbgpt-voice-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onDone}
+          className="absolute -right-1 -top-2 z-20 rounded-full p-2 text-zinc-500 ring-1 ring-zinc-700/80 transition hover:bg-zinc-900/90 hover:text-zinc-200 sm:right-0 sm:top-0"
+          aria-label="Close voice mode"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div className="relative flex min-h-[280px] w-full flex-col items-center">
+          <h2 id="bbgpt-voice-title" className="sr-only">
+            Voice input
+          </h2>
+
+          {/* ChatGPT-like ambient orb */}
+          <div
+            className={`pointer-events-none absolute left-1/2 top-1/2 h-[min(60vw,280px)] w-[min(60vw,280px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-cyan-400/25 via-violet-500/15 to-transparent blur-3xl transition-opacity duration-500 ${
+              listening ? "opacity-100 animate-pulse" : "opacity-40"
+            }`}
+          />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[min(50vw,220px)] w-[min(50vw,220px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-500/10" />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[min(45vw,200px)] w-[min(45vw,200px)] -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full border border-white/5 opacity-30 [animation-duration:2.8s]" />
+
+          {/* Grok-style “eyes” */}
+          <div className="relative z-10 mt-4 flex items-center justify-center gap-6 sm:gap-10">
+            <div
+              className={`bbgpt-voice-eye h-11 w-[4.25rem] rounded-[999px] bg-gradient-to-b from-white/25 via-cyan-100/10 to-zinc-950 shadow-[0_0_40px_rgba(34,211,238,0.45)] ring-1 ring-cyan-400/25 ${
+                listening ? "bbgpt-voice-eye--active" : "opacity-60"
+              }`}
+            />
+            <div
+              className={`bbgpt-voice-eye bbgpt-voice-eye--lag h-11 w-[4.25rem] rounded-[999px] bg-gradient-to-b from-white/25 via-violet-100/10 to-zinc-950 shadow-[0_0_40px_rgba(139,92,246,0.35)] ring-1 ring-violet-400/20 ${
+                listening ? "bbgpt-voice-eye--active" : "opacity-60"
+              }`}
+            />
+          </div>
+
+          {/* Mini waveform (ChatGPT / voice-assistant trope) */}
+          <div className="relative z-10 mt-12 flex h-10 items-end justify-center gap-1.5">
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className={`w-1.5 rounded-full bg-gradient-to-t from-cyan-600/90 to-cyan-300/80 ${
+                  listening ? "bbgpt-voice-bar" : "h-1 opacity-30"
+                }`}
+                style={listening ? { animationDelay: `${i * 0.08}s` } : undefined}
+              />
+            ))}
+          </div>
+
+          <p className="relative z-10 mt-8 min-h-[3rem] max-w-md px-4 text-center text-sm leading-relaxed text-zinc-300">
+            {interimText.trim() ? (
+              <span className="text-zinc-100">{interimText}</span>
+            ) : (
+              <span className="text-zinc-500">
+                {listening ? "Speak naturally — text appears in your message." : "Starting microphone…"}
+              </span>
+            )}
+          </p>
+
+          {onReadAloudChange ? (
+            <label className="relative z-10 mt-6 flex cursor-pointer items-center gap-2 text-xs text-zinc-500 hover:text-zinc-400">
+              <input
+                type="checkbox"
+                checked={readAloud ?? false}
+                onChange={(e) => onReadAloudChange(e.target.checked)}
+                className="rounded border-zinc-600 bg-zinc-900 accent-cyan-500"
+              />
+              Read assistant replies aloud when each reply finishes
+            </label>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={onDone}
+            className="relative z-10 mt-10 rounded-full bg-zinc-100 px-8 py-3 text-sm font-semibold text-zinc-900 shadow-lg shadow-black/30 transition hover:bg-white"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
 ### src/components/WelcomeScreen.tsx
 
 ```typescript
@@ -5828,6 +7874,7 @@ export function WelcomeScreen({
   plan,
   onPickTemplate,
   onInsertComposerText,
+  introIntakeComplete = false,
 }: {
   onOpenPlans: () => void;
   onOpenSearch: () => void;
@@ -5837,13 +7884,15 @@ export function WelcomeScreen({
   onPickTemplate: (t: PowerTemplate) => void;
   /** Prefill composer: full questions replace draft; mode prefixes go first. */
   onInsertComposerText: (text: string, how?: "replace" | "prefixFirst") => void;
+  /** True after the blocking seven-question intake has been completed (this browser). */
+  introIntakeComplete?: boolean;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 py-10">
       <div className="flex flex-col items-center gap-4 text-center">
         <Image
-          src="/babygpt-logo.png"
-          alt="BabyGPT"
+          src="/bbgpt-logo.png"
+          alt="bbGPT"
           width={88}
           height={88}
           priority
@@ -5851,7 +7900,7 @@ export function WelcomeScreen({
           className="drop-shadow-[0_0_24px_rgba(34,211,238,0.25)]"
         />
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">BabyGPT</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">bbGPT</h1>
           <p className="mt-2 text-sm text-zinc-400">
             A dark, ChatGPT-style UI with quantum-inspired controls — powered by{" "}
             <span className="text-zinc-300">z-ai-web-dev-sdk</span> on the server.
@@ -5878,11 +7927,24 @@ export function WelcomeScreen({
       <section className="w-full rounded-2xl border border-cyan-900/40 bg-gradient-to-b from-cyan-950/20 to-zinc-950/40 p-4 ring-1 ring-cyan-900/30">
         <h2 className="text-sm font-semibold text-cyan-100/95">Companion — start here</h2>
         <p className="mt-2 text-xs leading-relaxed text-zinc-400">{COMPANION_WELCOME_LEAD}</p>
+        {introIntakeComplete ? (
+          <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+            You already completed the connection questionnaire at first launch; your answers live in local memory
+            for this browser. The list below is optional reference if you want to paste a prompt into chat or
+            revisit the same themes — redo the full flow anytime from Settings.
+          </p>
+        ) : null}
 
         <div className="mt-4 space-y-3">
-          <details open className="group rounded-xl border border-zinc-800 bg-zinc-950/60">
+          <details
+            open={!introIntakeComplete}
+            className="group rounded-xl border border-zinc-800 bg-zinc-950/60"
+          >
             <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-zinc-200 [&::-webkit-details-marker]:hidden">
-              <span className="mr-2 text-cyan-500/90">▼</span>7 questions to connect & understand you
+              <span className="mr-2 text-cyan-500/90">▼</span>
+              {introIntakeComplete
+                ? "7 intro questions (optional — copy into chat if useful)"
+                : "7 questions to connect & understand you"}
             </summary>
             <ol className="list-decimal space-y-2 px-3 pb-3 pl-8 text-[11px] leading-relaxed text-zinc-400">
               {INTRO_SEVEN_QUESTIONS.map((q, i) => (
@@ -5960,7 +8022,7 @@ export function WelcomeScreen({
 
       <div className="grid w-full gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4">
-          <div className="mb-3 text-sm font-medium text-zinc-200">Quantum feature showcase</div>
+          <div className="mb-3 text-sm font-medium text-zinc-200">What each mode actually does</div>
           <ul className="space-y-2 text-sm text-zinc-400">
             {QUANTUM_FEATURES.map((f) => (
               <li key={f.id} className="flex gap-2">
@@ -6069,7 +8131,7 @@ export function useDialogA11y(
  * @see https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation
  */
 export async function register() {
-  // BabyGPT: add server bootstrap here if needed (metrics, tracing, etc.).
+  // bbGPT: add server bootstrap here if needed (metrics, tracing, etc.).
 }
 
 ```
@@ -6165,7 +8227,7 @@ export async function runReactAgentLoop(opts: {
   );
 
   const system = [
-    "You are BabyGPT in AGENT mode (ReAct).",
+    "You are bbGPT in AGENT mode (ReAct).",
     "You must reply with ONE JSON object ONLY (no markdown fences). Schema:",
     `{"thought":"string","finish":boolean,"finalAnswer":"string (when finish)","toolCalls":[{"name":"tool_id","arguments":{}}]}`,
     "If finish is true, put the user-facing answer in finalAnswer.",
@@ -6294,6 +8356,8 @@ export type AgentMemory = {
   ongoingTasks: string[];
   topics: string[];
   technicalLevel: "beginner" | "intermediate" | "advanced" | "unknown";
+  /** Seven-question companion intake (local), injected into memory prompt when present. */
+  companionIntake?: string;
   updatedAt: number;
 };
 
@@ -6325,6 +8389,21 @@ export function saveMemory(m: AgentMemory): void {
   } catch {
     // ignore
   }
+}
+
+/** Persist structured answers from the blocking intro questionnaire into memory prompt context. */
+export function setCompanionIntakeFromQuestionnaire(questions: string[], answers: string[]): void {
+  const m = loadMemory();
+  const block = questions
+    .map((q, i) => `${i + 1}. ${q}\n→ ${(answers[i] ?? "").trim()}`)
+    .join("\n\n");
+  saveMemory({ ...m, companionIntake: block });
+}
+
+/** Removes questionnaire-derived intake from local memory (pair with `clearIntroIntake`). */
+export function clearCompanionIntake(): void {
+  const m = loadMemory();
+  saveMemory({ ...m, companionIntake: undefined });
 }
 
 function guessTechnicalLevel(text: string): AgentMemory["technicalLevel"] {
@@ -6376,6 +8455,9 @@ function compactBlock(label: string, lines: string[], maxChars: number): string 
 export function generateMemoryPrompt(m: AgentMemory): string {
   const block = [
     "User memory (persistent, local):",
+    m.companionIntake
+      ? `Early connection intake (answered before first chat; honor tone, stakes, and success criteria):\n${m.companionIntake}`
+      : "",
     m.preferences.length ? `Preferences: ${m.preferences.join("; ")}` : "",
     m.styleNotes.length ? `Style: ${m.styleNotes.join("; ")}` : "",
     m.ongoingTasks.length ? `Ongoing tasks: ${m.ongoingTasks.join("; ")}` : "",
@@ -6395,6 +8477,103 @@ export function generateMemoryPrompt(m: AgentMemory): string {
 import packageJson from "../../package.json";
 
 export const APP_VERSION = packageJson.version as string;
+
+```
+### src/lib/attachment-config.ts
+
+```typescript
+import { DEFAULT_ATTACHMENT_BYTES } from "@/lib/attachment-presets";
+
+/** When env is unset — tuned for typical hosted deploys; users can raise via env or the in-app limit picker. */
+const DEFAULT_MAX = DEFAULT_ATTACHMENT_BYTES;
+
+/** Above this size, uploads go to Gemini Files API (multipart) instead of inline base64 in JSON. */
+const DEFAULT_INLINE_MAX = 4 * 1024 * 1024;
+
+function parseBytes(raw: string | undefined, fallback: number): number {
+  if (!raw?.trim()) return fallback;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
+
+/** Server-side max per attached file (bytes). */
+export function getServerMaxFileBytes(): number {
+  return parseBytes(process.env.BBGPT_MAX_FILE_BYTES ?? process.env.BABYGPT_MAX_FILE_BYTES, DEFAULT_MAX);
+}
+
+/** Client-side max (build-time env). */
+export function getClientMaxFileBytes(): number {
+  if (typeof window !== "undefined") {
+    try {
+      const fromLs =
+        localStorage.getItem("bbgpt_max_file_bytes_override") ??
+        localStorage.getItem("babygpt_max_file_bytes_override");
+      if (fromLs) return parseBytes(fromLs, DEFAULT_MAX);
+    } catch {
+      /* ignore */
+    }
+  }
+  return parseBytes(process.env.NEXT_PUBLIC_MAX_FILE_BYTES, DEFAULT_MAX);
+}
+
+/**
+ * Max size for inline base64 in the chat JSON body. Larger files upload via `/api/gemini/files` (multipart).
+ * Set `BBGPT_INLINE_ATTACHMENT_BYTES` on the server and `NEXT_PUBLIC_INLINE_ATTACHMENT_BYTES` for matching client builds.
+ */
+export function getInlineAttachmentMaxBytes(): number {
+  const raw =
+    typeof window !== "undefined"
+      ? process.env.NEXT_PUBLIC_INLINE_ATTACHMENT_BYTES
+      : process.env.BBGPT_INLINE_ATTACHMENT_BYTES ??
+          process.env.BABYGPT_INLINE_ATTACHMENT_BYTES ??
+          process.env.NEXT_PUBLIC_INLINE_ATTACHMENT_BYTES;
+  return parseBytes(raw, DEFAULT_INLINE_MAX);
+}
+
+```
+### src/lib/attachment-presets.ts
+
+```typescript
+/** User-selectable per-file caps (mirrors “pick a tier” UX in Claude / ChatGPT / Grok attach flows). */
+export const FILE_SIZE_PRESETS: { id: string; label: string; bytes: number }[] = [
+  { id: "10", label: "10 MB", bytes: 10 * 1024 * 1024 },
+  { id: "25", label: "25 MB", bytes: 25 * 1024 * 1024 },
+  { id: "50", label: "50 MB", bytes: 50 * 1024 * 1024 },
+  { id: "100", label: "100 MB", bytes: 100 * 1024 * 1024 },
+  { id: "256", label: "256 MB", bytes: 256 * 1024 * 1024 },
+  { id: "512", label: "512 MB", bytes: 512 * 1024 * 1024 },
+];
+
+/** Default when env is unset — practical for typical serverless hosts; raise via BBGPT_MAX_FILE_BYTES (legacy BABYGPT_MAX_FILE_BYTES). */
+export const DEFAULT_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+
+export function nearestPresetBytes(bytes: number): number {
+  let best = FILE_SIZE_PRESETS[0]!.bytes;
+  let bestDist = Math.abs(bytes - best);
+  for (const p of FILE_SIZE_PRESETS) {
+    const d = Math.abs(bytes - p.bytes);
+    if (d < bestDist) {
+      best = p.bytes;
+      bestDist = d;
+    }
+  }
+  return best;
+}
+
+export function presetLabelForBytes(bytes: number): string {
+  const exact = FILE_SIZE_PRESETS.find((p) => p.bytes === bytes);
+  return exact?.label ?? `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
+}
+
+```
+### src/lib/auth-cookie.ts
+
+```typescript
+/** Canonical session cookie (JWT when gate enabled). */
+export const SESSION_COOKIE_NAME = "bbgpt_token";
+
+/** Legacy cookie name — still accepted until users sign in again. */
+export const LEGACY_SESSION_COOKIE_NAME = "babygpt_token";
 
 ```
 ### src/lib/billing-faq.ts
@@ -6432,7 +8611,7 @@ export const BILLING_FAQ: FaqEntry[] = [
     id: "refund",
     keywords: ["refund", "money back", "dispute"],
     title: "Refunds",
-    body: "Refund policy is set by you as the merchant. Stripe supports refunds and disputes in the Dashboard. BabyGPT does not decide refund eligibility automatically.",
+    body: "Refund policy is set by you as the merchant. Stripe supports refunds and disputes in the Dashboard. bbGPT does not decide refund eligibility automatically.",
   },
   {
     id: "tax",
@@ -6678,6 +8857,13 @@ export const BUILT_IN_SKILLS: Skill[] = [
 ];
 
 ```
+### src/lib/chat-layout.ts
+
+```typescript
+/** Shared max width for message column + composer so the chat uses horizontal space on large screens. */
+export const CHAT_COLUMN_CLASS = "mx-auto w-full max-w-6xl xl:max-w-7xl";
+
+```
 ### src/lib/chat-route-guard.test.ts
 
 ```typescript
@@ -6737,6 +8923,46 @@ describe("guardChatSend", () => {
     });
     expect(out?.status).toBe(401);
     expect(readServerWallet).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when quantum DNA not on plan", async () => {
+    vi.mocked(isGateEnabled).mockReturnValue(true);
+    vi.mocked(assertAuthorized).mockResolvedValue(null);
+    vi.mocked(readServerWallet).mockReturnValue({
+      version: 1,
+      planId: "free",
+      balance: 10_000,
+      accrualMonth: "2026-01",
+      welcomeApplied: true,
+    });
+    const out = await guardChatSend(req(), {
+      model: "glm-4-flash",
+      thinking: false,
+      mode: "chat",
+      quantum: { dna: true },
+    });
+    expect(out?.status).toBe(403);
+    expect(tryDebitServerWallet).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when schrodinger secondary model not on plan", async () => {
+    vi.mocked(isGateEnabled).mockReturnValue(true);
+    vi.mocked(assertAuthorized).mockResolvedValue(null);
+    vi.mocked(readServerWallet).mockReturnValue({
+      version: 1,
+      planId: "starter",
+      balance: 10_000,
+      accrualMonth: "2026-01",
+      welcomeApplied: true,
+    });
+    const out = await guardChatSend(req(), {
+      model: "glm-4-flash",
+      thinking: false,
+      mode: "schrodinger",
+      secondaryModel: "glm-4-long",
+    });
+    expect(out?.status).toBe(403);
+    expect(tryDebitServerWallet).not.toHaveBeenCalled();
   });
 
   it("returns 403 when plan does not permit send mode", async () => {
@@ -6837,12 +9063,11 @@ import { assertAuthorized } from "@/lib/session-server";
 import { isGateEnabled } from "@/lib/server-config";
 import { readServerWallet, tryDebitServerWallet } from "@/lib/server-wallet";
 import { PLANS } from "@/lib/plans";
-import type { ModelTier } from "@/lib/types";
 import {
   COMMUNITY_DEBATE_COST,
   estimateSendCredits,
   planPermitsSend,
-  type SendMode,
+  type ChatSendPlanCheck,
 } from "@/lib/usage-cost";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -6853,7 +9078,7 @@ import { NextResponse } from "next/server";
  */
 export async function guardChatSend(
   request: NextRequest,
-  input: { model: ModelTier; thinking: boolean; mode: SendMode },
+  input: ChatSendPlanCheck,
 ): Promise<NextResponse | null> {
   const denied = await assertAuthorized(request);
   if (denied) {
@@ -6872,11 +9097,54 @@ export async function guardChatSend(
     );
   }
 
-  const cost = estimateSendCredits(input);
+  const cost = estimateSendCredits({
+    model: input.model,
+    thinking: input.thinking,
+    mode: input.mode,
+  });
   const { ok } = tryDebitServerWallet(cost);
   if (!ok) {
     return NextResponse.json(
       { error: `Insufficient credits (this send needs ${cost}).` },
+      { status: 402 },
+    );
+  }
+  return null;
+}
+
+/**
+ * Same plan/credit checks as `guardChatSend` but does **not** debit — use before a follow-up route
+ * that will debit (e.g. multipart file upload before `/api/chat/gemini`).
+ */
+export async function guardChatSendBalanceOnly(
+  request: NextRequest,
+  input: ChatSendPlanCheck,
+): Promise<NextResponse | null> {
+  const denied = await assertAuthorized(request);
+  if (denied) {
+    return denied;
+  }
+  if (!isGateEnabled()) {
+    return null;
+  }
+
+  const wallet = readServerWallet();
+  const plan = PLANS[wallet.planId];
+  if (!planPermitsSend(plan, input)) {
+    return NextResponse.json(
+      { error: "Your plan does not include this model or mode. Change plan or settings." },
+      { status: 403 },
+    );
+  }
+
+  const cost = estimateSendCredits({
+    model: input.model,
+    thinking: input.thinking,
+    mode: input.mode,
+  });
+  if (wallet.balance < cost) {
+    return NextResponse.json(
+      { error: `Insufficient credits (this chat send needs ${cost}).` },
       { status: 402 },
     );
   }
@@ -6919,13 +9187,70 @@ export async function guardApi(request: NextRequest): Promise<NextResponse | nul
 ```typescript
 export type CommentSentiment = "pos" | "neu" | "neg";
 
+const NEG_HINTS = [
+  "worst",
+  "hate",
+  "terrible",
+  "awful",
+  "stupid",
+  "idiot",
+  "sucks",
+  "garbage",
+  "trash",
+  "pathetic",
+  "disgusting",
+  "horrible",
+  "useless",
+];
+const POS_HINTS = [
+  "great",
+  "love",
+  "thanks",
+  "awesome",
+  "nice",
+  "helpful",
+  "beautiful",
+  "appreciate",
+  "inspiring",
+  "yes",
+];
+
+/** Heuristic for community tone — errs toward blocking harsh drive-by negativity. */
 export function analyzeCommentSentiment(text: string): CommentSentiment {
   const t = text.toLowerCase();
-  const neg = ["not", "bad", "worst", "hate", "never"].filter((w) => t.includes(w)).length;
-  const pos = ["great", "love", "thanks", "awesome", "nice"].filter((w) => t.includes(w)).length;
+  const neg = NEG_HINTS.filter((w) => t.includes(w)).length + (t.includes("bad") ? 1 : 0);
+  const pos = POS_HINTS.filter((w) => t.includes(w)).length;
   if (pos > neg) return "pos";
   if (neg > pos) return "neg";
   return "neu";
+}
+
+/** Community feed keeps comments constructive — no pile-ons or harsh insults. */
+export function shouldRejectCommunityComment(text: string): boolean {
+  return analyzeCommentSentiment(text) === "neg";
+}
+
+```
+### src/lib/community-visitor.ts
+
+```typescript
+import { lsKey } from "@/lib/storage";
+
+const KEY = lsKey("community_visitor_v1");
+
+/** Stable random id per browser — used to dedupe appreciations without accounts. */
+export function getCommunityVisitorId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
 }
 
 ```
@@ -6953,12 +9278,44 @@ export interface CommunityPost {
   createdAt: number;
   comments: CommunityComment[];
   resonance: number;
+  /** Anonymous appreciations — one per browser id, shared ranking for everyone. */
+  appreciationCount: number;
+  /** Set when API sends `X-Community-Visitor` so the UI can disable “Appreciate” locally. */
+  viewerHasAppreciated?: boolean;
 }
 
 const memory: CommunityPost[] = [];
+/** Dedupe appreciations per post (visitor keys from client, typically a stable random id). */
+const appreciatorsByPost = new Map<string, Set<string>>();
+
+function appreciatorSet(postId: string): Set<string> {
+  let s = appreciatorsByPost.get(postId);
+  if (!s) {
+    s = new Set();
+    appreciatorsByPost.set(postId, s);
+  }
+  return s;
+}
 
 export function listPosts(): CommunityPost[] {
-  return [...memory].sort((a, b) => b.createdAt - a.createdAt);
+  return [...memory].sort((a, b) => {
+    if (b.appreciationCount !== a.appreciationCount) {
+      return b.appreciationCount - a.appreciationCount;
+    }
+    return b.createdAt - a.createdAt;
+  });
+}
+
+export function attachViewerAppreciationFlags(
+  posts: CommunityPost[],
+  visitorKey: string | undefined,
+): CommunityPost[] {
+  const vk = visitorKey?.trim();
+  if (!vk || vk.length < 8) return posts.map((p) => ({ ...p, viewerHasAppreciated: false }));
+  return posts.map((p) => ({
+    ...p,
+    viewerHasAppreciated: appreciatorSet(p.id).has(vk),
+  }));
 }
 
 export function addPost(title: string, body: string): CommunityPost {
@@ -6969,9 +9326,26 @@ export function addPost(title: string, body: string): CommunityPost {
     createdAt: Date.now(),
     comments: [],
     resonance: 0,
+    appreciationCount: 0,
   };
+  appreciatorsByPost.set(post.id, new Set());
   memory.unshift(post);
   return post;
+}
+
+export function appreciatePost(
+  postId: string,
+  visitorKey: string,
+): { appreciationCount: number; duplicate: boolean } | null {
+  const p = memory.find((x) => x.id === postId);
+  if (!p) return null;
+  const vk = visitorKey.trim();
+  if (vk.length < 8) return null;
+  const set = appreciatorSet(postId);
+  if (set.has(vk)) return { appreciationCount: p.appreciationCount, duplicate: true };
+  set.add(vk);
+  p.appreciationCount += 1;
+  return { appreciationCount: p.appreciationCount, duplicate: false };
 }
 
 export function addComment(postId: string, author: string, body: string): CommunityComment | null {
@@ -6998,11 +9372,11 @@ export function updateResonance(postId: string, score: number) {
 ```typescript
 /**
  * Life-coach / AI companion onboarding copy — not billing.
- * Shown on the welcome (empty chat) screen. Full narrative: docs/BabyGPT-Onboarding-Paths-Spec.md
+ * Shown on the welcome (empty chat) screen. Full narrative: docs/BabyGPT-Onboarding-Paths-Spec.md (bbGPT product spec).
  */
 
 export const COMPANION_WELCOME_LEAD =
-  "BabyGPT is built to be an AI companion: quick help when you need it, and space to think clearly about your life and goals. Start with the questions below, or jump in with a mode prefix.";
+  "bbGPT is built to be an AI companion: quick help when you need it, and space to think clearly about your life and goals. Start with the questions below, or jump in with a mode prefix.";
 
 /** Seven intro questions — connect and understand before heavy strategy. */
 export const INTRO_SEVEN_QUESTIONS: string[] = [
@@ -7062,7 +9436,7 @@ export const MESSAGE_MODE_PREFIXES: { id: string; label: string; prefix: string;
 
 /** Short product controls reminder (not billing). */
 export const CORE_CONTROLS_SUMMARY =
-  "Header bar: model, Thinking, Schrödinger, Agent, and Quantum (Kolmogorov, Holographic, DNA, Adiabatic). Power templates set several at once.";
+  "Header bar: model, Thinking, Two models (dual stream), Agent, and Quantum (Kolmogorov, Holographic, DNA, Adiabatic). Power templates set several at once.";
 
 ```
 ### src/lib/credits-store.ts
@@ -7243,6 +9617,327 @@ export function formatChatError(status: number, bodyError?: string): string {
 }
 
 ```
+### src/lib/file-attachments.ts
+
+```typescript
+import { v4 as uuidv4 } from "uuid";
+import type { ChatAttachment, ModelTier } from "@/lib/types";
+import { getClientMaxFileBytes, getInlineAttachmentMaxBytes } from "@/lib/attachment-config";
+
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const s = r.result as string;
+      const idx = s.indexOf("base64,");
+      resolve(idx >= 0 ? s.slice(idx + 7) : s);
+    };
+    r.onerror = () => reject(new Error("read failed"));
+    r.readAsDataURL(file);
+  });
+}
+
+type PrepareOpts = {
+  /** Current UI model tier — sent with multipart upload for billing guard. */
+  modelTier: ModelTier;
+};
+
+/**
+ * Builds attachments: small files stay inline base64; larger ones upload via `/api/gemini/files` (multipart).
+ */
+export async function filesToChatAttachments(
+  files: File[],
+  opts: PrepareOpts,
+): Promise<{ ok: true; attachments: ChatAttachment[] } | { ok: false; error: string }> {
+  const max = getClientMaxFileBytes();
+  const inlineMax = getInlineAttachmentMaxBytes();
+
+  type Step = { kind: "inline"; file: File } | { kind: "large"; file: File };
+  const steps: Step[] = [];
+
+  for (const file of files) {
+    if (file.size > max) {
+      return {
+        ok: false,
+        error: `"${file.name}" is too large (max ${formatBytes(max)}).`,
+      };
+    }
+    steps.push(file.size <= inlineMax ? { kind: "inline", file } : { kind: "large", file });
+  }
+
+  const large = steps.filter((s): s is { kind: "large"; file: File } => s.kind === "large").map((s) => s.file);
+
+  let uploaded: Array<{
+    id: string;
+    name: string;
+    mimeType: string;
+    sizeBytes: number;
+    geminiFileUri: string;
+    geminiFileName: string;
+  }> = [];
+
+  if (large.length > 0) {
+    const fd = new FormData();
+    fd.append("model", opts.modelTier);
+    for (const f of large) {
+      fd.append("file", f, f.name);
+    }
+    const res = await fetch("/api/gemini/files", {
+      method: "POST",
+      body: fd,
+      credentials: "include",
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      files?: typeof uploaded;
+    };
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: data.error ?? "Could not upload files to Gemini (check GEMINI_API_KEY and size limits).",
+      };
+    }
+    if (!data.files?.length || data.files.length !== large.length) {
+      return { ok: false, error: "Unexpected response from file upload." };
+    }
+    uploaded = data.files;
+  }
+
+  const attachments: ChatAttachment[] = [];
+  let u = 0;
+  for (const step of steps) {
+    if (step.kind === "inline") {
+      try {
+        const dataBase64 = await readFileAsBase64(step.file);
+        attachments.push({
+          id: uuidv4(),
+          name: step.file.name,
+          mimeType: step.file.type || "application/octet-stream",
+          sizeBytes: step.file.size,
+          dataBase64,
+        });
+      } catch {
+        return { ok: false, error: `Could not read "${step.file.name}".` };
+      }
+    } else {
+      const meta = uploaded[u];
+      u += 1;
+      if (!meta) {
+        return { ok: false, error: "Upload mapping failed — try again." };
+      }
+      attachments.push({
+        id: meta.id,
+        name: meta.name,
+        mimeType: meta.mimeType,
+        sizeBytes: meta.sizeBytes,
+        geminiFileUri: meta.geminiFileUri,
+        geminiFileName: meta.geminiFileName,
+      });
+    }
+  }
+
+  return { ok: true, attachments };
+}
+
+```
+### src/lib/gemini-contents.test.ts
+
+```typescript
+import { describe, expect, it } from "vitest";
+import { bbgptMessagesToGeminiContents } from "./gemini-contents";
+
+describe("bbgptMessagesToGeminiContents", () => {
+  it("uses fileData for Gemini file refs", () => {
+    const { contents } = bbgptMessagesToGeminiContents(
+      [
+        {
+          role: "user",
+          content: "Describe this",
+          attachments: [
+            {
+              id: "1",
+              name: "big.pdf",
+              mimeType: "application/pdf",
+              sizeBytes: 9_000_000,
+              geminiFileUri: "https://generativelanguage.googleapis.com/v1beta/files/abc",
+              geminiFileName: "files/abc",
+            },
+          ],
+        },
+      ],
+      "",
+    );
+    expect(contents).toHaveLength(1);
+    const parts = contents[0]!.parts;
+    expect(parts[0]).toEqual({ text: "Describe this" });
+    expect(parts[1]).toEqual({
+      fileData: {
+        fileUri: "https://generativelanguage.googleapis.com/v1beta/files/abc",
+        mimeType: "application/pdf",
+      },
+    });
+  });
+
+  it("uses inlineData when base64 is present", () => {
+    const { contents } = bbgptMessagesToGeminiContents(
+      [
+        {
+          role: "user",
+          content: "Hi",
+          attachments: [
+            {
+              id: "2",
+              name: "x.png",
+              mimeType: "image/png",
+              sizeBytes: 10,
+              dataBase64: "qqqq",
+            },
+          ],
+        },
+      ],
+      "",
+    );
+    expect(contents[0]!.parts[1]).toMatchObject({
+      inlineData: { mimeType: "image/png", data: "qqqq" },
+    });
+  });
+});
+
+```
+### src/lib/gemini-contents.ts
+
+```typescript
+import type { ChatAttachment } from "@/lib/types";
+
+export type PayloadMessage = {
+  role: "user" | "assistant" | "system";
+  content: string;
+  attachments?: ChatAttachment[];
+};
+
+type GeminiPart =
+  | { text: string }
+  | { inlineData: { mimeType: string; data: string } }
+  | { fileData: { fileUri: string; mimeType: string } };
+
+type GeminiContent = { role: "user" | "model"; parts: GeminiPart[] };
+
+/** Map bbGPT history to Gemini `contents` (multimodal user parts). */
+export function bbgptMessagesToGeminiContents(
+  messages: PayloadMessage[],
+  memoryPrompt?: string,
+): { contents: GeminiContent[]; systemInstruction?: string } {
+  const systemInstruction = [memoryPrompt].filter(Boolean).join("\n\n").trim() || undefined;
+  const contents: GeminiContent[] = [];
+
+  for (const m of messages) {
+    if (m.role === "system") continue;
+    if (m.role === "assistant") {
+      contents.push({
+        role: "model",
+        parts: [{ text: m.content }],
+      });
+      continue;
+    }
+    const parts: GeminiPart[] = [];
+    if (m.content.trim()) {
+      parts.push({ text: m.content });
+    }
+    for (const a of m.attachments ?? []) {
+      if (a.geminiFileUri) {
+        parts.push({
+          fileData: {
+            fileUri: a.geminiFileUri,
+            mimeType: a.mimeType || "application/octet-stream",
+          },
+        });
+      } else if (a.dataBase64) {
+        parts.push({
+          inlineData: {
+            mimeType: a.mimeType || "application/octet-stream",
+            data: a.dataBase64,
+          },
+        });
+      }
+    }
+    if (parts.length === 0) {
+      parts.push({ text: "(empty message)" });
+    }
+    contents.push({ role: "user", parts });
+  }
+
+  return { contents, systemInstruction };
+}
+
+```
+### src/lib/gemini-files.ts
+
+```typescript
+import type { GoogleGenAI } from "@google/genai";
+
+/** Poll until uploaded media is ready for `generateContent` (videos need this; images are usually fast). */
+export async function waitForGeminiFileActive(
+  ai: GoogleGenAI,
+  resourceName: string,
+  opts?: { timeoutMs?: number; pollMs?: number },
+): Promise<{ uri: string; mimeType?: string; sizeBytes?: number }> {
+  const timeoutMs = opts?.timeoutMs ?? 180_000;
+  const pollMs = opts?.pollMs ?? 1000;
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const f = await ai.files.get({ name: resourceName });
+    const state = String(f.state ?? "");
+    if (state === "ACTIVE") {
+      if (!f.uri) throw new Error("Gemini file is ACTIVE but has no URI.");
+      return {
+        uri: f.uri,
+        mimeType: f.mimeType ?? undefined,
+        sizeBytes: f.sizeBytes ? Number(f.sizeBytes) : undefined,
+      };
+    }
+    if (state === "FAILED") {
+      throw new Error("Gemini could not process this file.");
+    }
+    await new Promise((r) => setTimeout(r, pollMs));
+  }
+  throw new Error("Timed out waiting for Gemini to finish processing the upload.");
+}
+
+```
+### src/lib/gemini-server.ts
+
+```typescript
+import { GoogleGenAI } from "@google/genai";
+
+export function getGeminiApiKey(): string | null {
+  const k = process.env.GEMINI_API_KEY?.trim();
+  return k || null;
+}
+
+export function createGeminiClient(): GoogleGenAI | null {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) return null;
+  return new GoogleGenAI({ apiKey });
+}
+
+export function getGeminiChatModel(): string {
+  return process.env.GEMINI_CHAT_MODEL?.trim() || "gemini-2.5-flash";
+}
+
+/** Native image generation (see https://ai.google.dev/gemini-api/docs/image-generation). */
+export function getGeminiImageModel(): string {
+  return process.env.GEMINI_IMAGE_MODEL?.trim() || "gemini-2.5-flash-image";
+}
+
+```
 ### src/lib/heartbeat.ts
 
 ```typescript
@@ -7256,7 +9951,8 @@ export type HeartbeatSuggestion = {
   draft: string;
 };
 
-const INTERVAL_MS = 5 * 60_000;
+/** Suggestions are opt-in heuristics only — keep the cadence relaxed. */
+const INTERVAL_MS = 20 * 60_000;
 
 export function startHeartbeat(opts: {
   getLastUserMessage: () => string | null;
@@ -7284,8 +9980,8 @@ export function startHeartbeat(opts: {
         const pick = ideas[Math.floor(Math.random() * ideas.length)];
         opts.onSuggest({
           id: `retro-${now}`,
-          title: "BabyGPT suggests",
-          body: `Would you like to continue: ${pick}?`,
+          title: "Optional follow-up",
+          body: pick,
           draft: pick,
         });
       }
@@ -7458,7 +10154,7 @@ export const POWER_TEMPLATES: PowerTemplate[] = [
   },
   {
     id: "schrodinger-race",
-    title: "Schrödinger race",
+    title: "Two-model race",
     description: "Dual-model stream (Pro+)",
     emoji: "🔀",
     minPlan: "pro",
@@ -7801,6 +10497,76 @@ export function inferMood(text: string): Mood {
 }
 
 ```
+### src/lib/onboarding-intake-storage.ts
+
+```typescript
+import { lsKey } from "./storage";
+
+const KEY = lsKey("intro_questionnaire_v1");
+
+/** Minimum characters per answer (modal and persisted record must agree). */
+export const INTRO_INTAKE_MIN_CHARS = 12;
+
+export type IntroIntakeRecord = {
+  /** Parallel to `INTRO_SEVEN_QUESTIONS` */
+  answers: string[];
+  completedAt: number;
+};
+
+export function isIntroIntakeComplete(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as IntroIntakeRecord;
+    return (
+      Array.isArray(parsed.answers) &&
+      parsed.answers.length === 7 &&
+      parsed.answers.every((a) => typeof a === "string" && a.trim().length >= INTRO_INTAKE_MIN_CHARS) &&
+      typeof parsed.completedAt === "number"
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function loadIntroIntake(): IntroIntakeRecord | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as IntroIntakeRecord;
+    if (!isIntroIntakeComplete()) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function saveIntroIntake(answers: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    const rec: IntroIntakeRecord = {
+      answers: answers.map((a) => a.trim()),
+      completedAt: Date.now(),
+    };
+    localStorage.setItem(KEY, JSON.stringify(rec));
+  } catch {
+    // ignore
+  }
+}
+
+/** Clears saved questionnaire answers so the blocking modal can run again (e.g. from Settings). */
+export function clearIntroIntake(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    // ignore
+  }
+}
+
+```
 ### src/lib/openai-api.ts
 
 ```typescript
@@ -7890,17 +10656,51 @@ export async function streamOpenAIChat(opts: {
 }
 
 ```
+### src/lib/openai-thinking.ts
+
+```typescript
+type ChatRole = "system" | "user" | "assistant";
+
+/**
+ * OpenAI’s Chat Completions API has no GLM-style `thinking` channel, so when the user
+ * enables “Thinking” we strengthen the system prompt with an explicit reasoning instruction.
+ */
+export function mergeOpenAiThinkingDirective(
+  messages: { role: ChatRole; content: string }[],
+): { role: ChatRole; content: string }[] {
+  const directive =
+    "Instructions: reason step-by-step internally, then reply with only the final user-facing answer (clear and direct). Do not expose raw chain-of-thought unless the user asks for your reasoning.";
+  const idx = messages.findIndex((m) => m.role === "system");
+  if (idx >= 0) {
+    const copy = [...messages];
+    const cur = copy[idx]!;
+    copy[idx] = { ...cur, content: `${cur.content}\n\n${directive}` };
+    return copy;
+  }
+  return [{ role: "system", content: directive }, ...messages];
+}
+
+```
 ### src/lib/plan-pricing-display.test.ts
 
 ```typescript
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatPlanMoneyHeadline, getMonthlyUsdCents, planPriceConfigured } from "./plan-pricing-display";
+import {
+  formatPlanMoneyHeadline,
+  getAnnualUsdCents,
+  getMonthlyUsdCents,
+  planAnnualPriceConfigured,
+  planPriceConfigured,
+} from "./plan-pricing-display";
 
 describe("plan-pricing-display", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_PLAN_PRICE_STARTER_USD", "");
     vi.stubEnv("NEXT_PUBLIC_PLAN_PRICE_PRO_USD", "");
     vi.stubEnv("NEXT_PUBLIC_PLAN_PRICE_TEAM_USD", "");
+    vi.stubEnv("NEXT_PUBLIC_PLAN_PRICE_STARTER_YEARLY_USD", "");
+    vi.stubEnv("NEXT_PUBLIC_PLAN_PRICE_PRO_YEARLY_USD", "");
+    vi.stubEnv("NEXT_PUBLIC_PLAN_PRICE_TEAM_YEARLY_USD", "");
   });
 
   afterEach(() => {
@@ -7920,9 +10720,31 @@ describe("plan-pricing-display", () => {
     expect(planPriceConfigured("starter")).toBe(true);
   });
 
-  it("missing env shows checkout fallback for paid", () => {
-    expect(formatPlanMoneyHeadline("pro")).toBe("Price on checkout");
+  it("missing env uses built-in list defaults for display", () => {
+    expect(getMonthlyUsdCents("starter")).toBe(1200);
+    expect(formatPlanMoneyHeadline("starter")).toBe("$12/mo");
+    expect(getMonthlyUsdCents("pro")).toBe(2400);
+    expect(formatPlanMoneyHeadline("pro")).toBe("$24/mo");
+    expect(getMonthlyUsdCents("team")).toBe(6900);
+    expect(formatPlanMoneyHeadline("team")).toBe("$69/mo");
     expect(planPriceConfigured("pro")).toBe(false);
+  });
+
+  it("annual defaults (~10× monthly list for discount vs ×12)", () => {
+    expect(getAnnualUsdCents("starter")).toBe(12000);
+    expect(formatPlanMoneyHeadline("starter", "annual")).toBe("$120/yr");
+    expect(getAnnualUsdCents("pro")).toBe(24000);
+    expect(formatPlanMoneyHeadline("pro", "annual")).toBe("$240/yr");
+    expect(getAnnualUsdCents("team")).toBe(69000);
+    expect(formatPlanMoneyHeadline("team", "annual")).toBe("$690/yr");
+    expect(planAnnualPriceConfigured("pro")).toBe(false);
+  });
+
+  it("env overrides defaults", () => {
+    vi.stubEnv("NEXT_PUBLIC_PLAN_PRICE_PRO_USD", "29");
+    expect(getMonthlyUsdCents("pro")).toBe(2900);
+    expect(formatPlanMoneyHeadline("pro")).toBe("$29/mo");
+    expect(planPriceConfigured("pro")).toBe(true);
   });
 });
 
@@ -7930,11 +10752,40 @@ describe("plan-pricing-display", () => {
 ### src/lib/plan-pricing-display.ts
 
 ```typescript
-import type { PlanId } from "@/lib/plans";
+import type { PlanBillingCadence, PlanId } from "@/lib/plans";
+
+export type { PlanBillingCadence };
+
+/**
+ * When `NEXT_PUBLIC_PLAN_PRICE_*_USD` is unset, these USD/month anchors are used so the Plans modal
+ * always shows amounts (same defaults as `.env.local.example`). Set env in production to match Stripe.
+ */
+const DEFAULT_LIST_PRICE_USD: Record<Exclude<PlanId, "free">, number> = {
+  starter: 12,
+  pro: 24,
+  team: 69,
+};
+
+/**
+ * Default annual **list** prices (USD/year) when env not set — roughly **two months free**
+ * vs paying the monthly list price × 12 (Starter 12×10=120, etc.).
+ */
+const DEFAULT_ANNUAL_LIST_PRICE_USD: Record<Exclude<PlanId, "free">, number> = {
+  starter: 120,
+  pro: 240,
+  team: 690,
+};
+
+function centsFromUsdString(raw: string | undefined): number | null {
+  if (raw == null || String(raw).trim() === "") return null;
+  const n = Number.parseFloat(String(raw).replace(/[^0-9.]/g, ""));
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 100);
+}
 
 /**
  * Public marketing/list prices (USD / month) — must match what you configure in Stripe Products.
- * Set in `.env.local` so the Plans modal can show money next to each tier without calling Stripe from the browser.
+ * Env overrides; otherwise built-in defaults above.
  */
 export function getMonthlyUsdCents(planId: PlanId): number | null {
   if (planId === "free") return 0;
@@ -7946,24 +10797,64 @@ export function getMonthlyUsdCents(planId: PlanId): number | null {
         : planId === "team"
           ? process.env.NEXT_PUBLIC_PLAN_PRICE_TEAM_USD
           : undefined;
-  if (raw == null || String(raw).trim() === "") return null;
-  const n = Number.parseFloat(String(raw).replace(/[^0-9.]/g, ""));
-  if (!Number.isFinite(n) || n < 0) return null;
-  return Math.round(n * 100);
+  const fromEnv = centsFromUsdString(raw);
+  if (fromEnv !== null) return fromEnv;
+  return Math.round(DEFAULT_LIST_PRICE_USD[planId as Exclude<PlanId, "free">] * 100);
 }
 
-/** e.g. "$12/mo" or "Set price in env" when missing (paid tiers only). */
-export function formatPlanMoneyHeadline(planId: PlanId): string {
+/** Public annual list prices (USD / year). Env overrides; otherwise defaults above. */
+export function getAnnualUsdCents(planId: PlanId): number | null {
+  if (planId === "free") return 0;
+  const raw =
+    planId === "starter"
+      ? process.env.NEXT_PUBLIC_PLAN_PRICE_STARTER_YEARLY_USD
+      : planId === "pro"
+        ? process.env.NEXT_PUBLIC_PLAN_PRICE_PRO_YEARLY_USD
+        : planId === "team"
+          ? process.env.NEXT_PUBLIC_PLAN_PRICE_TEAM_YEARLY_USD
+          : undefined;
+  const fromEnv = centsFromUsdString(raw);
+  if (fromEnv !== null) return fromEnv;
+  return Math.round(DEFAULT_ANNUAL_LIST_PRICE_USD[planId as Exclude<PlanId, "free">] * 100);
+}
+
+/** e.g. "$12/mo" or "$120/yr" — paid tiers always show a dollar amount (env or default). */
+export function formatPlanMoneyHeadline(planId: PlanId, cadence: PlanBillingCadence = "monthly"): string {
   if (planId === "free") return "$0";
-  const cents = getMonthlyUsdCents(planId);
+  const cents = cadence === "annual" ? getAnnualUsdCents(planId) : getMonthlyUsdCents(planId);
   if (cents === null) return "Price on checkout";
   if (cents === 0) return "$0";
-  return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}/mo`;
+  const dollars = cents / 100;
+  const suffix = cadence === "annual" ? "/yr" : "/mo";
+  return `$${dollars.toFixed(dollars % 1 === 0 ? 0 : 2)}${suffix}`;
 }
 
+/** True when env explicitly sets the tier's monthly list price (for Stripe mode hints). */
 export function planPriceConfigured(planId: PlanId): boolean {
   if (planId === "free") return true;
-  return getMonthlyUsdCents(planId) !== null;
+  const raw =
+    planId === "starter"
+      ? process.env.NEXT_PUBLIC_PLAN_PRICE_STARTER_USD
+      : planId === "pro"
+        ? process.env.NEXT_PUBLIC_PLAN_PRICE_PRO_USD
+        : planId === "team"
+          ? process.env.NEXT_PUBLIC_PLAN_PRICE_TEAM_USD
+          : undefined;
+  return centsFromUsdString(raw) !== null;
+}
+
+/** True when env explicitly sets annual list price for the tier. */
+export function planAnnualPriceConfigured(planId: PlanId): boolean {
+  if (planId === "free") return true;
+  const raw =
+    planId === "starter"
+      ? process.env.NEXT_PUBLIC_PLAN_PRICE_STARTER_YEARLY_USD
+      : planId === "pro"
+        ? process.env.NEXT_PUBLIC_PLAN_PRICE_PRO_YEARLY_USD
+        : planId === "team"
+          ? process.env.NEXT_PUBLIC_PLAN_PRICE_TEAM_YEARLY_USD
+          : undefined;
+  return centsFromUsdString(raw) !== null;
 }
 
 ```
@@ -7973,6 +10864,9 @@ export function planPriceConfigured(planId: PlanId): boolean {
 import type { ModelTier } from "@/lib/types";
 
 export type PlanId = "free" | "starter" | "pro" | "team";
+
+/** Monthly vs annual Stripe checkout — separate recurring Prices in Dashboard. */
+export type PlanBillingCadence = "monthly" | "annual";
 
 export type QuantumFeatureKey = "kolmogorov" | "holographic" | "dna";
 
@@ -8092,6 +10986,9 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
 };
 
 export const DEFAULT_PLAN: PlanId = "free";
+
+/** Stable UI / billing order (do not rely only on `Object.keys(PLANS)`). */
+export const PLAN_IDS_IN_UI_ORDER: readonly PlanId[] = ["free", "starter", "pro", "team"];
 
 /** One-time welcome grant so new users can explore credit spend before monthly accrual. */
 export const FIRST_VISIT_CREDIT_BONUS = 120;
@@ -8292,13 +11189,18 @@ export function resonanceScore(text: string, replies: string[]): number {
 ### src/lib/retrocausal-prediction.ts
 
 ```typescript
+/**
+ * Optional follow-up ideas for the idle heartbeat. Keep this sparse — the UI
+ * surfaces these as toasts; a vague default was prompting too often.
+ */
 export function predictNextUserIntent(lastUser: string): string[] {
   const q = lastUser.toLowerCase();
   const out: string[] = [];
   if (q.includes("code")) out.push("Ask for tests or edge cases");
   if (q.includes("explain")) out.push("Request a shorter summary");
   if (q.length < 40) out.push("Add constraints or examples");
-  if (!out.length) out.push("Iterate on the strongest objection");
+  if (/\?|how do i|what is|why /.test(q)) out.push("Ask for a concrete example");
+  // No generic fallback — avoids repetitive “objection” nags on normal messages.
   return out;
 }
 
@@ -8471,7 +11373,8 @@ export function formatBillingAlertForClient(b: ServerBillingRecord): BillingAler
 ```typescript
 /**
  * Optional deployment gate: password login + server-side wallet.
- * When BABYGPT_APP_PASSWORD is unset, the app behaves as a local-first dev UI (no login).
+ * Canonical env: `BBGPT_*`. Legacy `BABYGPT_*` is still read when the new key is unset.
+ * When no app password is set, the app behaves as a local-first dev UI (no login).
  */
 
 /** Trim and strip a single pair of surrounding quotes (common .env copy/paste mistake). */
@@ -8498,11 +11401,11 @@ export function isGateEnabled(): boolean {
 }
 
 export function getApiSecret(): string | undefined {
-  return normalizeEnvString(process.env.BABYGPT_API_SECRET);
+  return normalizeEnvString(process.env.BBGPT_API_SECRET ?? process.env.BABYGPT_API_SECRET);
 }
 
 export function getSessionSecret(): string | undefined {
-  return normalizeEnvString(process.env.BABYGPT_SESSION_SECRET);
+  return normalizeEnvString(process.env.BBGPT_SESSION_SECRET ?? process.env.BABYGPT_SESSION_SECRET);
 }
 
 ```
@@ -8607,14 +11510,14 @@ export function setServerPlan(planId: PlanId): CreditsStateV1 {
 ### src/lib/session-server.ts
 
 ```typescript
-import { cookies } from "next/headers";
+import { LEGACY_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-cookie";
 import { jwtVerify } from "jose";
 import { getApiSecret, getSessionSecret, isGateEnabled } from "@/lib/server-config";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 /**
- * True when gate is off, or JWT cookie is valid, or Authorization Bearer matches BABYGPT_API_SECRET.
+ * True when gate is off, or JWT cookie is valid, or Authorization Bearer matches BBGPT_API_SECRET (legacy BABYGPT_*).
  */
 export async function isRequestAuthorized(request: NextRequest): Promise<boolean> {
   if (!isGateEnabled()) {
@@ -8632,7 +11535,9 @@ export async function isRequestAuthorized(request: NextRequest): Promise<boolean
     return false;
   }
 
-  const token = (await cookies()).get("babygpt_token")?.value;
+  const token =
+    request.cookies.get(SESSION_COOKIE_NAME)?.value ??
+    request.cookies.get(LEGACY_SESSION_COOKIE_NAME)?.value;
   if (!token) {
     return false;
   }
@@ -8743,13 +11648,172 @@ export function skillSystemPrompt(skill: Skill | null): string {
 }
 
 ```
+### src/lib/speech-recognition.ts
+
+```typescript
+/**
+ * Web Speech API — speech-to-text for the composer (Chrome/Edge/Safari; Firefox limited).
+ */
+
+export function getSpeechRecognitionConstructor(): (new () => SpeechRecognition) | null {
+  if (typeof window === "undefined") return null;
+  const w = window as Window &
+    typeof globalThis & {
+      SpeechRecognition?: new () => SpeechRecognition;
+      webkitSpeechRecognition?: new () => SpeechRecognition;
+    };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+
+export function isSpeechRecognitionAvailable(): boolean {
+  return getSpeechRecognitionConstructor() !== null;
+}
+
+```
+### src/lib/speech-synthesis.test.ts
+
+```typescript
+import { describe, expect, it } from "vitest";
+import { textForSpeech } from "./speech-synthesis";
+
+describe("textForSpeech", () => {
+  it("strips code fences and links", () => {
+    expect(textForSpeech("Hello `code` and [link](https://x.com)")).toContain("Hello code and link");
+  });
+
+  it("removes heading markers", () => {
+    expect(textForSpeech("# Title\n\nBody")).toContain("Title");
+    expect(textForSpeech("# Title\n\nBody")).toContain("Body");
+  });
+});
+
+```
+### src/lib/speech-synthesis.ts
+
+````typescript
+/**
+ * Browser Speech Synthesis (Web Speech API) — one utterance at a time app-wide.
+ */
+
+type Listener = (activeMessageId: string | null) => void;
+
+const listeners = new Set<Listener>();
+let activeMessageId: string | null = null;
+
+function notify(): void {
+  for (const l of listeners) l(activeMessageId);
+}
+
+export function getActiveSpeechMessageId(): string | null {
+  return activeMessageId;
+}
+
+export function subscribeSpeechActive(listener: Listener): () => void {
+  listeners.add(listener);
+  listener(activeMessageId);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/** Strip common Markdown so TTS reads more naturally (best-effort). */
+export function textForSpeech(markdown: string): string {
+  let t = markdown;
+  t = t.replace(/```[\s\S]*?```/g, " ");
+  t = t.replace(/`([^`]+)`/g, "$1");
+  t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  t = t.replace(/^#{1,6}\s+/gm, "");
+  t = t.replace(/^\s*[-*+]\s+/gm, "");
+  t = t.replace(/\*\*([^*]+)\*\*/g, "$1");
+  t = t.replace(/\*([^*]+)\*/g, "$1");
+  t = t.replace(/_{1,2}([^_]+)_{1,2}/g, "$1");
+  t = t.replace(/\s+/g, " ");
+  return t.trim();
+}
+
+export function isSpeechSynthesisAvailable(): boolean {
+  return typeof window !== "undefined" && typeof window.speechSynthesis !== "undefined";
+}
+
+export function speakAssistantMessage(messageId: string, markdownContent: string): boolean {
+  if (!isSpeechSynthesisAvailable()) return false;
+  const text = textForSpeech(markdownContent);
+  if (!text) return false;
+
+  window.speechSynthesis.cancel();
+  activeMessageId = messageId;
+  notify();
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1;
+  u.pitch = 1;
+
+  const done = () => {
+    if (activeMessageId === messageId) {
+      activeMessageId = null;
+      notify();
+    }
+  };
+  u.onend = done;
+  u.onerror = done;
+
+  try {
+    window.speechSynthesis.speak(u);
+  } catch {
+    activeMessageId = null;
+    notify();
+    return false;
+  }
+  return true;
+}
+
+export function stopSpeech(): void {
+  if (!isSpeechSynthesisAvailable()) return;
+  window.speechSynthesis.cancel();
+  activeMessageId = null;
+  notify();
+}
+
+````
 ### src/lib/storage.ts
 
 ```typescript
-export const LS_PREFIX = "babygpt_";
+/** Current localStorage prefix — see `migrateLegacyLocalStorageOnce`. */
+export const LS_PREFIX = "bbgpt_";
+
+/** Legacy prefix; migrated on first client load. */
+export const LEGACY_LS_PREFIX = "babygpt_";
 
 export function lsKey(name: string): string {
   return `${LS_PREFIX}${name}`;
+}
+
+/**
+ * Copy `babygpt_*` keys to `bbgpt_*` when the new key is absent (one-time UX migration).
+ */
+export function migrateLegacyLocalStorageOnce(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const done = sessionStorage.getItem("bbgpt_legacy_migrated_v1");
+    if (done === "1") return;
+
+    const keys = Object.keys(localStorage);
+    for (const k of keys) {
+      if (!k.startsWith(LEGACY_LS_PREFIX)) continue;
+      const suffix = k.slice(LEGACY_LS_PREFIX.length);
+      const nk = `${LS_PREFIX}${suffix}`;
+      if (!localStorage.getItem(nk) && localStorage.getItem(k) != null) {
+        localStorage.setItem(nk, localStorage.getItem(k)!);
+      }
+    }
+    sessionStorage.setItem("bbgpt_legacy_migrated_v1", "1");
+  } catch {
+    /* quota / privacy mode */
+  }
+}
+
+if (typeof window !== "undefined") {
+  migrateLegacyLocalStorageOnce();
 }
 
 ```
@@ -8798,6 +11862,7 @@ export function extractSseTextDelta(line: string): string {
     const j = JSON.parse(payload) as {
       schrodinger?: boolean;
       winner?: string;
+      bbgpt_agent?: unknown;
       babygpt_agent?: unknown;
       choices?: { delta?: { content?: string }; message?: { content?: string } }[];
     };
@@ -8819,6 +11884,7 @@ export function extractSseThinkingDelta(line: string): string {
   try {
     const j = JSON.parse(payload) as {
       schrodinger?: boolean;
+      bbgpt_agent?: unknown;
       babygpt_agent?: unknown;
       choices?: {
         delta?: {
@@ -8827,7 +11893,7 @@ export function extractSseThinkingDelta(line: string): string {
         };
       }[];
     };
-    if (j.schrodinger || j.babygpt_agent) return "";
+    if (j.schrodinger || j.bbgpt_agent || j.babygpt_agent) return "";
     const d = j.choices?.[0]?.delta;
     if (!d) return "";
     const t = d.reasoning_content ?? d.thinking ?? "";
@@ -8850,17 +11916,23 @@ export function parseSseAgentMeta(line: string): AgentStreamMeta | null {
   if (!payload) return null;
   try {
     const j = JSON.parse(payload) as {
+      bbgpt_agent?: {
+        toolCalls?: ToolCall[];
+        errorCorrectionLog?: ErrorCorrectionLogEntry[];
+        routingReason?: string;
+      };
       babygpt_agent?: {
         toolCalls?: ToolCall[];
         errorCorrectionLog?: ErrorCorrectionLogEntry[];
         routingReason?: string;
       };
     };
-    if (!j.babygpt_agent) return null;
+    const agent = j.bbgpt_agent ?? j.babygpt_agent;
+    if (!agent) return null;
     return {
-      toolCalls: j.babygpt_agent.toolCalls ?? [],
-      errorCorrectionLog: j.babygpt_agent.errorCorrectionLog ?? [],
-      routingReason: j.babygpt_agent.routingReason ?? "",
+      toolCalls: agent.toolCalls ?? [],
+      errorCorrectionLog: agent.errorCorrectionLog ?? [],
+      routingReason: agent.routingReason ?? "",
     };
   } catch {
     return null;
@@ -8970,6 +12042,9 @@ describe("stripe-config", () => {
     vi.stubEnv("STRIPE_PRICE_STARTER", "");
     vi.stubEnv("STRIPE_PRICE_PRO", "");
     vi.stubEnv("STRIPE_PRICE_TEAM", "");
+    vi.stubEnv("STRIPE_PRICE_STARTER_YEARLY", "");
+    vi.stubEnv("STRIPE_PRICE_PRO_YEARLY", "");
+    vi.stubEnv("STRIPE_PRICE_TEAM_YEARLY", "");
   });
 
   afterEach(() => {
@@ -8980,9 +12055,18 @@ describe("stripe-config", () => {
     expect(isStripeConfigured()).toBe(false);
   });
 
-  it("isStripeConfigured is true when STRIPE_SECRET_KEY is set", () => {
-    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_xxx");
+  const validTestSecret = `sk_test_${"x".repeat(95)}`;
+
+  it("isStripeConfigured is true when STRIPE_SECRET_KEY is a valid secret shape", () => {
+    vi.stubEnv("STRIPE_SECRET_KEY", validTestSecret);
     expect(isStripeConfigured()).toBe(true);
+  });
+
+  it("isStripeConfigured is false for publishable key or truncated secret", () => {
+    vi.stubEnv("STRIPE_SECRET_KEY", "pk_test_xxx");
+    expect(isStripeConfigured()).toBe(false);
+    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_short");
+    expect(isStripeConfigured()).toBe(false);
   });
 
   it("stripePriceIdForPlan maps env to price ids", () => {
@@ -8995,6 +12079,16 @@ describe("stripe-config", () => {
     expect(stripePriceIdForPlan("free")).toBeNull();
   });
 
+  it("stripePriceIdForPlan annual uses YEARLY env ids", () => {
+    vi.stubEnv("STRIPE_PRICE_STARTER_YEARLY", "price_starter_y");
+    vi.stubEnv("STRIPE_PRICE_PRO_YEARLY", "price_pro_y");
+    vi.stubEnv("STRIPE_PRICE_TEAM_YEARLY", "price_team_y");
+    expect(stripePriceIdForPlan("starter", "annual")).toBe("price_starter_y");
+    expect(stripePriceIdForPlan("pro", "annual")).toBe("price_pro_y");
+    expect(stripePriceIdForPlan("team", "annual")).toBe("price_team_y");
+    expect(stripePriceIdForPlan("starter", "monthly")).toBeNull();
+  });
+
   it("planIdFromStripePriceId resolves from env", () => {
     vi.stubEnv("STRIPE_PRICE_STARTER", "price_a");
     vi.stubEnv("STRIPE_PRICE_PRO", "price_b");
@@ -9003,26 +12097,43 @@ describe("stripe-config", () => {
     expect(planIdFromStripePriceId("unknown")).toBeNull();
     expect(planIdFromStripePriceId(null)).toBeNull();
   });
+
+  it("planIdFromStripePriceId resolves yearly price ids", () => {
+    vi.stubEnv("STRIPE_PRICE_PRO_YEARLY", "price_pro_year");
+    expect(planIdFromStripePriceId("price_pro_year")).toBe("pro");
+  });
 });
 
 ```
 ### src/lib/stripe-config.ts
 
 ```typescript
-import type { PlanId } from "@/lib/plans";
+import type { PlanBillingCadence, PlanId } from "@/lib/plans";
+import { isStripeSecretApiKey } from "@/lib/stripe-secret-valid";
 
 export function isStripeConfigured(): boolean {
-  return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
+  return isStripeSecretApiKey(process.env.STRIPE_SECRET_KEY);
 }
 
 export function getStripeWebhookSecret(): string | undefined {
   return process.env.STRIPE_WEBHOOK_SECRET?.trim() || undefined;
 }
 
-/** Stripe Price IDs (Dashboard → Products → Price ID) for subscription mode. */
-export function stripePriceIdForPlan(planId: PlanId): string | null {
-  const m: Record<PlanId, string | undefined> = {
-    free: undefined,
+/** Stripe Price IDs (Dashboard → Products → Price ID) for subscription Checkout. */
+export function stripePriceIdForPlan(planId: PlanId, cadence: PlanBillingCadence = "monthly"): string | null {
+  if (planId === "free") return null;
+
+  if (cadence === "annual") {
+    const m: Record<Exclude<PlanId, "free">, string | undefined> = {
+      starter: process.env.STRIPE_PRICE_STARTER_YEARLY,
+      pro: process.env.STRIPE_PRICE_PRO_YEARLY,
+      team: process.env.STRIPE_PRICE_TEAM_YEARLY,
+    };
+    const v = m[planId]?.trim();
+    return v || null;
+  }
+
+  const m: Record<Exclude<PlanId, "free">, string | undefined> = {
     starter: process.env.STRIPE_PRICE_STARTER,
     pro: process.env.STRIPE_PRICE_PRO,
     team: process.env.STRIPE_PRICE_TEAM,
@@ -9037,11 +12148,26 @@ export function planIdFromStripePriceId(priceId: string | null | undefined): Pla
     [process.env.STRIPE_PRICE_STARTER?.trim(), "starter"],
     [process.env.STRIPE_PRICE_PRO?.trim(), "pro"],
     [process.env.STRIPE_PRICE_TEAM?.trim(), "team"],
+    [process.env.STRIPE_PRICE_STARTER_YEARLY?.trim(), "starter"],
+    [process.env.STRIPE_PRICE_PRO_YEARLY?.trim(), "pro"],
+    [process.env.STRIPE_PRICE_TEAM_YEARLY?.trim(), "team"],
   ];
   for (const [pid, plan] of pairs) {
     if (pid && pid === priceId) return plan;
   }
   return null;
+}
+
+```
+### src/lib/stripe-secret-valid.ts
+
+```typescript
+/**
+ * Stripe Secret API key shape check (matches scripts/stripe-secret-valid.cjs success path).
+ */
+export function isStripeSecretApiKey(raw: string | undefined | null): boolean {
+  const s = String(raw ?? "").trim();
+  return /^sk_(test|live)_/.test(s) && s.length >= 60;
 }
 
 ```
@@ -9433,7 +12559,7 @@ export const webReaderTool: ToolDefinition = {
       const res = await fetch(url, {
         signal: ac.signal,
         headers: {
-          "User-Agent": "BabyGPT-Agent/1.0 (educational)",
+          "User-Agent": "bbGPT-Agent/1.0 (educational)",
           Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
         },
       });
@@ -9462,7 +12588,7 @@ import type { ToolDefinition } from "./types";
 /** DuckDuckGo lite + optional Z.AI web_search. Full browser automation (e.g. OpenClaw-style Playwright agents) is out of scope here — run as a separate service if you need it. */
 async function duckDuckGoLite(query: string): Promise<string> {
   const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
-  const res = await fetch(url, { headers: { "User-Agent": "BabyGPT/1.0 (tool)" } });
+  const res = await fetch(url, { headers: { "User-Agent": "bbGPT/1.0 (tool)" } });
   const j = (await res.json()) as {
     AbstractText?: string;
     AbstractURL?: string;
@@ -9538,6 +12664,20 @@ export interface ErrorCorrectionLogEntry {
   detail: string;
 }
 
+/** File or image attached to a user message (sent to Gemini multimodal). */
+export interface ChatAttachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  sizeBytes: number;
+  /** Raw base64 (no data: prefix). Small files only — omitted when using Gemini Files API. */
+  dataBase64?: string;
+  /** Gemini Files API URI (large uploads via `/api/gemini/files`). */
+  geminiFileUri?: string;
+  /** Resource name, e.g. `files/abc123` — used to verify the file before chat. */
+  geminiFileName?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: Role;
@@ -9546,6 +12686,8 @@ export interface ChatMessage {
   createdAt: number;
   toolCalls?: ToolCall[];
   errorCorrectionLog?: ErrorCorrectionLogEntry[];
+  /** User uploads (images, PDFs, etc.) — requires `GEMINI_API_KEY` and `/api/chat/gemini`. */
+  attachments?: ChatAttachment[];
 }
 
 export interface Conversation {
@@ -9555,18 +12697,100 @@ export interface Conversation {
   messages: ChatMessage[];
 }
 
+/** Shipped behaviors only — names are thematic; descriptions match server/client code. */
 export const QUANTUM_FEATURES = [
-  { id: "schrodinger", name: "Schrödinger Chat", description: "Dual-model racing" },
-  { id: "kolmogorov", name: "Kolmogorov Router", description: "Complexity-aware routing" },
-  { id: "holographic", name: "Holographic Context", description: "Token-aware context folding" },
-  { id: "dna", name: "Eigenresponse / DNA", description: "Style lock from prior turns" },
-  { id: "bloch", name: "Bloch Sphere", description: "Intent state visualization" },
-  { id: "entangle", name: "Entanglement", description: "Linked thread coherence" },
-  { id: "adiabatic", name: "Adiabatic Prompts", description: "Smooth prompt morphing" },
-  { id: "qec", name: "Quantum Error Correction", description: "Self-healing drafts" },
-  { id: "topology", name: "Conversation Topology", description: "Branch graph view" },
-  { id: "retro", name: "Retrocausal Prediction", description: "Next-turn priors" },
+  {
+    id: "thinking",
+    name: "Thinking",
+    description:
+      "GLM (Z.AI): native extended-reasoning channel in the API. OpenAI: adds a stronger step-by-step system instruction (no separate reasoning stream).",
+  },
+  {
+    id: "schrodinger",
+    name: "Two models",
+    description: "Two models stream in parallel; one winning reply is kept (same feature as the header toggle).",
+  },
+  {
+    id: "agent",
+    name: "Agent",
+    description: "Tool-using loop (web, calculator, …) with a streamed final answer.",
+  },
+  {
+    id: "kolmogorov",
+    name: "Kolmogorov router",
+    description:
+      "Keyword + length heuristics pick a model tier for this send, overriding the dropdown for that request.",
+  },
+  {
+    id: "holographic",
+    name: "Holographic context",
+    description: "If the transcript exceeds ~12k characters, older messages are folded to cap prompt size.",
+  },
+  {
+    id: "dna",
+    name: "Eigenresponse / DNA",
+    description: "Injects a short style hint from recent assistant replies.",
+  },
+  {
+    id: "adiabatic",
+    name: "Adiabatic morph",
+    description: "Slider merges explore / balance / commit wording into the system prompt.",
+  },
+  {
+    id: "qec",
+    name: "Error correction",
+    description: "In Agent mode, malformed tool JSON may be retried or repaired — not a separate header toggle.",
+  },
 ] as const;
+
+```
+### src/lib/ui-diagnostics.ts
+
+```typescript
+import { lsKey } from "./storage";
+
+const KEY = lsKey("ui_diag_v1");
+
+export type UiDiagStatus = "ok" | "fail" | "skip";
+
+/** Console diagnostics for control paths — enable via Settings or `NEXT_PUBLIC_UI_DIAGNOSTICS=true`. */
+export function isUiDiagnosticsEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (process.env.NEXT_PUBLIC_UI_DIAGNOSTICS === "true") return true;
+    return localStorage.getItem(KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function getUiDiagnosticsEnabled(): boolean {
+  return isUiDiagnosticsEnabled();
+}
+
+export function setUiDiagnosticsEnabled(on: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (on) localStorage.setItem(KEY, "1");
+    else localStorage.removeItem(KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function uiDiag(controlId: string, status: UiDiagStatus, detail?: Record<string, unknown>): void {
+  if (!isUiDiagnosticsEnabled()) return;
+  const line = {
+    app: "bbGPT",
+    controlId,
+    status,
+    at: new Date().toISOString(),
+    ...detail,
+  };
+  const msg = `[bbGPT UI] ${JSON.stringify(line)}`;
+  if (status === "fail") console.warn(msg);
+  else console.log(msg);
+}
 
 ```
 ### src/lib/ui-preferences.ts
@@ -9632,10 +12856,10 @@ export function saveUiPreferences(next: UiPreferences): void {
 export function applyUiPreferences(p: UiPreferences): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.style.setProperty("--babygpt-font-scale", String(p.fontScale));
-  root.dataset.babygptAppearance = p.appearance;
-  root.classList.toggle("babygpt-appearance-light", p.appearance === "light");
-  root.classList.toggle("babygpt-appearance-oled", p.appearance === "oled");
+  root.style.setProperty("--bbgpt-font-scale", String(p.fontScale));
+  root.dataset.bbgptAppearance = p.appearance;
+  root.classList.toggle("bbgpt-appearance-light", p.appearance === "light");
+  root.classList.toggle("bbgpt-appearance-oled", p.appearance === "oled");
 }
 
 /** Outer app root background (fills viewport). */
@@ -9678,12 +12902,12 @@ export function mainChatShellClass(appearance: UiPreferences["appearance"], mood
 
 export function footerShellClass(appearance: UiPreferences["appearance"]): string {
   if (appearance === "light") {
-    return "shrink-0 border-t border-zinc-200 bg-zinc-50 px-4 py-2 text-center text-[10px] text-zinc-600";
+    return "shrink-0 border-t border-zinc-200 bg-zinc-50 px-3 py-1.5 text-center text-[10px] text-zinc-600";
   }
   if (appearance === "oled") {
-    return "shrink-0 border-t border-zinc-800 bg-black px-4 py-2 text-center text-[10px] text-zinc-500";
+    return "shrink-0 border-t border-zinc-800 bg-black px-3 py-1.5 text-center text-[10px] text-zinc-500";
   }
-  return "shrink-0 border-t border-zinc-900/80 px-4 py-2 text-center text-[10px] text-zinc-600";
+  return "shrink-0 border-t border-zinc-900/80 px-3 py-1.5 text-center text-[10px] text-zinc-600";
 }
 
 export async function tryEnableDesktopNotifications(): Promise<NotificationPermission> {
@@ -9694,6 +12918,134 @@ export async function tryEnableDesktopNotifications(): Promise<NotificationPermi
   if (Notification.permission === "denied") return "denied";
   return Notification.requestPermission();
 }
+
+```
+### src/lib/usage-cost.test.ts
+
+```typescript
+import { describe, expect, it } from "vitest";
+import { PLANS } from "./plans";
+import type { ModelTier } from "./types";
+import { planPermitsSend } from "./usage-cost";
+
+const ALL_MODELS: ModelTier[] = ["glm-4-flash", "glm-4-air", "glm-4-plus", "glm-4-long", "glm-4"];
+
+/** Automated stand-in for “open console + click every control” — validates PLANS ↔ planPermitsSend. */
+describe("plan × capability matrix (audit)", () => {
+  it("basic chat: allowedModels matches planPermitsSend for every plan × model", () => {
+    for (const plan of Object.values(PLANS)) {
+      for (const model of ALL_MODELS) {
+        const allowed = plan.allowedModels.includes(model);
+        expect(
+          planPermitsSend(plan, { model, thinking: false, mode: "chat" }),
+          `${plan.id} + ${model}`,
+        ).toBe(allowed);
+      }
+    }
+  });
+
+  it("agent mode permitted iff plan.features.agent (using first allowed model)", () => {
+    for (const plan of Object.values(PLANS)) {
+      const model = plan.allowedModels[0]!;
+      expect(
+        planPermitsSend(plan, { model, thinking: false, mode: "agent" }),
+        `${plan.id} agent`,
+      ).toBe(plan.features.agent);
+    }
+  });
+
+  it("schrodinger permitted iff plan.features.schrodinger with valid pair on-plan", () => {
+    for (const plan of Object.values(PLANS)) {
+      const a = plan.allowedModels[0]!;
+      const b = plan.allowedModels.find((m) => m !== a) ?? a;
+      const expected = plan.features.schrodinger && plan.allowedModels.includes(a) && plan.allowedModels.includes(b);
+      expect(
+        planPermitsSend(plan, {
+          model: a,
+          thinking: false,
+          mode: "schrodinger",
+          secondaryModel: b,
+        }),
+        `${plan.id} schrodinger`,
+      ).toBe(expected);
+    }
+  });
+
+  it("quantum flags require matching plan.features (starter: K+H not DNA)", () => {
+    expect(
+      planPermitsSend(PLANS.starter, {
+        model: "glm-4-flash",
+        thinking: false,
+        mode: "chat",
+        quantum: { kolmogorov: true, holographic: true, dna: false },
+      }),
+    ).toBe(true);
+    expect(
+      planPermitsSend(PLANS.starter, {
+        model: "glm-4-flash",
+        thinking: false,
+        mode: "chat",
+        quantum: { dna: true },
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("planPermitsSend", () => {
+  it("allows free flash with thinking when quantum off", () => {
+    expect(
+      planPermitsSend(PLANS.free, {
+        model: "glm-4-flash",
+        thinking: true,
+        mode: "chat",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects DNA quantum on free plan", () => {
+    expect(
+      planPermitsSend(PLANS.free, {
+        model: "glm-4-flash",
+        thinking: false,
+        mode: "chat",
+        quantum: { dna: true },
+      }),
+    ).toBe(false);
+  });
+
+  it("allows DNA on pro with glm-4", () => {
+    expect(
+      planPermitsSend(PLANS.pro, {
+        model: "glm-4",
+        thinking: false,
+        mode: "chat",
+        quantum: { kolmogorov: true, holographic: true, dna: true },
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects schrodinger secondary model not on plan", () => {
+    expect(
+      planPermitsSend(PLANS.starter, {
+        model: "glm-4-flash",
+        thinking: false,
+        mode: "schrodinger",
+        secondaryModel: "glm-4-long",
+      }),
+    ).toBe(false);
+  });
+
+  it("allows schrodinger pair on pro when both models allowed", () => {
+    expect(
+      planPermitsSend(PLANS.pro, {
+        model: "glm-4-flash",
+        thinking: false,
+        mode: "schrodinger",
+        secondaryModel: "glm-4-air",
+      }),
+    ).toBe(true);
+  });
+});
 
 ```
 ### src/lib/usage-cost.ts
@@ -9755,7 +13107,7 @@ export function estimateSendCreditsBreakdown(input: SendCostInput): {
   lines.push({ label: `Model (${input.model})`, credits: base });
   if (input.thinking) lines.push({ label: "Thinking", credits: 2 });
   if (input.mode === "agent") lines.push({ label: "Agent loop", credits: 6 });
-  if (input.mode === "schrodinger") lines.push({ label: "Schrödinger", credits: 8 });
+  if (input.mode === "schrodinger") lines.push({ label: "Two models (dual stream)", credits: 8 });
   if (input.debate) lines.push({ label: "Debate", credits: 5 });
   return { lines, total: estimateSendCredits(input) };
 }
@@ -9765,17 +13117,31 @@ export function describeCost(input: SendCostInput, credits: number): string {
   bits.push(`${input.model}`);
   if (input.thinking) bits.push("thinking");
   if (input.mode === "agent") bits.push("agent");
-  if (input.mode === "schrodinger") bits.push("Schrödinger");
+  if (input.mode === "schrodinger") bits.push("two-models");
   if (input.debate) bits.push("debate");
   return `${credits} credits (${bits.join(" · ")})`;
 }
 
+/**
+ * Plan gate for a chat send (client + server wallet). Includes quantum toggles and Schrödinger’s second model.
+ */
+export type ChatSendPlanCheck = Omit<SendCostInput, "debate"> & {
+  quantum?: { kolmogorov?: boolean; holographic?: boolean; dna?: boolean };
+  /** Second racer model — must be on-plan when mode is `schrodinger`. */
+  secondaryModel?: ModelTier;
+};
+
 /** Whether the current plan permits this combination (before credits). */
-export function planPermitsSend(plan: PlanDefinition, input: Omit<SendCostInput, "debate">): boolean {
+export function planPermitsSend(plan: PlanDefinition, input: ChatSendPlanCheck): boolean {
   if (!plan.allowedModels.includes(input.model)) return false;
   if (input.thinking && !plan.features.thinking) return false;
   if (input.mode === "agent" && !plan.features.agent) return false;
   if (input.mode === "schrodinger" && !plan.features.schrodinger) return false;
+  const q = input.quantum;
+  if (q?.kolmogorov && !plan.features.kolmogorov) return false;
+  if (q?.holographic && !plan.features.holographic) return false;
+  if (q?.dna && !plan.features.dna) return false;
+  if (input.secondaryModel != null && !plan.allowedModels.includes(input.secondaryModel)) return false;
   return true;
 }
 
@@ -9875,6 +13241,7 @@ export function createZai(): InstanceType<typeof ZAI> {
 ### src/middleware.ts
 
 ```typescript
+import { LEGACY_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-cookie";
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -9893,8 +13260,6 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/api/auth/")) {
     return NextResponse.next();
   }
-  // Stripe Checkout/Portal/Finalize require the same session as the rest of the app.
-  // Only the webhook is verified via Stripe-Signature (no browser cookie).
   if (pathname === "/api/stripe/webhook" || pathname.startsWith("/api/stripe/webhook/")) {
     return NextResponse.next();
   }
@@ -9909,14 +13274,16 @@ export async function middleware(request: NextRequest) {
   if (!secret) {
     if (pathname.startsWith("/api")) {
       return NextResponse.json(
-        { error: "Server misconfigured: set BABYGPT_SESSION_SECRET when BABYGPT_APP_PASSWORD is set." },
+        { error: "Server misconfigured: set BBGPT_SESSION_SECRET when BBGPT_APP_PASSWORD is set." },
         { status: 500 },
       );
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const token = request.cookies.get("babygpt_token")?.value;
+  const token =
+    request.cookies.get(SESSION_COOKIE_NAME)?.value ??
+    request.cookies.get(LEGACY_SESSION_COOKIE_NAME)?.value;
   if (!token) {
     if (pathname.startsWith("/api")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -9937,9 +13304,41 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|babygpt-logo.png|.*\\.(?:ico|png|jpg|jpeg|svg|webp|gif)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|bbgpt-logo.png|babygpt-logo.png|.*\\.(?:ico|png|jpg|jpeg|svg|webp|gif)$).*)",
   ],
 };
+
+```
+### src/types/speech-dom.d.ts
+
+```typescript
+/** Web Speech API (speech-to-text) — augment globals when `lib.dom` typings omit constructors. */
+
+export {};
+
+declare global {
+  interface SpeechRecognition extends EventTarget {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    start(): void;
+    stop(): void;
+    abort(): void;
+    onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+    onerror: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onend: ((this: SpeechRecognition, ev: Event) => void) | null;
+  }
+
+  interface SpeechRecognitionEvent extends Event {
+    resultIndex: number;
+    readonly results: SpeechRecognitionResultList;
+  }
+
+  interface Window {
+    SpeechRecognition?: { new (): SpeechRecognition };
+    webkitSpeechRecognition?: { new (): SpeechRecognition };
+  }
+}
 
 ```
 ### src/types/z-ai-web-dev-sdk.d.ts

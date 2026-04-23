@@ -45,7 +45,7 @@ export default function CheckoutReturnClient() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-950 px-4 text-center">
         <p className="text-sm text-red-400">Missing checkout session. Return to the app and try again.</p>
         <Link href="/" className="text-sm text-cyan-400 underline">
-          Back to BabyGPT
+          Back to bbGPT
         </Link>
       </div>
     );
@@ -56,7 +56,7 @@ export default function CheckoutReturnClient() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-950 px-4 text-center">
         <p className="text-sm text-red-400">{finalizeError}</p>
         <Link href="/" className="text-sm text-cyan-400 underline">
-          Back to BabyGPT
+          Back to bbGPT
         </Link>
       </div>
     );

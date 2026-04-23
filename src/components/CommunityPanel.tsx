@@ -55,7 +55,7 @@ export function CommunityPanel({
     /* eslint-disable react-hooks/set-state-in-effect -- load posts when panel opens */
     void refresh();
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [open]);
+  }, [open, refresh]);
 
   async function createPost() {
     const t = title.trim();
@@ -159,11 +159,11 @@ export function CommunityPanel({
         className="h-[min(92vh,860px)] w-full max-w-lg overflow-auto rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl ring-1 ring-white/5"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="babygpt-community-title"
+        aria-labelledby="bbgpt-community-title"
       >
         <div className="sticky top-0 z-10 flex flex-col gap-1 border-b border-zinc-900 bg-zinc-950/90 px-4 py-3 backdrop-blur">
           <div className="flex items-center justify-between gap-2">
-            <div id="babygpt-community-title" className="text-sm font-semibold text-zinc-100">
+            <div id="bbgpt-community-title" className="text-sm font-semibold text-zinc-100">
               Community
             </div>
             <button

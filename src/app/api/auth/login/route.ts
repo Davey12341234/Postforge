@@ -1,5 +1,6 @@
 import { SignJWT } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
+import { SESSION_COOKIE_NAME } from "@/lib/auth-cookie";
 import { getAppPassword, getSessionSecret } from "@/lib/server-config";
 
 export const runtime = "nodejs";
@@ -7,7 +8,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   const expected = getAppPassword();
   if (!expected) {
-    return NextResponse.json({ error: "BABYGPT_APP_PASSWORD is not configured." }, { status: 400 });
+    return NextResponse.json({ error: "BBGPT_APP_PASSWORD is not configured." }, { status: 400 });
   }
 
   let body: { password?: string };
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
   const secret = getSessionSecret();
   if (!secret) {
     return NextResponse.json(
-      { error: "Set BABYGPT_SESSION_SECRET (long random string) when using BABYGPT_APP_PASSWORD." },
+      { error: "Set BBGPT_SESSION_SECRET (long random string) when using BBGPT_APP_PASSWORD." },
       { status: 500 },
     );
   }
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
     .sign(key);
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set("babygpt_token", token, {
+  res.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

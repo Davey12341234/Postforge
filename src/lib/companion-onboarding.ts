@@ -1,10 +1,10 @@
 /**
  * Life-coach / AI companion onboarding copy — not billing.
- * Shown on the welcome (empty chat) screen. Full narrative: docs/BabyGPT-Onboarding-Paths-Spec.md
+ * Shown on the welcome (empty chat) screen. Full narrative: docs/BabyGPT-Onboarding-Paths-Spec.md (bbGPT product spec).
  */
 
 export const COMPANION_WELCOME_LEAD =
-  "BabyGPT is built to be an AI companion: quick help when you need it, and space to think clearly about your life and goals. Start with the questions below, or jump in with a mode prefix.";
+  "bbGPT is built to be an AI companion: quick help when you need it, and space to think clearly about your life and goals. Start with the questions below, or jump in with a mode prefix.";
 
 /** Seven intro questions — connect and understand before heavy strategy. */
 export const INTRO_SEVEN_QUESTIONS: string[] = [
