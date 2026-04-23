@@ -4,6 +4,15 @@
 const fs = require("fs");
 const path = require("path");
 
+/** Omit blank values so pulled `.env.local` KEY="" rows do not clutter merges. */
+function dropEmptyEntries(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (String(v ?? "").trim() !== "") out[k] = v;
+  }
+  return out;
+}
+
 function parseEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return {};
   const raw = fs.readFileSync(filePath, "utf8");
@@ -27,9 +36,9 @@ function parseEnvFile(filePath) {
 }
 
 function loadMergedEnv(cwd = process.cwd()) {
-  const base = parseEnvFile(path.join(cwd, ".env"));
-  const local = parseEnvFile(path.join(cwd, ".env.local"));
+  const base = dropEmptyEntries(parseEnvFile(path.join(cwd, ".env")));
+  const local = dropEmptyEntries(parseEnvFile(path.join(cwd, ".env.local")));
   return { ...base, ...local, ...process.env };
 }
 
-module.exports = { loadMergedEnv, parseEnvFile };
+module.exports = { loadMergedEnv, parseEnvFile, dropEmptyEntries };

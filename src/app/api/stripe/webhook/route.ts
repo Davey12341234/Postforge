@@ -24,7 +24,9 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(raw, sig, whsec);
-  } catch {
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Invalid signature";
+    console.error("[stripe webhook] constructEvent failed:", msg);
     return NextResponse.json({ error: "Invalid Stripe signature" }, { status: 400 });
   }
 
@@ -36,26 +38,26 @@ export async function POST(req: NextRequest) {
           const subId =
             typeof session.subscription === "string" ? session.subscription : session.subscription.id;
           const sub = await stripe.subscriptions.retrieve(subId);
-          applyStripeSubscription(sub);
-          clearPaymentAlert();
+          await applyStripeSubscription(sub);
+          await clearPaymentAlert();
         }
         break;
       }
       case "invoice.paid": {
-        clearPaymentAlert();
+        await clearPaymentAlert();
         break;
       }
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
-        applyStripeSubscription(sub);
+        await applyStripeSubscription(sub);
         break;
       }
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
         const cid =
           typeof sub.customer === "string" ? sub.customer : (sub.customer?.id ?? null);
-        clearStripeSubscriptionToFree(cid);
+        await clearStripeSubscriptionToFree(cid);
         break;
       }
       case "invoice.payment_failed": {
@@ -71,14 +73,14 @@ export async function POST(req: NextRequest) {
           subscriptionId: subId,
           attemptCount: inv.attempt_count,
         });
-        recordPaymentFailure({
+        await recordPaymentFailure({
           at: new Date().toISOString(),
           invoiceId: inv.id ?? null,
           attemptCount: inv.attempt_count ?? null,
         });
         if (subId) {
           const sub = await stripe.subscriptions.retrieve(subId);
-          applyStripeSubscription(sub);
+          await applyStripeSubscription(sub);
         }
         break;
       }

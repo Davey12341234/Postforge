@@ -56,6 +56,11 @@ for (const r of [...OPTIONAL_LIST_PRICES, ...OPTIONAL_STRIPE_YEARLY_PRICE_IDS]) 
 }
 
 if (missingRequired.length > 0) {
+  if (missingRequired.length === REQUIRED_FOR_CHECKOUT.length) {
+    console.log(
+      "\n  Note: All required keys are missing in this run. `vercel env pull` often stores `KEY=\"\"` for secrets; that does not confirm Production is empty. Open Vercel → postforge2 → Settings → Environment variables (Production) and cross-check. See also: deploy/LAUNCH-HANDOFF.md\n",
+    );
+  }
   console.log("\n--- Still to do ---\n");
   let n = 1;
   if (missingRequired.some((r) => r.key === "STRIPE_SECRET_KEY")) {

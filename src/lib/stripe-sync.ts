@@ -16,12 +16,12 @@ function resolvePlanFromSubscription(sub: Stripe.Subscription): PlanId {
 }
 
 /**
- * Syncs wallet plan + `.data/billing.json` from a Stripe Subscription object.
+ * Syncs wallet plan + billing snapshot from a Stripe Subscription object.
  */
-export function applyStripeSubscription(sub: Stripe.Subscription): PlanId {
+export async function applyStripeSubscription(sub: Stripe.Subscription): Promise<PlanId> {
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? null;
   const priceId = sub.items.data[0]?.price?.id ?? null;
-  const prev = readServerBilling();
+  const prev = await readServerBilling();
   const billing: ServerBillingRecord = {
     ...prev,
     customerId,
@@ -29,7 +29,7 @@ export function applyStripeSubscription(sub: Stripe.Subscription): PlanId {
     status: sub.status,
     priceId,
   };
-  writeServerBilling(billing);
+  await writeServerBilling(billing);
 
   const ACTIVE = activeStatuses();
   let planId: PlanId = DEFAULT_PLAN;
@@ -39,21 +39,21 @@ export function applyStripeSubscription(sub: Stripe.Subscription): PlanId {
     planId = DEFAULT_PLAN;
   }
 
-  setServerPlan(planId);
+  await setServerPlan(planId);
   return planId;
 }
 
 /**
  * Clears subscription to Free (e.g. canceled / unpaid).
  */
-export function clearStripeSubscriptionToFree(customerId?: string | null): void {
-  const prev = readServerBilling();
-  writeServerBilling({
+export async function clearStripeSubscriptionToFree(customerId?: string | null): Promise<void> {
+  const prev = await readServerBilling();
+  await writeServerBilling({
     ...prev,
     customerId: customerId ?? prev.customerId,
     subscriptionId: null,
     status: "canceled",
     priceId: null,
   });
-  setServerPlan(DEFAULT_PLAN);
+  await setServerPlan(DEFAULT_PLAN);
 }

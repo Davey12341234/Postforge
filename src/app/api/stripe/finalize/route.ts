@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   const subId = typeof subRaw === "string" ? subRaw : subRaw.id;
   const sub = await stripe.subscriptions.retrieve(subId);
-  applyStripeSubscription(sub);
+  await applyStripeSubscription(sub);
 
   return NextResponse.json({ ok: true });
 }

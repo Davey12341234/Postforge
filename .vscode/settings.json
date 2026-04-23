@@ -1,4 +1,6 @@
 {
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "terminal.integrated.envFile": "${workspaceFolder}/.env.local",
   "explorer.excludeGitIgnore": false,
   "files.exclude": {
     "**/node_modules": true,

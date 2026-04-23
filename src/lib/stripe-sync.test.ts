@@ -6,12 +6,12 @@ const readServerBilling = vi.fn();
 const setServerPlan = vi.fn();
 
 vi.mock("./server-billing", () => ({
-  readServerBilling: () => readServerBilling(),
-  writeServerBilling: (r: unknown) => writeServerBilling(r),
+  readServerBilling: (...args: unknown[]) => readServerBilling(...args),
+  writeServerBilling: (...args: unknown[]) => writeServerBilling(...args),
 }));
 
 vi.mock("./server-wallet", () => ({
-  setServerPlan: (id: unknown) => setServerPlan(id),
+  setServerPlan: (...args: unknown[]) => setServerPlan(...args),
 }));
 
 vi.mock("./stripe-config", async (importOriginal) => {
@@ -43,18 +43,27 @@ function mockSub(overrides: Partial<{ status: Stripe.Subscription.Status; priceI
 
 describe("stripe-sync", () => {
   beforeEach(() => {
-    writeServerBilling.mockClear();
-    setServerPlan.mockClear();
-    readServerBilling.mockReturnValue({
+    writeServerBilling.mockReset();
+    setServerPlan.mockReset();
+    readServerBilling.mockReset();
+    readServerBilling.mockResolvedValue({
       customerId: "cus_prev",
       subscriptionId: "sub_old",
       status: "active",
       priceId: "price_old",
     });
+    setServerPlan.mockResolvedValue({
+      version: 1,
+      planId: "free",
+      balance: 0,
+      accrualMonth: "2026-01",
+      welcomeApplied: false,
+    });
+    writeServerBilling.mockResolvedValue(undefined);
   });
 
-  it("applyStripeSubscription sets plan from price when subscription is active", () => {
-    applyStripeSubscription(mockSub({ status: "active", priceId: "price_map_pro" }));
+  it("applyStripeSubscription sets plan from price when subscription is active", async () => {
+    await applyStripeSubscription(mockSub({ status: "active", priceId: "price_map_pro" }));
     expect(writeServerBilling).toHaveBeenCalledWith(
       expect.objectContaining({
         customerId: "cus_test",
@@ -66,18 +75,18 @@ describe("stripe-sync", () => {
     expect(setServerPlan).toHaveBeenCalledWith("pro");
   });
 
-  it("applyStripeSubscription sets starter when price maps to starter", () => {
-    applyStripeSubscription(mockSub({ priceId: "price_map_starter" }));
+  it("applyStripeSubscription sets starter when price maps to starter", async () => {
+    await applyStripeSubscription(mockSub({ priceId: "price_map_starter" }));
     expect(setServerPlan).toHaveBeenCalledWith("starter");
   });
 
-  it("applyStripeSubscription sets free when status is canceled", () => {
-    applyStripeSubscription(mockSub({ status: "canceled" }));
+  it("applyStripeSubscription sets free when status is canceled", async () => {
+    await applyStripeSubscription(mockSub({ status: "canceled" }));
     expect(setServerPlan).toHaveBeenCalledWith("free");
   });
 
-  it("clearStripeSubscriptionToFree resets billing and plan", () => {
-    clearStripeSubscriptionToFree("cus_keep");
+  it("clearStripeSubscriptionToFree resets billing and plan", async () => {
+    await clearStripeSubscriptionToFree("cus_keep");
     expect(writeServerBilling).toHaveBeenCalledWith(
       expect.objectContaining({
         customerId: "cus_keep",

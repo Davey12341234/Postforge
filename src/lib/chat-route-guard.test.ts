@@ -59,7 +59,7 @@ describe("guardChatSend", () => {
   it("returns 403 when quantum DNA not on plan", async () => {
     vi.mocked(isGateEnabled).mockReturnValue(true);
     vi.mocked(assertAuthorized).mockResolvedValue(null);
-    vi.mocked(readServerWallet).mockReturnValue({
+    vi.mocked(readServerWallet).mockResolvedValue({
       version: 1,
       planId: "free",
       balance: 10_000,
@@ -79,7 +79,7 @@ describe("guardChatSend", () => {
   it("returns 403 when schrodinger secondary model not on plan", async () => {
     vi.mocked(isGateEnabled).mockReturnValue(true);
     vi.mocked(assertAuthorized).mockResolvedValue(null);
-    vi.mocked(readServerWallet).mockReturnValue({
+    vi.mocked(readServerWallet).mockResolvedValue({
       version: 1,
       planId: "starter",
       balance: 10_000,
@@ -99,7 +99,7 @@ describe("guardChatSend", () => {
   it("returns 403 when plan does not permit send mode", async () => {
     vi.mocked(isGateEnabled).mockReturnValue(true);
     vi.mocked(assertAuthorized).mockResolvedValue(null);
-    vi.mocked(readServerWallet).mockReturnValue({
+    vi.mocked(readServerWallet).mockResolvedValue({
       version: 1,
       planId: "free",
       balance: 10_000,
@@ -118,14 +118,14 @@ describe("guardChatSend", () => {
   it("returns 402 when debit fails", async () => {
     vi.mocked(isGateEnabled).mockReturnValue(true);
     vi.mocked(assertAuthorized).mockResolvedValue(null);
-    vi.mocked(readServerWallet).mockReturnValue({
+    vi.mocked(readServerWallet).mockResolvedValue({
       version: 1,
       planId: "pro",
       balance: PLANS.pro.monthlyCredits,
       accrualMonth: "2026-01",
       welcomeApplied: true,
     });
-    vi.mocked(tryDebitServerWallet).mockReturnValue({
+    vi.mocked(tryDebitServerWallet).mockResolvedValue({
       ok: false,
       wallet: {
         version: 1,
@@ -146,14 +146,14 @@ describe("guardChatSend", () => {
   it("returns null when debit succeeds", async () => {
     vi.mocked(isGateEnabled).mockReturnValue(true);
     vi.mocked(assertAuthorized).mockResolvedValue(null);
-    vi.mocked(readServerWallet).mockReturnValue({
+    vi.mocked(readServerWallet).mockResolvedValue({
       version: 1,
       planId: "pro",
       balance: PLANS.pro.monthlyCredits,
       accrualMonth: "2026-01",
       welcomeApplied: true,
     });
-    vi.mocked(tryDebitServerWallet).mockReturnValue({
+    vi.mocked(tryDebitServerWallet).mockResolvedValue({
       ok: true,
       wallet: {
         version: 1,

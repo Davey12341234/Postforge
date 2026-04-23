@@ -37,6 +37,9 @@ if (failed) {
   console.log("  - Code: fix lint/test/build errors shown above.");
   console.log("  - Billing: add missing keys to .env.local (see .env.local.example).");
   console.log("    Stripe secrets come only from your Stripe Dashboard — they cannot be generated here.");
+  console.log("    If every key shows missing after `vercel env pull`, verify values in Vercel Dashboard (pull often leaves secrets blank locally).");
+  console.log("  - Deploy smoke + DB without fixing local secrets:  npm run launch:audit");
+  console.log("  - Operator checklist for you + AI: deploy/LAUNCH-HANDOFF.md");
   console.log("  - Outline of human-only steps: deploy/CANNOT-AUTOMATE.md");
   console.log("  - Docs: docs/STRIPE-ACCOUNT-SETUP.md, docs/FINAL-LAUNCH-COPY.md\n");
   process.exit(1);

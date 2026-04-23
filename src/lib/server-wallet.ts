@@ -1,95 +1,97 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+
 import type { CreditsStateV1 } from "@/lib/credits-store";
-import { DEFAULT_PLAN, FIRST_VISIT_CREDIT_BONUS, PLANS, type PlanId } from "@/lib/plans";
-
 import { getDataDir } from "@/lib/data-dir";
+import { isPostgresPersistenceEnabled } from "@/lib/persistence-env";
+import type { PlanId } from "@/lib/plans";
+import {
+  dbReadCreditsHydrated,
+  dbSetPlan,
+  dbTryDebit,
+  dbWriteCreditsState,
+} from "@/lib/site-wallet-store";
+import { getDefaultWalletClerkId } from "@/lib/site-wallet-user";
+import { getWalletClerkIdFromRequest } from "@/lib/session-server";
+import { defaultWalletState, hydrateServerWallet, parseWalletJson } from "@/lib/wallet-hydrate";
 
-/** Persisted under `.data/` locally or `/tmp/bbgpt-data` on Vercel (gitignored locally). */
+import type { NextRequest } from "next/server";
+
+/** Persisted under `.data/` locally or `/tmp/bbgpt-data` on Vercel when `POSTGRES_URL` is unset (gitignored locally). */
 const DATA_DIR = getDataDir();
 const WALLET_FILE = join(DATA_DIR, "wallet.json");
 
-function monthKey(d = new Date()): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function defaultWallet(): CreditsStateV1 {
-  return {
-    version: 1,
-    planId: DEFAULT_PLAN,
-    balance: 0,
-    accrualMonth: monthKey(),
-    welcomeApplied: false,
-  };
-}
-
-function parseWallet(raw: string): CreditsStateV1 {
-  try {
-    const p = JSON.parse(raw) as CreditsStateV1;
-    if (p?.version !== 1) return defaultWallet();
-    return {
-      ...defaultWallet(),
-      ...p,
-      planId: (p.planId ?? DEFAULT_PLAN) as PlanId,
-      balance: typeof p.balance === "number" && p.balance >= 0 ? Math.floor(p.balance) : 0,
-      accrualMonth: typeof p.accrualMonth === "string" ? p.accrualMonth : monthKey(),
-      welcomeApplied: Boolean(p.welcomeApplied),
-    };
-  } catch {
-    return defaultWallet();
-  }
-}
-
-/** Monthly accrual + welcome — mirrors client `hydrateCredits`. */
-export function hydrateServerWallet(state: CreditsStateV1): CreditsStateV1 {
-  const next = { ...state };
-  const m = monthKey();
-  const monthly = PLANS[next.planId].monthlyCredits;
-  if (next.accrualMonth !== m) {
-    next.balance += monthly;
-    next.accrualMonth = m;
-  }
-  if (!next.welcomeApplied) {
-    next.balance += FIRST_VISIT_CREDIT_BONUS;
-    next.welcomeApplied = true;
-  }
-  return next;
-}
+export { isPostgresPersistenceEnabled as isPostgresWalletPersistence };
 
 function ensureWalletFile(): void {
   if (!existsSync(DATA_DIR)) {
     mkdirSync(DATA_DIR, { recursive: true });
   }
   if (!existsSync(WALLET_FILE)) {
-    const w = hydrateServerWallet(defaultWallet());
+    const w = hydrateServerWallet(defaultWalletState());
     writeFileSync(WALLET_FILE, JSON.stringify(w, null, 2), "utf-8");
   }
 }
 
-export function readServerWallet(): CreditsStateV1 {
+function readServerWalletFile(): CreditsStateV1 {
   ensureWalletFile();
   const raw = readFileSync(WALLET_FILE, "utf-8");
-  return hydrateServerWallet(parseWallet(raw));
+  return hydrateServerWallet(parseWalletJson(raw));
 }
 
-export function writeServerWallet(state: CreditsStateV1): void {
+function writeServerWalletFile(state: CreditsStateV1): void {
   ensureWalletFile();
   writeFileSync(WALLET_FILE, JSON.stringify(state, null, 2), "utf-8");
 }
 
-export function tryDebitServerWallet(amount: number): { ok: boolean; wallet: CreditsStateV1 } {
-  const w = readServerWallet();
+export { hydrateServerWallet };
+
+async function clerkIdFromRequestMaybe(req?: NextRequest): Promise<string> {
+  if (!req) return getDefaultWalletClerkId();
+  return getWalletClerkIdFromRequest(req);
+}
+
+export async function readServerWallet(req?: NextRequest): Promise<CreditsStateV1> {
+  if (isPostgresPersistenceEnabled()) {
+    const clerkId = await clerkIdFromRequestMaybe(req);
+    return dbReadCreditsHydrated(clerkId);
+  }
+  return readServerWalletFile();
+}
+
+export async function writeServerWallet(state: CreditsStateV1, req?: NextRequest): Promise<void> {
+  if (isPostgresPersistenceEnabled()) {
+    const clerkId = await clerkIdFromRequestMaybe(req);
+    await dbWriteCreditsState(clerkId, state);
+    return;
+  }
+  writeServerWalletFile(state);
+}
+
+export async function tryDebitServerWallet(
+  amount: number,
+  req?: NextRequest,
+): Promise<{ ok: boolean; wallet: CreditsStateV1 }> {
+  if (isPostgresPersistenceEnabled()) {
+    const clerkId = await clerkIdFromRequestMaybe(req);
+    return dbTryDebit(clerkId, amount);
+  }
+  const w = readServerWalletFile();
   if (w.balance < amount) {
     return { ok: false, wallet: w };
   }
   const next: CreditsStateV1 = { ...w, balance: Math.max(0, w.balance - amount) };
-  writeServerWallet(next);
+  writeServerWalletFile(next);
   return { ok: true, wallet: next };
 }
 
-export function setServerPlan(planId: PlanId): CreditsStateV1 {
-  const w = readServerWallet();
+export async function setServerPlan(planId: PlanId, req?: NextRequest): Promise<CreditsStateV1> {
+  if (isPostgresPersistenceEnabled()) {
+    const clerkId = await clerkIdFromRequestMaybe(req);
+    return dbSetPlan(clerkId, planId);
+  }
+  const w = readServerWalletFile();
   const next = { ...w, planId };
-  writeServerWallet(next);
+  writeServerWalletFile(next);
   return next;
 }

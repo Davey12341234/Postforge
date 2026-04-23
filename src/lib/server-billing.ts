@@ -1,22 +1,19 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import { getDataDir } from "@/lib/data-dir";
+
 import type { BillingAlertPayload } from "@/lib/billing-usage-hints";
+import { getDataDir } from "@/lib/data-dir";
+import { isPostgresPersistenceEnabled } from "@/lib/persistence-env";
+import type { PaymentAlert } from "@/lib/payment-alert";
+import { dbReadBilling, dbWriteBilling } from "@/lib/site-wallet-store";
+import { getDefaultWalletClerkId } from "@/lib/site-wallet-user";
+import { getWalletClerkIdFromRequest } from "@/lib/session-server";
+import type { ServerBillingRecord } from "@/lib/server-billing-record";
 
-/** Shown in-app after Stripe `invoice.payment_failed` until cleared by `invoice.paid` or successful checkout. */
-export type PaymentAlert = {
-  at: string;
-  invoiceId: string | null;
-  attemptCount: number | null;
-};
+import type { NextRequest } from "next/server";
 
-export type ServerBillingRecord = {
-  customerId: string | null;
-  subscriptionId: string | null;
-  status: string | null;
-  priceId: string | null;
-  paymentAlert: PaymentAlert | null;
-};
+export type { PaymentAlert } from "@/lib/payment-alert";
+export type { ServerBillingRecord } from "@/lib/server-billing-record";
 
 const DATA_DIR = getDataDir();
 const BILLING_FILE = join(DATA_DIR, "billing.json");
@@ -31,7 +28,7 @@ function defaultBilling(): ServerBillingRecord {
   };
 }
 
-export function readServerBilling(): ServerBillingRecord {
+function readServerBillingFile(): ServerBillingRecord {
   if (!existsSync(BILLING_FILE)) {
     return defaultBilling();
   }
@@ -61,22 +58,44 @@ export function readServerBilling(): ServerBillingRecord {
   }
 }
 
-export function writeServerBilling(next: ServerBillingRecord): void {
+function writeServerBillingFile(next: ServerBillingRecord): void {
   if (!existsSync(DATA_DIR)) {
     mkdirSync(DATA_DIR, { recursive: true });
   }
   writeFileSync(BILLING_FILE, JSON.stringify(next, null, 2), "utf-8");
 }
 
-export function recordPaymentFailure(alert: PaymentAlert): void {
-  const prev = readServerBilling();
-  writeServerBilling({ ...prev, paymentAlert: alert });
+async function clerkIdFromRequestMaybe(req?: NextRequest): Promise<string> {
+  if (!req) return getDefaultWalletClerkId();
+  return getWalletClerkIdFromRequest(req);
 }
 
-export function clearPaymentAlert(): void {
-  const prev = readServerBilling();
+export async function readServerBilling(req?: NextRequest): Promise<ServerBillingRecord> {
+  if (isPostgresPersistenceEnabled()) {
+    const clerkId = await clerkIdFromRequestMaybe(req);
+    return dbReadBilling(clerkId);
+  }
+  return readServerBillingFile();
+}
+
+export async function writeServerBilling(next: ServerBillingRecord, req?: NextRequest): Promise<void> {
+  if (isPostgresPersistenceEnabled()) {
+    const clerkId = await clerkIdFromRequestMaybe(req);
+    await dbWriteBilling(clerkId, next);
+    return;
+  }
+  writeServerBillingFile(next);
+}
+
+export async function recordPaymentFailure(alert: PaymentAlert, req?: NextRequest): Promise<void> {
+  const prev = await readServerBilling(req);
+  await writeServerBilling({ ...prev, paymentAlert: alert }, req);
+}
+
+export async function clearPaymentAlert(req?: NextRequest): Promise<void> {
+  const prev = await readServerBilling(req);
   if (!prev.paymentAlert) return;
-  writeServerBilling({ ...prev, paymentAlert: null });
+  await writeServerBilling({ ...prev, paymentAlert: null }, req);
 }
 
 /** Client-safe banner for failed renewal (no Stripe ids). */

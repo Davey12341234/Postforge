@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Push bbGPT + Stripe env from .env.local (or .env) to Vercel Production.
+ * Push bbGPT + Stripe (+ optional Postgres) env from .env.local (or .env) to Vercel Production.
  * Uses spawnSync with argv (no shell) so secrets with special chars never hang like nested PowerShell.
  *
  * Requires: .vercel/project.json (npx vercel link), npx vercel CLI auth.
+ * Neon / DB URLs are not generated here — paste real values into .env.local first, then run this script.
  */
 const { spawnSync } = require("child_process");
 const fs = require("fs");
@@ -122,6 +123,21 @@ function main() {
   }
 
   for (const { key, sensitive } of optionalLlm) {
+    const v = env[key]?.trim();
+    if (!v) {
+      console.error(`Skipping optional ${key}`);
+      continue;
+    }
+    console.error(`Setting ${key} ...`);
+    vercelEnvAdd(key, v, sensitive);
+  }
+
+  const optionalDb = [
+    { key: "DATABASE_URL", sensitive: true },
+    { key: "POSTGRES_URL", sensitive: true },
+    { key: "POSTGRES_URL_NON_POOLING", sensitive: true },
+  ];
+  for (const { key, sensitive } of optionalDb) {
     const v = env[key]?.trim();
     if (!v) {
       console.error(`Skipping optional ${key}`);

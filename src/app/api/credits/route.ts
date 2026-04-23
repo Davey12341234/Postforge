@@ -10,8 +10,8 @@ import { PLANS, type PlanId } from "@/lib/plans";
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const stripePayload = () => {
-    const b = readServerBilling();
+  const stripePayload = async () => {
+    const b = await readServerBilling();
     return {
       configured: isStripeConfigured(),
       customerId: b.customerId,
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   };
 
   if (!isGateEnabled()) {
-    return NextResponse.json({ source: "client" as const, stripe: stripePayload() });
+    return NextResponse.json({ source: "client" as const, stripe: await stripePayload() });
   }
 
   const denied = await assertAuthorized(req);
@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
     return denied;
   }
 
-  const w = readServerWallet();
-  const billing = readServerBilling();
+  const w = await readServerWallet();
+  const billing = await readServerBilling();
   const usageHints = [
     ...computeUsageHints(w),
     ...(billing.paymentAlert
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     accrualMonth: w.accrualMonth,
     welcomeApplied: w.welcomeApplied,
     version: w.version,
-    stripe: stripePayload(),
+    stripe: await stripePayload(),
     billingAlert: formatBillingAlertForClient(billing),
     usageHints,
   });
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid planId" }, { status: 400 });
   }
 
-  const w = setServerPlan(planId);
+  const w = await setServerPlan(planId);
   return NextResponse.json({
     source: "server" as const,
     planId: w.planId,

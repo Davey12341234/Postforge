@@ -1,0 +1,31 @@
+bbgpt.ai + www.bbgpt.ai on Vercel (postforge2) — DNS you set at your registrar
+================================================================================
+
+Done in Vercel (no action needed to re-run):
+- Domains added: bbgpt.ai, www.bbgpt.ai
+- Production env: NEXT_PUBLIC_APP_URL=https://www.bbgpt.ai
+- Production redeploy recommended after DNS goes green (Stripe/client URLs).
+
+Your registrar shows nameservers: dns1.namecheaphosting.com, dns2.namecheaphosting.com
+(Option B from Vercel): point the domain’s nameservers to ns1.vercel-dns.com + ns2.vercel-dns.com
+ONLY if you want Vercel to manage all DNS — do this at Namecheap → Domain → Nameservers → Custom DNS.
+
+(Option A — keep current nameservers): add these records where you edit DNS for bbgpt.ai:
+
+  Type   Host / Name    Value           TTL
+  ----   -----------    -----           ---
+  A      @              76.76.21.21     Auto (or 300s)
+  A      www            76.76.21.21     Auto
+
+Exact UI: Namecheap → Domain List → Manage → Advanced DNS → Host Records → Add New Record.
+
+After propagation (minutes to a few hours):
+- Vercel → Project → Settings → Domains: status should become Valid with SSL.
+- Open https://www.bbgpt.ai and https://bbgpt.ai
+
+Then update Stripe Webhook URL to:
+  https://www.bbgpt.ai/api/stripe/webhook
+
+Local dev: pull env so NEXT_PUBLIC_APP_URL matches:
+  npx vercel env pull .env.local --environment production --yes
+  (review file; merge carefully if you keep local overrides)
