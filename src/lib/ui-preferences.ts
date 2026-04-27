@@ -71,15 +71,17 @@ export function appRootBgClass(appearance: UiPreferences["appearance"]): string 
   return "bg-zinc-950";
 }
 
-/** Header strip classes. */
+/** Header strip classes (stacked on small screens, row from md). */
 export function headerShellClass(appearance: UiPreferences["appearance"]): string {
+  const layout =
+    "flex flex-col gap-2 px-3 py-2.5 sm:px-4 sm:py-3 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-3";
   if (appearance === "light") {
-    return "flex items-center justify-between gap-3 border-b border-zinc-200 bg-white/95 px-4 py-3 text-zinc-900 shadow-sm backdrop-blur";
+    return `${layout} border-b border-zinc-200 bg-white/95 text-zinc-900 shadow-sm backdrop-blur`;
   }
   if (appearance === "oled") {
-    return "flex items-center justify-between gap-3 border-b border-zinc-800 bg-black/70 px-4 py-3 backdrop-blur";
+    return `${layout} border-b border-zinc-800 bg-black/70 backdrop-blur`;
   }
-  return "flex items-center justify-between gap-3 border-b border-zinc-900 bg-zinc-950/60 px-4 py-3 backdrop-blur";
+  return `${layout} border-b border-zinc-900 bg-zinc-950/60 backdrop-blur`;
 }
 
 /** Sub-banner (streaming / errors) row. */
@@ -95,7 +97,8 @@ export function subBannerClass(appearance: UiPreferences["appearance"]): string 
 
 /** Main chat column (inside Sidebar row): mood gradient or light neutral. */
 export function mainChatShellClass(appearance: UiPreferences["appearance"], moodShellClass: string): string {
-  const base = "flex min-h-0 min-w-0 flex-1 flex-col transition-[background,box-shadow] duration-700";
+  const base =
+    "relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-[background,box-shadow] duration-700";
   if (appearance === "light") {
     return `${base} bg-zinc-100 ring-1 ring-zinc-200/40`;
   }

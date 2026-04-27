@@ -32,6 +32,21 @@ export function stripePriceIdForPlan(planId: PlanId, cadence: PlanBillingCadence
   return v || null;
 }
 
+/**
+ * Stripe Checkout `payment_method_types`. Default is `["card"]` only — some accounts do not have
+ * Link enabled and Stripe rejects `link` with an invalid payment method error.
+ * Set `STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES=card,link` (comma- or space-separated) to add Link, etc.
+ */
+export function stripeCheckoutPaymentMethodTypes(): string[] {
+  const raw = process.env.STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES?.trim();
+  if (!raw) return ["card"];
+  const parts = raw
+    .split(/[\s,]+/)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return parts.length ? parts : ["card"];
+}
+
 export function planIdFromStripePriceId(priceId: string | null | undefined): PlanId | null {
   if (!priceId) return null;
   const pairs: [string | undefined, PlanId][] = [

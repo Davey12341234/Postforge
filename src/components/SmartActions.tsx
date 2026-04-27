@@ -66,7 +66,7 @@ export function SmartActions({
               type="button"
               disabled={disabled}
               onClick={() => onAction(act.prompt)}
-              className="rounded-full bg-zinc-900/90 px-2.5 py-1 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-700/80 transition hover:bg-zinc-800 hover:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-11 rounded-full bg-zinc-900/90 px-3 py-2 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-700/80 transition hover:bg-zinc-800 hover:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-9 sm:px-2.5 sm:py-1"
             >
               {act.label}
             </button>

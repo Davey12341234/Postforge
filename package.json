@@ -39,6 +39,7 @@
     "magic:link": "node scripts/print-magic-link.mjs",
     "env:open": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/open-env-local.ps1",
     "env:scaffold": "node scripts/scaffold-env-local.cjs",
+    "sync:vercel-env": "node scripts/sync-vercel-prod-env-from-local.mjs",
     "env:status": "node scripts/finish-billing-setup.cjs",
     "stripe:sync-product-copy": "node scripts/stripe-update-product-copy.cjs",
     "stripe:ensure-prices": "node scripts/stripe-ensure-babygpt-prices.cjs",

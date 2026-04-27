@@ -36,7 +36,7 @@ export function WelcomeScreen({
   introIntakeComplete?: boolean;
 }) {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 py-10">
+    <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-3 py-8 sm:gap-8 sm:px-4 sm:py-10">
       <div className="flex flex-col items-center gap-4 text-center">
         <Image
           src="/bbgpt-logo.png"
@@ -57,14 +57,14 @@ export function WelcomeScreen({
             <button
               type="button"
               onClick={onOpenPlans}
-              className="rounded-full bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-white"
+              className="min-h-11 rounded-full bg-zinc-100 px-4 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-white sm:min-h-10 sm:py-2"
             >
               Plans & credits
             </button>
             <button
               type="button"
               onClick={onOpenSearch}
-              className="rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800"
+              className="min-h-11 rounded-full bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:min-h-10 sm:py-2"
             >
               Search chats (⌘/Ctrl+K)
             </button>
@@ -101,7 +101,7 @@ export function WelcomeScreen({
                   <button
                     type="button"
                     onClick={() => onInsertComposerText(`${q} `, "replace")}
-                    className="ml-2 shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-cyan-300/90 ring-1 ring-zinc-700 hover:bg-zinc-700"
+                    className="ml-2 inline-flex min-h-10 shrink-0 items-center rounded-lg bg-zinc-800 px-2 py-1.5 text-[10px] font-medium text-cyan-300/90 ring-1 ring-zinc-700 hover:bg-zinc-700 sm:min-h-0 sm:px-1.5 sm:py-0.5"
                   >
                     Use in chat
                   </button>
@@ -121,7 +121,7 @@ export function WelcomeScreen({
                   <button
                     type="button"
                     onClick={() => onInsertComposerText(`${q} `, "replace")}
-                    className="ml-2 shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-cyan-300/90 ring-1 ring-zinc-700 hover:bg-zinc-700"
+                    className="ml-2 inline-flex min-h-10 shrink-0 items-center rounded-lg bg-zinc-800 px-2 py-1.5 text-[10px] font-medium text-cyan-300/90 ring-1 ring-zinc-700 hover:bg-zinc-700 sm:min-h-0 sm:px-1.5 sm:py-0.5"
                   >
                     Use in chat
                   </button>
@@ -141,7 +141,7 @@ export function WelcomeScreen({
                 type="button"
                 title={m.hint}
                 onClick={() => onInsertComposerText(`${m.prefix} `, "prefixFirst")}
-                className="rounded-full bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 hover:ring-cyan-800/50"
+                className="min-h-10 rounded-full bg-zinc-900 px-3 py-2 text-[11px] font-medium text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 hover:ring-cyan-800/50 sm:min-h-9 sm:py-1.5"
               >
                 {m.label}
               </button>
@@ -162,7 +162,7 @@ export function WelcomeScreen({
         <button
           type="button"
           onClick={onJumpToQuantum}
-          className="mt-3 rounded-full bg-cyan-950/50 px-4 py-2 text-xs font-semibold text-cyan-200 ring-1 ring-cyan-900/60 hover:bg-cyan-900/40"
+          className="mt-3 min-h-11 w-full rounded-full bg-cyan-950/50 px-4 py-2.5 text-xs font-semibold text-cyan-200 ring-1 ring-cyan-900/60 hover:bg-cyan-900/40 sm:w-auto sm:min-h-10 sm:py-2"
         >
           Jump to live Quantum controls
         </button>

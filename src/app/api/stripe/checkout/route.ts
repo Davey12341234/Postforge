@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { assertAuthorized } from "@/lib/session-server";
+import { assertAuthorized, getOptionalSessionEmail } from "@/lib/session-server";
 import { isGateEnabled } from "@/lib/server-config";
 import { readServerBilling } from "@/lib/server-billing";
 import { requestAppOrigin } from "@/lib/request-origin";
 import { getStripe } from "@/lib/stripe-client";
-import { isStripeConfigured, stripePriceIdForPlan } from "@/lib/stripe-config";
+import { isStripeConfigured, stripeCheckoutPaymentMethodTypes, stripePriceIdForPlan } from "@/lib/stripe-config";
 import type { PlanBillingCadence, PlanId } from "@/lib/plans";
+import type Stripe from "stripe";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,10 @@ export async function POST(req: NextRequest) {
   }
   if (!isGateEnabled()) {
     return NextResponse.json(
-      { error: "Paid checkout requires the app gate (set BABYGPT_APP_PASSWORD)." },
+      {
+        error:
+          "Paid checkout requires a signed-in server session: set BBGPT_SESSION_SECRET and either BBGPT_USER_AUTH=1 (accounts) or BBGPT_APP_PASSWORD (shared gate).",
+      },
       { status: 400 },
     );
   }
@@ -72,15 +76,22 @@ export async function POST(req: NextRequest) {
 
   const origin = requestAppOrigin(req);
   const billingRecord = await readServerBilling(req);
+  const sessionEmail = await getOptionalSessionEmail(req);
 
   const stripe = getStripe();
   const autoTax = process.env.STRIPE_CHECKOUT_AUTO_TAX?.trim() === "1";
   const trialDaysRaw = process.env.STRIPE_CHECKOUT_TRIAL_DAYS?.trim();
   const trialDays = trialDaysRaw ? Math.min(90, Math.max(0, Number.parseInt(trialDaysRaw, 10))) : 0;
 
+  const paymentMethodTypes = stripeCheckoutPaymentMethodTypes();
+
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    customer: billingRecord.customerId ?? undefined,
+    ...(billingRecord.customerId
+      ? { customer: billingRecord.customerId }
+      : sessionEmail
+        ? { customer_email: sessionEmail }
+        : {}),
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/?checkout=canceled`,
@@ -90,7 +101,7 @@ export async function POST(req: NextRequest) {
       ...(trialDays > 0 && !Number.isNaN(trialDays) ? { trial_period_days: trialDays } : {}),
     },
     allow_promotion_codes: true,
-    payment_method_types: ["card", "link"],
+    payment_method_types: paymentMethodTypes as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
     ...(autoTax
       ? {
           automatic_tax: { enabled: true },

@@ -67,6 +67,26 @@ export async function getWalletClerkIdFromRequest(request: NextRequest): Promise
   return getDefaultWalletClerkId();
 }
 
+/** Email from session JWT (per-user auth), for Stripe Checkout prefill when there is no Customer yet. */
+export async function getOptionalSessionEmail(request: NextRequest): Promise<string | undefined> {
+  const secret = getSessionSecret();
+  if (!secret) return undefined;
+  const token =
+    request.cookies.get(SESSION_COOKIE_NAME)?.value ??
+    request.cookies.get(LEGACY_SESSION_COOKIE_NAME)?.value;
+  if (!token) return undefined;
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+    if (typeof payload.email === "string") {
+      const e = payload.email.trim();
+      if (e.includes("@")) return e;
+    }
+  } catch {
+    /* invalid */
+  }
+  return undefined;
+}
+
 /** `null` means OK to proceed. */
 export async function assertAuthorized(request: NextRequest): Promise<NextResponse | null> {
   const ok = await isRequestAuthorized(request);

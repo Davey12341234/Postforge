@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Runs a command with `vercel env run -e production` while temporarily renaming
- * `.env.local` aside. Vercel CLI merges pulled `.env.local` keys over downloaded
- * secrets — empty strings like DATABASE_URL="" wipe Production DATABASE_URL before
- * Node runs. Skipping that file lets cloud env reach db scripts.
+ * `.env.local` and `.env` aside. Vercel CLI merges those files over downloaded
+ * secrets — empty strings like DATABASE_URL="" wipe Production DATABASE_URL, and
+ * a stale `DATABASE_URL` in `.env` overrides the correct Production URL.
  *
  * Usage: node scripts/run-vercel-prod-db.mjs npm run db:ping
  *        node scripts/run-vercel-prod-db.mjs npm run db:migrate
@@ -15,7 +15,9 @@ import { fileURLToPath } from "url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const envLocal = join(root, ".env.local");
-const stashPath = join(root, `.env.local.vercel-prod-stash-${process.pid}`);
+const envDot = join(root, ".env");
+const stashLocal = join(root, `.env.local.vercel-prod-stash-${process.pid}`);
+const stashDot = join(root, `.env.vercel-prod-stash-${process.pid}`);
 
 const rest = process.argv.slice(2);
 if (rest.length === 0) {
@@ -24,15 +26,25 @@ if (rest.length === 0) {
   process.exit(1);
 }
 
-let stashed = false;
+let stashedLocal = false;
 if (existsSync(envLocal)) {
-  renameSync(envLocal, stashPath);
-  stashed = true;
+  renameSync(envLocal, stashLocal);
+  stashedLocal = true;
+}
+
+let stashedDot = false;
+if (existsSync(envDot)) {
+  renameSync(envDot, stashDot);
+  stashedDot = true;
 }
 
 function restore() {
-  if (!stashed || !existsSync(stashPath)) return;
-  renameSync(stashPath, envLocal);
+  if (stashedLocal && existsSync(stashLocal)) {
+    renameSync(stashLocal, envLocal);
+  }
+  if (stashedDot && existsSync(stashDot)) {
+    renameSync(stashDot, envDot);
+  }
 }
 
 const bin = process.platform === "win32" ? "npx.cmd" : "npx";

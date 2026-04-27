@@ -20,7 +20,7 @@ DOMAIN (bbgpt.ai) — automation vs you
 
 FINISH THESE (manual, short list)
 ---------------------------------
-  1) DNS A records for @ and www → 76.76.21.21 (or switch nameservers to Vercel’s pair).
+  1) DNS — copy records from Vercel → Settings → Domains (www CNAME → *.vercel-dns-NNN.com; apex per Vercel). See deploy/bbgpt-ai-DNS-Namecheap.txt (or switch nameservers to Vercel’s pair).
   2) Stripe Dashboard → Webhooks → endpoint https://www.bbgpt.ai/api/stripe/webhook (when DNS works).
   3) Vercel → Domains → confirm both hostnames Valid + HTTPS.
   4) Local: npx vercel env pull .env.local --environment production --yes (merge carefully).

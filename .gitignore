@@ -67,3 +67,7 @@ next-env.d.ts
 # Local user uploads (dev)
 public/uploads/*
 !public/uploads/.gitkeep
+
+# One-off login/HTML captures (may contain secrets; do not commit)
+scripts/_*.txt
+scripts/_www-login.html

@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { isStripeConfigured, planIdFromStripePriceId, stripePriceIdForPlan } from "./stripe-config";
+import {
+  isStripeConfigured,
+  planIdFromStripePriceId,
+  stripeCheckoutPaymentMethodTypes,
+  stripePriceIdForPlan,
+} from "./stripe-config";
 
 describe("stripe-config", () => {
   beforeEach(() => {
@@ -10,6 +15,7 @@ describe("stripe-config", () => {
     vi.stubEnv("STRIPE_PRICE_STARTER_YEARLY", "");
     vi.stubEnv("STRIPE_PRICE_PRO_YEARLY", "");
     vi.stubEnv("STRIPE_PRICE_TEAM_YEARLY", "");
+    vi.stubEnv("STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES", "");
   });
 
   afterEach(() => {
@@ -24,6 +30,11 @@ describe("stripe-config", () => {
 
   it("isStripeConfigured is true when STRIPE_SECRET_KEY is a valid secret shape", () => {
     vi.stubEnv("STRIPE_SECRET_KEY", validTestSecret);
+    expect(isStripeConfigured()).toBe(true);
+  });
+
+  it("isStripeConfigured accepts secret key wrapped in quotes (Vercel paste)", () => {
+    vi.stubEnv("STRIPE_SECRET_KEY", `"${validTestSecret}"`);
     expect(isStripeConfigured()).toBe(true);
   });
 
@@ -66,5 +77,16 @@ describe("stripe-config", () => {
   it("planIdFromStripePriceId resolves yearly price ids", () => {
     vi.stubEnv("STRIPE_PRICE_PRO_YEARLY", "price_pro_year");
     expect(planIdFromStripePriceId("price_pro_year")).toBe("pro");
+  });
+
+  it("stripeCheckoutPaymentMethodTypes defaults to card only", () => {
+    expect(stripeCheckoutPaymentMethodTypes()).toEqual(["card"]);
+  });
+
+  it("stripeCheckoutPaymentMethodTypes parses comma- or space-separated list", () => {
+    vi.stubEnv("STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES", "card, link");
+    expect(stripeCheckoutPaymentMethodTypes()).toEqual(["card", "link"]);
+    vi.stubEnv("STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES", "card ideal");
+    expect(stripeCheckoutPaymentMethodTypes()).toEqual(["card", "ideal"]);
   });
 });

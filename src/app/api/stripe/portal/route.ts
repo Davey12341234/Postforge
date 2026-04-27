@@ -14,7 +14,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Stripe is not configured (STRIPE_SECRET_KEY)." }, { status: 503 });
   }
   if (!isGateEnabled()) {
-    return NextResponse.json({ error: "Billing portal requires the app gate (BABYGPT_APP_PASSWORD)." }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          "Billing portal requires a signed-in server session (BBGPT_SESSION_SECRET + BBGPT_USER_AUTH=1 or BBGPT_APP_PASSWORD).",
+      },
+      { status: 400 },
+    );
   }
 
   const denied = await assertAuthorized(req);

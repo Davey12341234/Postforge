@@ -22,5 +22,6 @@ for (const row of ALL_ROWS) {
 
 console.log("\nStripe Checkout + Subscribe need: Gate + Stripe keys + monthly price IDs + NEXT_PUBLIC_APP_URL.");
 console.log("Annual Checkout also needs STRIPE_PRICE_*_YEARLY when using yearly prices in Stripe.");
-console.log("LLM keys (Z_AI_API_KEY / OPENAI_API_KEY) are separate — set on Vercel for production chat.");
+console.log("LLM: Z_AI_API_KEY / OPENAI_API_KEY for chat; GEMINI_API_KEY on the server for attachments + Create image.");
+console.log("Email: RESEND_API_KEY + EMAIL_FROM for password reset / magic links.");
 console.log("Dashboard-only: create Products/Prices, webhook endpoint, Signing secret — see docs/STRIPE-ACCOUNT-SETUP.md.\n");

@@ -1,9 +1,17 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { AuthBranding } from "@/components/auth/AuthBranding";
+import {
+  AuthShell,
+  AuthPageSkeleton,
+  authCardClass,
+  authFieldClass,
+  authLinkClass,
+  authPrimaryButtonClass,
+} from "@/components/auth/AuthShell";
 
 const userAuthUi = process.env.NEXT_PUBLIC_BBGPT_USER_AUTH === "1";
 
@@ -28,6 +36,7 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const banner = magicMessage(searchParams.get("magic"));
+  const resetOk = searchParams.get("reset") === "ok";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,24 +74,13 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-zinc-950 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 shadow-xl ring-1 ring-white/5">
-        <div className="flex flex-col items-center gap-3">
-          <Image
-            src="/bbgpt-logo.png"
-            alt="bbGPT"
-            width={72}
-            height={72}
-            priority
-            style={{ width: "auto", height: "auto" }}
-            className="drop-shadow-[0_0_26px_rgba(167,243,208,0.35)]"
-          />
-          <h1 className="text-center text-lg font-semibold text-zinc-100">bbGPT</h1>
-        </div>
+    <AuthShell>
+      <div className={authCardClass}>
+        <AuthBranding title="bbGPT" />
         {userAuthUi ? (
           <p className="mt-2 text-center text-xs text-zinc-500">
             Sign in with your account email and password. New here?{" "}
-            <Link href="/register" className="font-medium text-emerald-500/90 hover:text-emerald-400">
+            <Link href="/register" className={authLinkClass}>
               Create an account
             </Link>
             .
@@ -99,6 +97,11 @@ function LoginContent() {
           </>
         )}
         {banner ? <p className="mt-3 rounded-lg bg-amber-950/40 px-3 py-2 text-center text-[11px] text-amber-200/90">{banner}</p> : null}
+        {resetOk ? (
+          <p className="mt-3 rounded-lg bg-emerald-950/35 px-3 py-2 text-center text-[11px] text-emerald-200/95">
+            Password updated. Sign in with your new password.
+          </p>
+        ) : null}
         <div className="mt-6 space-y-3">
           <form className="space-y-3" onSubmit={onSubmit}>
             {userAuthUi ? (
@@ -109,19 +112,19 @@ function LoginContent() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-1 ring-zinc-800 focus:ring-emerald-500/35"
+                  className={authFieldClass}
                   required
                 />
               </label>
             ) : null}
             <label className="block text-xs text-zinc-400">
-              {userAuthUi ? "Password" : "Shared app password"}
+              Password
               <input
                 type="password"
                 autoComplete={userAuthUi ? "current-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-1 ring-zinc-800 focus:ring-emerald-500/35"
+                className={authFieldClass}
                 required
               />
             </label>
@@ -129,11 +132,18 @@ function LoginContent() {
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-xl bg-zinc-100 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-white disabled:opacity-50"
+              className={authPrimaryButtonClass}
             >
               {busy ? "Signing in…" : "Sign in"}
             </button>
           </form>
+          {userAuthUi ? (
+            <p className="pt-1 text-center text-sm">
+              <Link href="/forgot-password" className={authLinkClass}>
+                Forgot password?
+              </Link>
+            </p>
+          ) : null}
           {userAuthUi ? null : (
             <>
               <button
@@ -141,7 +151,7 @@ function LoginContent() {
                 onClick={() => setForgotOpen((open) => !open)}
                 aria-expanded={forgotOpen}
                 aria-controls="forgot-password-panel"
-                className="w-full pt-1 text-center text-sm font-medium text-emerald-500/90 underline-offset-2 hover:text-emerald-400 hover:underline"
+                className="min-h-[48px] w-full rounded-lg pt-2 text-center text-sm font-medium text-emerald-500/90 underline-offset-2 hover:bg-zinc-800/30 hover:text-emerald-400 hover:underline sm:min-h-0 sm:pt-1"
               >
                 Forgot password? / Change the shared password
               </button>
@@ -166,7 +176,7 @@ function LoginContent() {
           )}
         </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }
 
@@ -174,7 +184,9 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[100dvh] items-center justify-center bg-zinc-950 text-sm text-zinc-500">Loading…</div>
+        <AuthShell>
+          <AuthPageSkeleton />
+        </AuthShell>
       }
     >
       <LoginContent />

@@ -44,7 +44,7 @@ export function ChatArea({
 
   if (empty) {
     return (
-      <div className="flex min-h-0 flex-1 overflow-auto">
+      <div className="bbgpt-chat-scroll flex min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y">
         <WelcomeScreen
           onOpenPlans={onOpenPlans}
           onOpenSearch={onOpenSearch}
@@ -59,7 +59,7 @@ export function ChatArea({
   }
 
   return (
-      <div className="flex min-h-0 flex-1 overflow-auto px-3 py-4 sm:px-4 sm:py-5">
+      <div className="bbgpt-chat-scroll flex min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-3 py-4 touch-pan-y sm:px-4 sm:py-5">
       <div className={`flex flex-col gap-3 ${CHAT_COLUMN_CLASS}`}>
         {messages.map((m) => (
           <MessageBubble

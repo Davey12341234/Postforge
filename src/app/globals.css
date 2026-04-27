@@ -17,6 +17,21 @@ body {
   @apply bg-zinc-950 text-zinc-100 antialiased;
 }
 
+/* Composer: keep above home indicator + give iOS a little lift when keyboard resizes the layout. */
+.bbgpt-chat-input-dock {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.5rem);
+}
+
+/* Chat transcript: isolate vertical scroll from the page; smoother rubber-banding on iOS. */
+.bbgpt-chat-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+.bbgpt-app-root {
+  overscroll-behavior-y: none;
+}
+
 html {
   font-size: calc(14px * var(--bbgpt-font-scale, 1));
 }

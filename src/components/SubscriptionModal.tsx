@@ -126,14 +126,16 @@ export function SubscriptionModal({
                 annual list prices match your Stripe yearly Prices.
               </p>
             ) : null}
-            {serverCredits && !stripeBilling?.configured ? (
+            {serverCredits && stripeBilling != null && !stripeBilling.configured ? (
               <p className="mt-2 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-100/95">
-                <span className="font-semibold text-amber-50">No Subscribe / Pay button?</span> Paid checkout only
-                appears after the server has <span className="font-mono text-amber-200/90">STRIPE_SECRET_KEY</span> set
-                (Vercel → Environment Variables → Production). Until then, the modal shows{" "}
-                <span className="italic">Use this plan</span> and the server accepts plan changes without payment (dev /
-                staging). Add Stripe keys + <span className="font-mono">STRIPE_PRICE_*</span> price IDs, redeploy, then
-                use <span className="italic">Subscribe with Stripe</span>.
+                <span className="font-semibold text-amber-50">Checkout not enabled on the server yet.</span> The API
+                needs a valid <span className="font-mono text-amber-200/90">STRIPE_SECRET_KEY</span> (standard Secret key
+                starting with <span className="font-mono">sk_test_</span> or <span className="font-mono">sk_live_</span>,{" "}
+                ~100+ characters — not <span className="font-mono">pk_</span> or <span className="font-mono">rk_</span>).
+                In Vercel, paste the value <span className="italic">without</span> extra quotes; save for{" "}
+                <span className="font-semibold">Production</span>, redeploy, then reopen Plans (we refresh when you open
+                this modal). Also set recurring <span className="font-mono">STRIPE_PRICE_*</span> Price IDs for paid
+                tiers.
               </p>
             ) : null}
           </div>

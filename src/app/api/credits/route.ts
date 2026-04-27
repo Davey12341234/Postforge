@@ -58,7 +58,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isGateEnabled()) {
     return NextResponse.json(
-      { error: "Server plan sync is only available when BABYGPT_APP_PASSWORD is set." },
+      {
+        error:
+          "Server plan sync is only available when the gate is on (BBGPT_SESSION_SECRET + BBGPT_USER_AUTH=1 or BBGPT_APP_PASSWORD).",
+      },
       { status: 400 },
     );
   }

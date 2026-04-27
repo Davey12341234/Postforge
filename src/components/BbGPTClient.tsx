@@ -153,6 +153,10 @@ export default function BbGPTClient() {
   const [uiPrefs, setUiPrefs] = useState<UiPreferences | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [timeCapsuleReveal, setTimeCapsuleReveal] = useState<TimeCapsule | null>(null);
+  /** Below `md`: slide-over for chat list (sidebar). */
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  /** Left-edge swipe from the chat pane opens the drawer on narrow viewports. */
+  const mobileEdgeSwipeRef = useRef<{ x: number; y: number } | null>(null);
   const notifEnabledRef = useRef(false);
 
   useEffect(() => {
@@ -186,6 +190,39 @@ export default function BbGPTClient() {
   useEffect(() => {
     setBillingAlertLocalDismiss(false);
   }, [billingAlert?.at]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const narrow = () => window.matchMedia("(max-width: 767px)").matches;
+    if (mobileNavOpen && narrow()) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+    document.body.style.overflow = "";
+    return undefined;
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    function onKey(ev: KeyboardEvent) {
+      if (ev.key === "Escape") setMobileNavOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    function onResize() {
+      if (window.matchMedia("(min-width: 768px)").matches) {
+        setMobileNavOpen(false);
+      }
+    }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const showBillingBanner = useMemo(() => {
     if (!billingAlert || billingAlertLocalDismiss) return false;
@@ -319,6 +356,58 @@ export default function BbGPTClient() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!subscriptionOpen) return;
+    let cancelled = false;
+    async function refreshBilling() {
+      try {
+        const res = await fetch("/api/credits", { credentials: "include", cache: "no-store" });
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          source?: string;
+          planId?: PlanId;
+          balance?: number;
+          accrualMonth?: string;
+          welcomeApplied?: boolean;
+          billingAlert?: BillingAlertPayload | null;
+          usageHints?: UsageHint[];
+          stripe?: {
+            configured?: boolean;
+            customerId?: string | null;
+            subscriptionStatus?: string | null;
+          };
+        };
+        if (cancelled) return;
+        if (data.stripe && typeof data.stripe.configured === "boolean") {
+          setStripeBilling({
+            configured: data.stripe.configured,
+            customerId: data.stripe.customerId ?? null,
+            subscriptionStatus: data.stripe.subscriptionStatus ?? null,
+          });
+        }
+        if (Array.isArray(data.usageHints)) {
+          setUsageHints(data.usageHints);
+        }
+        if (data.source === "server" && typeof data.balance === "number" && data.planId) {
+          setServerCredits(true);
+          setCredits({
+            version: 1,
+            planId: data.planId,
+            balance: data.balance,
+            accrualMonth: data.accrualMonth ?? creditMonthKey(),
+            welcomeApplied: Boolean(data.welcomeApplied),
+          });
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    void refreshBilling();
+    return () => {
+      cancelled = true;
+    };
+  }, [subscriptionOpen]);
+
   const openStripeCheckout = useCallback(
     async (planId: Exclude<PlanId, "free">, billing: PlanBillingCadence = "monthly") => {
     const res = await fetch("/api/stripe/checkout", {
@@ -405,6 +494,33 @@ export default function BbGPTClient() {
   useEffect(() => {
     if (introGateOpen) setSearchOpen(false);
   }, [introGateOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileNavOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onMq = () => {
+      if (mq.matches) setMobileNavOpen(false);
+    };
+    mq.addEventListener("change", onMq);
+    return () => mq.removeEventListener("change", onMq);
+  }, []);
 
   const convRef = useRef(conversations);
   const activeRef = useRef(activeId);
@@ -1055,11 +1171,20 @@ export default function BbGPTClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, model }),
       });
-      const data = (await res.json()) as {
-        error?: string;
-        imageBase64?: string;
-        mimeType?: string;
-      };
+      const raw = await res.text();
+      let data: { error?: string; imageBase64?: string; mimeType?: string } = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw) as typeof data;
+        } catch {
+          setBanner(
+            res.ok
+              ? "Image response was not valid JSON — check server logs."
+              : `Image generation failed (${res.status}).`,
+          );
+          return;
+        }
+      }
       if (!res.ok) {
         setBanner(data.error ?? "Image generation failed.");
         return;
@@ -1162,6 +1287,32 @@ export default function BbGPTClient() {
     void sendMessage("", { regenerate: true });
   }, [sendMessage]);
 
+  const onChatShellTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (typeof window === "undefined") return;
+      if (!window.matchMedia("(max-width: 767px)").matches || mobileNavOpen) return;
+      const t = e.touches[0];
+      if (!t || t.clientX > 28) return;
+      mobileEdgeSwipeRef.current = { x: t.clientX, y: t.clientY };
+    },
+    [mobileNavOpen],
+  );
+
+  const onChatShellTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const start = mobileEdgeSwipeRef.current;
+      mobileEdgeSwipeRef.current = null;
+      if (!start || typeof window === "undefined") return;
+      if (!window.matchMedia("(max-width: 767px)").matches || mobileNavOpen) return;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      if (t.clientX - start.x > 56 && Math.abs(t.clientY - start.y) < 88) {
+        setMobileNavOpen(true);
+      }
+    },
+    [mobileNavOpen],
+  );
+
   const stopStreaming = useCallback(() => {
     streamAbortRef.current?.abort();
   }, []);
@@ -1196,14 +1347,14 @@ export default function BbGPTClient() {
             <button
               type="button"
               onClick={() => void openStripePortal()}
-              className="rounded-full bg-amber-500/20 px-3 py-1.5 text-[11px] font-semibold text-amber-50 ring-1 ring-amber-500/40 hover:bg-amber-500/30"
+              className="min-h-11 rounded-full bg-amber-500/20 px-4 py-2 text-[11px] font-semibold text-amber-50 ring-1 ring-amber-500/40 hover:bg-amber-500/30 sm:min-h-10"
             >
               Manage billing
             </button>
             <button
               type="button"
               onClick={dismissBillingAlert}
-              className="rounded-full px-3 py-1.5 text-[11px] text-amber-200/90 ring-1 ring-amber-800/80 hover:bg-amber-950/50"
+              className="min-h-11 rounded-full px-4 py-2 text-[11px] text-amber-200/90 ring-1 ring-amber-800/80 hover:bg-amber-950/50 sm:min-h-10"
             >
               Dismiss
             </button>
@@ -1211,60 +1362,106 @@ export default function BbGPTClient() {
         </div>
       ) : null}
       <header className={headerShellClass(appearance)}>
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <div
-              className={`truncate text-sm font-semibold ${appearance === "light" ? "text-zinc-900" : "text-zinc-100"}`}
-            >
-              bbGPT
+        <div className="flex w-full min-w-0 items-start justify-between gap-2 md:contents">
+          <div className="min-w-0 flex-1 md:max-w-[min(100%,24rem)]">
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                className={`truncate text-sm font-semibold ${appearance === "light" ? "text-zinc-900" : "text-zinc-100"}`}
+              >
+                bbGPT
+              </div>
+              <span
+                className={`hidden items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ring-1 sm:inline-flex ${mood.accentClass}`}
+                title="Inferred from your draft and last message"
+              >
+                <span aria-hidden>{mood.emoji}</span>
+                {mood.label}
+              </span>
+              <span
+                className={`hidden max-w-[min(420px,50vw)] cursor-help truncate rounded-full px-2 py-0.5 text-[10px] ring-1 sm:inline-flex ${
+                  appearance === "light"
+                    ? "bg-zinc-200 text-zinc-700 ring-zinc-300"
+                    : "bg-zinc-900 text-zinc-500 ring-zinc-800"
+                }`}
+                title={
+                  routingReason ??
+                  "Every chat response includes a routing note: either Kolmogorov’s pick or “router off — using selected model.”"
+                }
+              >
+                {routingReason ? routingReason : "Model routing (see after send)"}
+              </span>
             </div>
-            <span
-              className={`hidden items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ring-1 sm:inline-flex ${mood.accentClass}`}
-              title="Inferred from your draft and last message"
+            <div
+              className={`mt-0.5 truncate text-[11px] ${appearance === "light" ? "text-zinc-600" : "text-zinc-600"}`}
             >
-              <span aria-hidden>{mood.emoji}</span>
-              {mood.label}
-            </span>
+              Plans gate models · credits per send · memory · Cmd/Ctrl+K search
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2 md:hidden">
             <span
-              className={`inline-flex max-w-[min(420px,40vw)] cursor-help truncate rounded-full px-2 py-0.5 text-[10px] ring-1 ${
+              className={`rounded-full px-2.5 py-1.5 font-mono text-[10px] ring-1 ${
                 appearance === "light"
-                  ? "bg-zinc-200 text-zinc-700 ring-zinc-300"
-                  : "bg-zinc-900 text-zinc-500 ring-zinc-800"
+                  ? "bg-cyan-100/90 text-cyan-900 ring-cyan-300"
+                  : "bg-zinc-900/80 text-cyan-200 ring-zinc-800"
               }`}
               title={
-                routingReason ??
-                "Every chat response includes a routing note: either Kolmogorov’s pick or “router off — using selected model.”"
+                serverCredits
+                  ? "Credits stored on the server (enforced when app password is enabled)."
+                  : "Local credit balance in this browser."
               }
             >
-              {routingReason ? routingReason : "Model routing (see after send)"}
+              {credits ? `${credits.balance} cr` : "…"}
             </span>
-          </div>
-          <div
-            className={`truncate text-[11px] ${appearance === "light" ? "text-zinc-600" : "text-zinc-600"}`}
-          >
-            Plans gate models · credits per send · memory · Cmd/Ctrl+K search
+            <button
+              type="button"
+              aria-expanded={mobileNavOpen}
+              aria-controls="bbgpt-mobile-sidebar"
+              aria-label={mobileNavOpen ? "Close conversations menu" : "Open conversations menu"}
+              onClick={() => setMobileNavOpen((o) => !o)}
+              className={`inline-flex h-11 min-w-11 items-center justify-center rounded-xl ring-1 ${
+                appearance === "light"
+                  ? "bg-white text-zinc-900 ring-zinc-300 hover:bg-zinc-100"
+                  : "bg-zinc-900 text-zinc-100 ring-zinc-800 hover:bg-zinc-800"
+              }`}
+            >
+              <span className="sr-only">Chats menu</span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                {mobileNavOpen ? (
+                  <>
+                    <path strokeWidth="2" strokeLinecap="round" d="M6 6l12 12" />
+                    <path strokeWidth="2" strokeLinecap="round" d="M18 6L6 18" />
+                  </>
+                ) : (
+                  <path strokeWidth="2" strokeLinecap="round" d="M5 7h14M5 12h14M5 17h14" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
-        <QuantumControls
-          id="bbgpt-quantum-bar"
-          plan={credits ? PLANS[credits.planId] : PLANS.free}
-          model={model}
-          onModel={setModel}
-          thinking={thinking}
-          onThinking={setThinking}
-          schrodinger={schrodinger}
-          onSchrodinger={setSchrodinger}
-          agentMode={agentMode}
-          onAgentMode={setAgentMode}
-          quantum={quantum}
-          onQuantum={setQuantum}
-          onRequestUpgrade={() => setSubscriptionOpen(true)}
-        />
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+
+        <div className="-mx-1 w-full min-w-0 overflow-x-auto overscroll-x-contain px-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] md:mx-0 md:max-w-none md:flex-1">
+          <QuantumControls
+            id="bbgpt-quantum-bar"
+            plan={credits ? PLANS[credits.planId] : PLANS.free}
+            model={model}
+            onModel={setModel}
+            thinking={thinking}
+            onThinking={setThinking}
+            schrodinger={schrodinger}
+            onSchrodinger={setSchrodinger}
+            agentMode={agentMode}
+            onAgentMode={setAgentMode}
+            quantum={quantum}
+            onQuantum={setQuantum}
+            onRequestUpgrade={() => setSubscriptionOpen(true)}
+          />
+        </div>
+
+        <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 md:w-auto">
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            className="bbgpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn min-h-11 rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:min-h-10"
             title="Font size, theme, notifications, time capsule"
           >
             Settings
@@ -1272,13 +1469,13 @@ export default function BbGPTClient() {
           <button
             type="button"
             onClick={() => setSubscriptionOpen(true)}
-            className="bbgpt-header-btn rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn min-h-11 rounded-full bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:min-h-10"
             title="Subscription tiers, model access, and credit balance"
           >
             Plans
           </button>
           <span
-            className={`hidden rounded-full px-2 py-1 font-mono text-[10px] ring-1 sm:inline ${
+            className={`hidden rounded-full px-2 py-1 font-mono text-[10px] ring-1 md:inline ${
               appearance === "light"
                 ? "bg-cyan-100/90 text-cyan-900 ring-cyan-300"
                 : "bg-zinc-900/80 text-cyan-200 ring-zinc-800"
@@ -1299,27 +1496,27 @@ export default function BbGPTClient() {
                 router.push("/login");
                 router.refresh();
               }}
-              className="bbgpt-header-btn hidden rounded-full bg-zinc-900 px-2 py-1 text-[10px] text-zinc-400 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:inline"
+              className="bbgpt-header-btn min-h-11 rounded-full bg-zinc-900 px-3 py-2 text-xs text-zinc-300 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:min-h-10"
             >
               Sign out
             </button>
           ) : null}
           {activeSkill ? (
-            <span className="hidden max-w-[160px] truncate rounded-full bg-cyan-950/40 px-2 py-1 text-[10px] text-cyan-200 ring-1 ring-cyan-900 sm:inline">
+            <span className="hidden max-w-[160px] truncate rounded-full bg-cyan-950/40 px-2 py-1 text-[10px] text-cyan-200 ring-1 ring-cyan-900 md:inline">
               Skill: {activeSkill.name}
             </span>
           ) : null}
           <button
             type="button"
             onClick={() => setSkillsOpen(true)}
-            className="bbgpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn min-h-11 rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:min-h-10"
           >
             Skills
           </button>
           <button
             type="button"
             onClick={() => setCommunityOpen(true)}
-            className="bbgpt-header-btn rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="bbgpt-header-btn min-h-11 rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:min-h-10"
           >
             Community
           </button>
@@ -1336,7 +1533,7 @@ export default function BbGPTClient() {
               <button
                 type="button"
                 onClick={stopStreaming}
-                className="rounded-full bg-zinc-800 px-3 py-1.5 text-[11px] font-semibold text-zinc-100 ring-1 ring-zinc-700 hover:bg-zinc-700"
+                className="min-h-11 rounded-full bg-zinc-800 px-4 py-2 text-[11px] font-semibold text-zinc-100 ring-1 ring-zinc-700 hover:bg-zinc-700 sm:min-h-10"
               >
                 Stop
               </button>
@@ -1345,7 +1542,7 @@ export default function BbGPTClient() {
               <button
                 type="button"
                 onClick={regenerateLastResponse}
-                className="rounded-full bg-zinc-800 px-3 py-1.5 text-[11px] font-semibold text-cyan-200 ring-1 ring-zinc-700 hover:bg-zinc-700"
+                className="min-h-11 rounded-full bg-zinc-800 px-4 py-2 text-[11px] font-semibold text-cyan-200 ring-1 ring-zinc-700 hover:bg-zinc-700 sm:min-h-10"
               >
                 Regenerate
               </button>
@@ -1354,16 +1551,49 @@ export default function BbGPTClient() {
         </div>
       ) : null}
 
-      <div className="flex min-h-0 flex-1">
-        <Sidebar
-          conversations={conversations}
-          activeId={activeId}
-          onNew={newChat}
-          onSelect={setActiveId}
-          onDelete={onDelete}
-          appearance={appearance}
-        />
-        <div className={mainChatShellClass(appearance, mood.shellClass)}>
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        {mobileNavOpen ? (
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px] motion-safe:transition-opacity motion-safe:duration-200 md:hidden"
+            onClick={() => setMobileNavOpen(false)}
+          />
+        ) : null}
+        <div
+          id="bbgpt-mobile-sidebar"
+          className={`fixed inset-y-0 left-0 z-50 flex h-full w-[min(18rem,88vw)] max-w-[100vw] shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 pb-[env(safe-area-inset-bottom,0px)] shadow-2xl motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out md:static md:z-auto md:h-full md:w-52 md:max-w-none md:translate-x-0 md:border-r md:border-zinc-800 md:pb-0 md:shadow-none ${
+            mobileNavOpen
+              ? "translate-x-0"
+              : "-translate-x-full pointer-events-none md:pointer-events-auto md:translate-x-0"
+          }`}
+        >
+          <Sidebar
+            conversations={conversations}
+            activeId={activeId}
+            onNew={newChat}
+            onSelect={setActiveId}
+            onDelete={onDelete}
+            appearance={appearance}
+            className="h-full w-full min-w-0 border-r-0 sm:w-full"
+            onNavigate={() => setMobileNavOpen(false)}
+          />
+        </div>
+        <div
+          className={`touch-pan-y ${mainChatShellClass(appearance, mood.shellClass)}`}
+          onTouchStart={onChatShellTouchStart}
+          onTouchEnd={onChatShellTouchEnd}
+        >
+          {!introGateOpen && credits === null ? (
+            <div
+              className="shrink-0 space-y-2 border-b border-zinc-800/50 px-4 py-3"
+              role="status"
+              aria-label="Loading wallet"
+            >
+              <div className="h-3.5 max-w-[10rem] animate-pulse rounded-md bg-zinc-800/45" />
+              <div className="h-3 max-w-[7rem] animate-pulse rounded-md bg-zinc-800/35" />
+            </div>
+          ) : null}
           <ChatArea
             messages={active?.messages ?? []}
             empty={!active || active.messages.length === 0}

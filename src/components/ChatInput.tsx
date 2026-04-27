@@ -165,7 +165,7 @@ export function ChatInput({
   const col = CHAT_COLUMN_CLASS;
 
   return (
-    <div className="shrink-0 border-t border-zinc-900 bg-zinc-950/40 px-2 py-2 sm:px-3">
+    <div className="bbgpt-chat-input-dock shrink-0 border-t border-zinc-900 bg-zinc-950/40 px-2 py-2 sm:px-3">
       <VoiceModeOverlay
         open={voicePanelOpen}
         listening={listening}
@@ -185,7 +185,7 @@ export function ChatInput({
           </span>
           <button
             type="button"
-            className="rounded-lg bg-zinc-900 px-2 py-1 text-[11px] font-semibold text-cyan-300 ring-1 ring-zinc-800 hover:bg-zinc-800"
+            className="min-h-11 shrink-0 rounded-lg bg-zinc-900 px-3 py-2 text-[11px] font-semibold text-cyan-300 ring-1 ring-zinc-800 hover:bg-zinc-800 sm:min-h-10"
             onClick={() => onUseSkill?.()}
           >
             Activate
@@ -215,7 +215,7 @@ export function ChatInput({
               <span className="text-zinc-500">({formatBytes(f.size)})</span>
               <button
                 type="button"
-                className="text-zinc-500 hover:text-zinc-200"
+                className="-mr-1 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-200"
                 onClick={() => onPendingFilesChange(pendingFiles.filter((_, j) => j !== i))}
                 aria-label="Remove file"
               >
@@ -232,7 +232,7 @@ export function ChatInput({
           type="button"
           disabled={disabled}
           onClick={() => fileInputRef.current?.click()}
-          className="inline-flex items-center gap-1 rounded-lg bg-zinc-900/90 px-2.5 py-1.5 font-medium text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 disabled:opacity-40"
+          className="inline-flex min-h-11 items-center gap-1 rounded-lg bg-zinc-900/90 px-3 py-2 font-medium text-zinc-200 ring-1 ring-zinc-800 hover:bg-zinc-800 disabled:opacity-40 sm:min-h-10 sm:px-2.5 sm:py-1.5"
           title={`Add files (max ${formatBytes(maxBytes)} each)`}
         >
           <span className="text-sm leading-none text-zinc-400">+</span>
@@ -244,7 +244,7 @@ export function ChatInput({
             disabled={disabled}
             value={presetSelectBytes}
             onChange={(e) => onAttachmentLimitChange(Number(e.target.value))}
-            className="cursor-pointer rounded-lg border-0 bg-zinc-900/90 py-1.5 pl-2 pr-7 text-[11px] font-medium text-zinc-300 ring-1 ring-zinc-800 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 disabled:opacity-40"
+            className="min-h-11 cursor-pointer rounded-lg border-0 bg-zinc-900/90 py-2 pl-2 pr-7 text-[11px] font-medium text-zinc-300 ring-1 ring-zinc-800 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 disabled:opacity-40 sm:min-h-10 sm:py-1.5"
             title="Per-file size limit (stored on this device)"
           >
             {FILE_SIZE_PRESETS.map((p) => (
@@ -262,7 +262,7 @@ export function ChatInput({
               onChange={(e) => onImagePromptExtraChange?.(e.target.value)}
               disabled={disabled}
               placeholder="Image prompt…"
-              className="min-w-0 max-w-[200px] flex-1 rounded-lg border-0 bg-zinc-900/90 px-2 py-1.5 text-[11px] text-zinc-200 ring-1 ring-zinc-800 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/25 disabled:opacity-40 sm:max-w-xs"
+              className="min-h-11 min-w-0 max-w-[200px] flex-1 rounded-lg border-0 bg-zinc-900/90 px-2 py-2 text-[11px] text-zinc-200 ring-1 ring-zinc-800 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/25 disabled:opacity-40 sm:max-w-xs sm:py-1.5"
               title="Optional: describe the image here if you do not want to use the main message box above"
               aria-label="Image generation prompt"
             />
@@ -270,7 +270,7 @@ export function ChatInput({
               type="button"
               disabled={disabled}
               onClick={onGenerateImage}
-              className="rounded-lg bg-fuchsia-950/50 px-2.5 py-1.5 text-[11px] font-semibold text-fuchsia-100/95 ring-1 ring-fuchsia-900/60 hover:bg-fuchsia-950/80 disabled:opacity-40"
+              className="min-h-11 rounded-lg bg-fuchsia-950/50 px-3 py-2 text-[11px] font-semibold text-fuchsia-100/95 ring-1 ring-fuchsia-900/60 hover:bg-fuchsia-950/80 disabled:opacity-40 sm:min-h-10 sm:px-2.5 sm:py-1.5"
               title="Generate an image with Gemini (uses one chat credit; needs GEMINI_API_KEY on the server)"
             >
               Create image

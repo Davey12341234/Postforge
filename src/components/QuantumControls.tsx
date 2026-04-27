@@ -59,8 +59,8 @@ export function QuantumControls({
   const canDna = plan.features.dna;
 
   return (
-    <div id={id} className="flex flex-wrap items-center gap-2">
-      <label className="flex items-center gap-2 text-xs text-zinc-400">
+    <div id={id} className="flex min-w-max flex-wrap items-center gap-2 md:min-w-0">
+      <label className="flex min-h-10 items-center gap-2 text-xs text-zinc-400">
         Model
         <select
           value={model}
@@ -75,7 +75,7 @@ export function QuantumControls({
             uiDiag("header.model", "ok", { planId: plan.id, model: v });
             onModel(v);
           }}
-          className="max-w-[140px] rounded-lg bg-zinc-900 px-2 py-1 text-xs text-zinc-100 ring-1 ring-zinc-800"
+          className="max-w-[140px] min-h-10 rounded-lg bg-zinc-900 px-2 py-2 text-xs text-zinc-100 ring-1 ring-zinc-800"
         >
           {MODELS.map((m) => {
             const allowed = planAllowsModel(plan, m);
@@ -106,7 +106,7 @@ export function QuantumControls({
           uiDiag("header.thinking", "ok", { planId: plan.id, on: next });
           onThinking(next);
         }}
-        className={`rounded-full px-3 py-1 text-xs ring-1 ${
+        className={`min-h-10 rounded-full px-3 py-2 text-xs ring-1 ${
           !canThinking
             ? "cursor-pointer opacity-60 hover:opacity-90"
             : thinking
@@ -141,7 +141,7 @@ export function QuantumControls({
           uiDiag("header.schrodinger", "ok", { planId: plan.id, on: next });
           onSchrodinger(next);
         }}
-        className={`rounded-full px-3 py-1 text-xs ring-1 ${
+        className={`min-h-10 rounded-full px-3 py-2 text-xs ring-1 ${
           agentMode
             ? "cursor-not-allowed opacity-40"
             : !canSchrodinger
@@ -172,7 +172,7 @@ export function QuantumControls({
           onAgentMode(next);
           if (next) onSchrodinger(false);
         }}
-        className={`rounded-full px-3 py-1 text-xs ring-1 ${
+        className={`min-h-10 rounded-full px-3 py-2 text-xs ring-1 ${
           !canAgent
             ? "cursor-pointer opacity-60 hover:opacity-90"
             : agentMode
@@ -184,7 +184,7 @@ export function QuantumControls({
       </button>
 
       <details className="relative">
-        <summary className="cursor-pointer list-none rounded-full bg-zinc-900 px-3 py-1 text-xs text-zinc-300 ring-1 ring-zinc-800">
+        <summary className="flex min-h-10 cursor-pointer list-none items-center rounded-full bg-zinc-900 px-3 py-2 text-xs text-zinc-300 ring-1 ring-zinc-800">
           Quantum
         </summary>
         <div className="absolute right-0 z-40 mt-2 w-[min(100vw-2rem,320px)] rounded-2xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300 shadow-xl ring-1 ring-white/5">

@@ -3,9 +3,21 @@
  * App runtime uses the same rules in src/lib/stripe-secret-valid.ts (keep in sync).
  */
 
+/** Strip one pair of surrounding quotes (common Vercel / .env paste mistake). */
+function normalizeStripeSecretKey(raw) {
+  let s = String(raw || "").trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"') && s.length >= 2) ||
+    (s.startsWith("'") && s.endsWith("'") && s.length >= 2)
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
 /** @returns {{ ok: true } | { ok: false; reason: string }} */
 function validateStripeSecretKey(raw) {
-  const s = (raw || "").trim();
+  const s = normalizeStripeSecretKey(raw);
   if (!s) return { ok: false, reason: "STRIPE_SECRET_KEY is empty." };
   if (s.startsWith("pk_")) {
     return {

@@ -1,7 +1,7 @@
-import { Modality } from "@google/genai";
 import { NextResponse, type NextRequest } from "next/server";
 import { guardChatSend } from "@/lib/chat-route-guard";
-import { createGeminiClient, getGeminiImageModel } from "@/lib/gemini-server";
+import { requestGeminiNativeImage } from "@/lib/gemini-native-image";
+import { createGeminiClient } from "@/lib/gemini-server";
 import { parseModelTierBody } from "@/lib/model-tier";
 import type { ModelTier } from "@/lib/types";
 
@@ -46,44 +46,15 @@ export async function POST(req: NextRequest) {
   });
   if (gated) return gated;
 
-  const imageModel = getGeminiImageModel();
-
   try {
-    const response = await ai.models.generateContent({
-      model: imageModel,
-      contents: prompt,
-      config: {
-        // Image-capable models expect image (and optionally text) in the response modalities.
-        responseModalities: [Modality.TEXT, Modality.IMAGE],
-      },
-    });
-
-    let mimeType = "image/png";
-    let base64: string | null = null;
-
-    const parts = response.candidates?.[0]?.content?.parts ?? [];
-    for (const part of parts) {
-      if (part.inlineData?.data) {
-        base64 = part.inlineData.data;
-        mimeType = part.inlineData.mimeType ?? mimeType;
-        break;
-      }
+    const result = await requestGeminiNativeImage(ai, prompt);
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: 502 });
     }
-
-    if (!base64) {
-      const textFallback = response.text?.trim();
-      return NextResponse.json(
-        {
-          error: textFallback || "No image returned — try a different prompt or GEMINI_IMAGE_MODEL.",
-        },
-        { status: 502 },
-      );
-    }
-
     return NextResponse.json({
-      mimeType,
-      imageBase64: base64,
-      model: imageModel,
+      mimeType: result.mimeType,
+      imageBase64: result.imageBase64,
+      model: result.model,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Image generation failed";

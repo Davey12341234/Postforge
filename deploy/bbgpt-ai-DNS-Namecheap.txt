@@ -10,14 +10,31 @@ Your registrar shows nameservers: dns1.namecheaphosting.com, dns2.namecheaphosti
 (Option B from Vercel): point the domain’s nameservers to ns1.vercel-dns.com + ns2.vercel-dns.com
 ONLY if you want Vercel to manage all DNS — do this at Namecheap → Domain → Nameservers → Custom DNS.
 
-(Option A — keep current nameservers): add these records where you edit DNS for bbgpt.ai:
+(Option A — keep current nameservers): use the EXACT records Vercel shows for this project
+(Dashboard → postforge2 → Settings → Domains → each hostname → “Invalid Configuration” panel).
 
-  Type   Host / Name    Value           TTL
-  ----   -----------    -----           ---
-  A      @              76.76.21.21     Auto (or 300s)
-  A      www            76.76.21.21     Auto
+As of the current Vercel UI (per-domain targets; do not guess):
+
+  www.bbgpt.ai
+  ----
+  Type: CNAME
+  Host / Name: www
+  Value: 45f91758b1a5bb25.vercel-dns-017.com
+  TTL: Automatic (or 300s)
+
+  If your Domains page shows a different *.vercel-dns-NNN.com host, copy that value instead.
+
+  bbgpt.ai (apex / “@”)
+  ----
+  Copy whatever Vercel lists for the root domain (often one or more A records to Vercel anycast IPs,
+  or a flattened CNAME / ALIAS — the dashboard text is authoritative). Do not mix stale blog recipes
+  with the live “Configure” instructions for your project.
+
+  Legacy note: older docs used `www` → `cname.vercel-dns.com` or `A` for `www`. Vercel may now reject
+  that for your domain in favor of the unique `*.vercel-dns-017.com` style target — follow the dashboard.
 
 Exact UI: Namecheap → Domain List → Manage → Advanced DNS → Host Records → Add New Record.
+Remove conflicting old `www` A/CNAME rows before adding the new CNAME.
 
 After propagation (minutes to a few hours):
 - Vercel → Project → Settings → Domains: status should become Valid with SSL.

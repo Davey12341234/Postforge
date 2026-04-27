@@ -20,7 +20,6 @@ const EXTRA_KEYS = [
   { key: "Z_AI_BASE_URL", comment: "optional; defaults in app if unset" },
   { key: "Z_AI_API_KEY", comment: "" },
   { key: "OPENAI_API_KEY", comment: "" },
-  { key: "GEMINI_API_KEY", comment: "attachments + Create image" },
   { key: "BBGPT_API_SECRET", comment: "optional Bearer for scripted API calls (legacy: BABYGPT_API_SECRET)" },
   {
     key: "STRIPE_BBGPT_PRODUCT_ID",
@@ -55,6 +54,9 @@ function main() {
     ...OPTIONAL_LIST_PRICES.map((r) => ({ key: r.key, note: r.note })),
     ...OPTIONAL_STRIPE_YEARLY_PRICE_IDS.map((r) => ({ key: r.key, note: r.note })),
     ...OPTIONAL_STRIPE_TUNING.map((r) => ({ key: r.key, note: r.note })),
+    ...OPTIONAL_GEMINI.map((r) => ({ key: r.key, note: r.note })),
+    ...OPTIONAL_EMAIL_RESEND.map((r) => ({ key: r.key, note: r.note })),
+    ...OPTIONAL_AUTH_FLAGS.map((r) => ({ key: r.key, note: r.note })),
     ...EXTRA_KEYS.map((e) => ({ key: e.key, note: e.comment })),
   ];
 

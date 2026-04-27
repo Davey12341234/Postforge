@@ -17,5 +17,5 @@ export function getGeminiChatModel(): string {
 
 /** Native image generation (see https://ai.google.dev/gemini-api/docs/image-generation). */
 export function getGeminiImageModel(): string {
-  return process.env.GEMINI_IMAGE_MODEL?.trim() || "gemini-2.5-flash-image";
+  return process.env.GEMINI_IMAGE_MODEL?.trim() || "gemini-3.1-flash-image-preview";
 }

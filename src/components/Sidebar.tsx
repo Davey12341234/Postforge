@@ -15,6 +15,8 @@ export function Sidebar({
   onSelect,
   onDelete,
   appearance = "dark",
+  className = "",
+  onNavigate,
 }: {
   conversations: Conversation[];
   activeId: string | null;
@@ -22,6 +24,10 @@ export function Sidebar({
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   appearance?: UiPreferences["appearance"];
+  /** Merged onto the root panel (e.g. `w-full` inside a mobile drawer). */
+  className?: string;
+  /** Called after choosing a chat or starting a new one (e.g. close mobile drawer). */
+  onNavigate?: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("chats");
   const [memory, setMemory] = useState<AgentMemory | null>(null);
@@ -58,18 +64,20 @@ export function Sidebar({
   const rowText = appearance === "light" ? "text-zinc-800" : "text-zinc-300";
 
   return (
-    <aside className={`flex h-full w-[min(13.5rem,30vw)] shrink-0 flex-col border-r sm:w-52 ${shell}`}>
+    <aside
+      className={`flex h-full min-h-0 w-[min(13.5rem,30vw)] shrink-0 flex-col border-r sm:w-52 ${shell} ${className}`.trim()}
+    >
       <div className={`flex border-b ${hairline} p-2`}>
         <button
           type="button"
-          className={`flex-1 rounded-xl px-2 py-2 text-xs font-semibold ${tab === "chats" ? tabActive : tabIdle}`}
+          className={`min-h-11 flex-1 rounded-xl px-2 py-2.5 text-xs font-semibold sm:min-h-10 sm:py-2 ${tab === "chats" ? tabActive : tabIdle}`}
           onClick={() => setTab("chats")}
         >
           Chats
         </button>
         <button
           type="button"
-          className={`flex-1 rounded-xl px-2 py-2 text-xs font-semibold ${tab === "memory" ? tabActive : tabIdle}`}
+          className={`min-h-11 flex-1 rounded-xl px-2 py-2.5 text-xs font-semibold sm:min-h-10 sm:py-2 ${tab === "memory" ? tabActive : tabIdle}`}
           onClick={() => setTab("memory")}
         >
           Memory
@@ -81,8 +89,11 @@ export function Sidebar({
           <div className={`border-b ${hairline} p-3`}>
             <button
               type="button"
-              onClick={onNew}
-              className="w-full rounded-xl bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-950 hover:bg-white"
+              onClick={() => {
+                onNew();
+                onNavigate?.();
+              }}
+              className="min-h-11 w-full rounded-xl bg-zinc-100 px-3 py-2.5 text-sm font-medium text-zinc-950 hover:bg-white sm:min-h-10 sm:py-2"
             >
               New chat
             </button>
@@ -92,8 +103,11 @@ export function Sidebar({
               <div key={c.id} className="group mb-1 flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => onSelect(c.id)}
-                  className={`min-w-0 flex-1 truncate rounded-xl px-3 py-2 text-left text-sm ${
+                  onClick={() => {
+                    onSelect(c.id);
+                    onNavigate?.();
+                  }}
+                  className={`min-h-11 min-w-0 flex-1 truncate rounded-xl px-3 py-2.5 text-left text-sm sm:min-h-10 sm:py-2 ${
                     c.id === activeId ? rowActive : `${rowText} ${rowHover}`
                   }`}
                 >
@@ -102,7 +116,21 @@ export function Sidebar({
                 <button
                   type="button"
                   title="Delete"
-                  className={`hidden rounded-lg px-2 py-1 text-xs group-hover:inline ${
+                  aria-label={`Delete chat ${c.title || "Untitled"}`}
+                  className={`inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-sm leading-none md:hidden ${
+                    appearance === "light"
+                      ? "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+                      : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
+                  }`}
+                  onClick={() => onDelete(c.id)}
+                >
+                  ×
+                </button>
+                <button
+                  type="button"
+                  title="Delete"
+                  aria-label={`Delete chat ${c.title || "Untitled"}`}
+                  className={`hidden min-h-10 min-w-10 shrink-0 items-center justify-center rounded-lg text-xs md:inline-flex md:opacity-0 md:transition-opacity md:group-hover:opacity-100 ${
                     appearance === "light"
                       ? "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
                       : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
