@@ -1,0 +1,17 @@
+BabyGPT + ProLiant — simplified flow
+=====================================
+
+ONE COMMAND ON YOUR PC (USB plugged in; use -DriveLetter X if you have more than one stick):
+
+  cd c:\Users\mckel\postforge
+  npm run proliant:usb-forward
+
+That refreshes the kit, writes autoinstall seed for this PC's LAN IP, and creates START-BABYGPT.txt on the USB.
+
+THEN:
+
+  1)  npm run proliant:serve-seed     (leave running)
+  2)  Boot the USB on the server; GRUB: add the line from START-BABYGPT.txt
+  3)  Browser: http://server-ip:3000
+
+Details: deploy/proliant/RUNBOOK.md

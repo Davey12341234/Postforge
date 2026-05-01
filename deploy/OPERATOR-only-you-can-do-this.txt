@@ -1,0 +1,29 @@
+BabyGPT — steps no script can do for you (needs your accounts)
+Full outline: deploy/CANNOT-AUTOMATE.md
+
+One-shot local check (scaffold + lint + test + build + finish:billing):
+  npm run ship
+
+1) Stripe Dashboard (stripe.com)
+   - Create / verify your business account.
+   - Create Products and recurring Prices (monthly: three tiers; optional yearly: three more Prices).
+   - Copy Secret key (sk_test_ / sk_live_), each price_... ID, webhook Signing secret (whsec_...).
+   - Register webhook URL https://<your-domain>/api/stripe/webhook with the events the app handles.
+
+2) Paste into repo-root .env.local (never commit)
+   - npm run env:scaffold   # adds any missing KEY= lines (empty)
+   - npm run env:open       # open file in editor
+   - Required for paid checkout with gate: npm run finish:billing
+
+3) Vercel (or other host)
+   - Production Environment Variables must match .env.local for deploy.
+   - Push from Windows: npm run vercel:env:prod (requires npx vercel login + linked project).
+   - Or paste the same keys manually in Vercel Dashboard.
+
+4) Legal / product
+   - Terms and Privacy pages on the public site when charging real money.
+
+5) Smoke test after deploy
+   - /login → Plans → Checkout (test mode first) → confirm GET /api/credits shows stripe.configured.
+
+Automated gate before all that: npm run prod:ready

@@ -1,49 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# bbGPT
 
-## Unified Content Studio (`/unified`)
+bbGPT is a dark, ChatGPT-style assistant built with Next.js 16, React 19, Tailwind CSS 4, and the `z-ai-web-dev-sdk` on the server.
 
-The **Unified** route is a self-contained studio (AI chat via Anthropic, XP/missions, drafts UI, publish stub, referrals) backed by `Unified*` Prisma models. It uses the same NextAuth session as the rest of Postforge.
+## Setup
 
-- **URL:** [http://localhost:3000/unified](http://localhost:3000/unified) (after sign-in)
-- **Env:** set `ANTHROPIC_API_KEY` for chat; `DATABASE_URL` must match your Prisma datasource (PostgreSQL).
-- **DB:** run `npx prisma migrate dev` or `npx prisma db push`, then `npx prisma generate`.
-- **APIs:** `/api/unified/chat`, `/api/unified/upload`, `/api/unified/user/progress`, `/api/unified/referrals`, `/api/unified/publish`, `/api/unified/generate`, `/api/unified/drafts`, `/api/unified/checkout`, `/api/stripe/webhook`, `/api/admin/revenue` (protected)
-- **Stripe:** set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_PRO` / `STRIPE_PRICE_BUSINESS` / `STRIPE_PRICE_ENTERPRISE`; run `npx prisma migrate dev` after pulling schema changes.
-- **Setup script (Git Bash / WSL / macOS/Linux):** `./setup.sh`
+1. Install dependencies:
 
-Styles live in `src/app/unified/unified-globals.css` (scoped under `.ucs-root`). Do not add a second `<html>` in route layouts — only the root `src/app/layout.tsx` should wrap `<html>`.
+```bash
+npm install
+```
 
-## Getting Started
+2. Configure Z.AI credentials in `.env.local`:
 
-First, run the development server:
+```bash
+Z_AI_BASE_URL=https://your-api-base-url
+Z_AI_API_KEY=your-api-key
+```
+
+3. Run the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` — development server (port 3000)
+- `npm run build` — production build
+- `npm run lint` — ESLint
 
-## Learn More
+## Notes
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Chat history is stored in the browser (`localStorage`, prefix `bbgpt_`; legacy `babygpt_*` keys migrate once on load).
+- Community posts are kept in memory on the server and reset when the dev server restarts.
+- Legacy PostForge assets are archived under `_archive/`.

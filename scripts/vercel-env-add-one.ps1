@@ -1,4 +1,4 @@
-# Called by set-vercel-prod-env.ps1 in a fresh process — avoids PowerShell hanging on sequential `npx vercel env add`.
+# Called by set-babygpt-vercel-prod-env.ps1 — avoids PowerShell hanging on sequential `npx vercel env add`.
 param(
   [Parameter(Mandatory)][string]$Name,
   [Parameter(Mandatory)][string]$Value,
