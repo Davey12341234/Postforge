@@ -30,7 +30,7 @@ Approve **UAC** if prompted.
 
 **ISO only (no Rufus yet):** `npm run proliant:prepare-official-download` — same staging refresh + download, does not launch Rufus. Use this when you want the ISO on disk before flashing later.
 
-**Where downloads go:** The ISO is saved under **`deploy\proliant\staging\` on the same drive as this repo** (usually **`C:`**). Scripts **refuse** that folder on USB/SD so multi‑GB downloads are not written to removable media (Rufus writes the installer **to** the SD/USB **after** the ISO is on a fixed disk). Override only if you must: **`BABYGPT_ALLOW_REMOVABLE_STAGING=1`**.
+**Where downloads go:** The ISO is saved under **`deploy\proliant\staging\` on the same drive as this repo** (usually **`C:`**). Scripts **refuse** that folder on USB/SD so multi‑GB downloads are not written to removable media (Rufus writes the installer **to** the SD/USB **after** the ISO is on a fixed disk). Override only if you must: **`BBGPT_ALLOW_REMOVABLE_STAGING=1`**.
 
 ## 2) In Rufus
 
@@ -52,7 +52,7 @@ npm run proliant:stage
 .\scripts\full-usb-deploy.ps1 -DriveLetter D
 ```
 
-Or one step: `npm run proliant:usb-sync` (build + stage + deploy; set `BABYGPT_USB_LETTER` if needed). On a **very small** volume, add `-SkipStandalone` to `full-usb-deploy.ps1` or `sync-installer-usb.ps1` so only `babygpt-server-kit` is written (no `babygpt-standalone` folder).
+Or one step: `npm run proliant:usb-sync` (build + stage + deploy; set `BBGPT_USB_LETTER` if needed). On a **very small** volume, add `-SkipStandalone` to `full-usb-deploy.ps1` or `sync-installer-usb.ps1` so only `babygpt-server-kit` is written (no `babygpt-standalone` folder).
 
 (Replace `D` with your USB’s drive letter—confirm in File Explorer that it is the **whole** installer stick, not a tiny spare partition.)
 

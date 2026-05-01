@@ -60,7 +60,7 @@ Or build on the server: npm ci && npm run build, then copy only if same OS/arch.
 
 Copy .env next to this folder or set env vars for AI keys (see .env.local.example in repo).
 
-If BABYGPT_APP_PASSWORD is set, you must also set BABYGPT_SESSION_SECRET or APIs return 500/401.
+If BBGPT_APP_PASSWORD is set, you must also set BBGPT_SESSION_SECRET or APIs return 500/401.
 "@
 Set-Content -Path (Join-Path $Dest "README-STANDALONE.txt") -Value $readme -Encoding UTF8
 

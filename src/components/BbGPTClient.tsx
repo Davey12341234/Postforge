@@ -142,7 +142,7 @@ export default function BbGPTClient() {
   /** Mirrors local questionnaire + memory; drives Welcome copy and Settings redo. */
   const [introIntakeDone, setIntroIntakeDone] = useState(false);
   const [credits, setCredits] = useState<CreditsStateV1 | null>(null);
-  /** Server wallet + login gate (when BABYGPT_APP_PASSWORD is set). */
+  /** Server wallet + login gate (when BBGPT_APP_PASSWORD is set). */
   const [serverCredits, setServerCredits] = useState(false);
   /** Stripe linkage from GET /api/credits (when gate on, or env-only flags when gate off). */
   const [stripeBilling, setStripeBilling] = useState<StripeBillingInfo | null>(null);
@@ -1483,7 +1483,7 @@ export default function BbGPTClient() {
             title={
               serverCredits
                 ? "Credits stored on the server (enforced when app password is enabled)."
-                : "Local credit balance in this browser. Enable BABYGPT_APP_PASSWORD for server wallet."
+                : "Local credit balance in this browser. Enable BBGPT_APP_PASSWORD for server wallet."
             }
           >
             {credits ? `${credits.balance} cr` : "…"}

@@ -7,8 +7,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-if ($env:BABYGPT_ALLOW_REMOVABLE_STAGING -match '^(1|true|yes)$') {
-  Write-Warning "BABYGPT_ALLOW_REMOVABLE_STAGING is set - skipping fixed-disk check (not recommended)."
+if ($env:BBGPT_ALLOW_REMOVABLE_STAGING -match '^(1|true|yes)$') {
+  Write-Warning "BBGPT_ALLOW_REMOVABLE_STAGING is set - skipping fixed-disk check (not recommended)."
   exit 0
 }
 
@@ -26,7 +26,7 @@ BabyGPT / Ubuntu ISO staging must be on a fixed disk (internal SSD/HDD), not USB
 
 Keep the repo on C: (or another internal volume). Download the ISO there; use Rufus only to write TO the SD/USB.
 
-Override (not recommended): set BABYGPT_ALLOW_REMOVABLE_STAGING=1
+Override (not recommended): set BBGPT_ALLOW_REMOVABLE_STAGING=1
 '@
   Write-Error ("{0}`n`n  Path: {1}`n  Drive: {2}: is Removable" -f $msg.Trim(), $StagingRoot, $letter)
 }

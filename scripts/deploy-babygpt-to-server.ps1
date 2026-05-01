@@ -92,7 +92,7 @@ if ($EnvFile -ne "") {
   $envFull = Resolve-Path -LiteralPath $EnvFile
   Write-Host "Uploading env file..."
   & scp @sshOpts $envFull "${User}@${Server}:~/$remoteKit/.env.provision"
-  $envPair = "BABYGPT_ENV_FILE=$provisionPath "
+  $envPair = "BBGPT_ENV_FILE=$provisionPath "
 }
 
 $remoteCmd = @"

@@ -48,7 +48,7 @@ export const BILLING_FAQ: FaqEntry[] = [
     id: "privacy",
     keywords: ["privacy", "data", "storage", "where", "retention"],
     title: "Data and privacy",
-    body: "Chats and credits can live in this browser (localStorage) or on the server when BABYGPT_APP_PASSWORD is set. Community posts in this app are in-memory on the server and reset on restart. No separate cloud sync unless you add it.",
+    body: "Chats and credits can live in this browser (localStorage) or on the server when BBGPT_APP_PASSWORD is set. Community posts in this app are in-memory on the server and reset on restart. No separate cloud sync unless you add it.",
   },
   {
     id: "coupon",

@@ -14,13 +14,13 @@ if [[ "${EUID:-0}" -ne 0 ]]; then
 fi
 
 ZIP_PATH="${1:-}"
-if [[ -z "${ZIP_PATH}" && -n "${BABYGPT_SRC_ZIP:-}" ]]; then
-  ZIP_PATH="${BABYGPT_SRC_ZIP}"
+if [[ -z "${ZIP_PATH}" && -n "${BBGPT_SRC_ZIP:-}" ]]; then
+  ZIP_PATH="${BBGPT_SRC_ZIP}"
 fi
 
 if [[ -z "${ZIP_PATH}" ]]; then
   die "Usage: sudo bash bootstrap.sh /path/to/babygpt-src.zip
-Or set BABYGPT_SRC_ZIP to the zip path (from this repo: scripts/archive-babygpt-for-server.ps1)."
+Or set BBGPT_SRC_ZIP to the zip path (from this repo: scripts/archive-babygpt-for-server.ps1)."
 fi
 
 if [[ ! -f "${ZIP_PATH}" ]]; then
@@ -61,10 +61,10 @@ rm -rf "${TMP}"
 
 chown -R babygpt:babygpt "${INSTALL_ROOT}"
 
-# Non-interactive: BABYGPT_ENV_FILE installs secrets before npm build (NEXT_PUBLIC_* and build-time env).
-if [[ -n "${BABYGPT_ENV_FILE:-}" && -f "${BABYGPT_ENV_FILE}" ]]; then
-  install -o babygpt -g babygpt -m 0600 "${BABYGPT_ENV_FILE}" "${INSTALL_ROOT}/.env"
-  echo "Installed ${INSTALL_ROOT}/.env from BABYGPT_ENV_FILE"
+# Non-interactive: BBGPT_ENV_FILE installs secrets before npm build (NEXT_PUBLIC_* and build-time env).
+if [[ -n "${BBGPT_ENV_FILE:-}" && -f "${BBGPT_ENV_FILE}" ]]; then
+  install -o babygpt -g babygpt -m 0600 "${BBGPT_ENV_FILE}" "${INSTALL_ROOT}/.env"
+  echo "Installed ${INSTALL_ROOT}/.env from BBGPT_ENV_FILE"
 elif [[ ! -f "${INSTALL_ROOT}/.env" ]]; then
   if [[ -f "${INSTALL_ROOT}/.env.local.example" ]]; then
     cp "${INSTALL_ROOT}/.env.local.example" "${INSTALL_ROOT}/.env"
