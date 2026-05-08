@@ -5,6 +5,9 @@ import type { ToolContext } from "./tools/types";
 import { executeToolWithRetry, tryRepairJson } from "./quantum-error-correction";
 import type ZAI from "z-ai-web-dev-sdk";
 import { mapTierToOpenAIModel, openaiChatCompletionJson } from "./openai-api";
+import { claudeChatCompletionJson, isClaudeTier } from "./anthropic-api";
+import { openRouterChatCompletionJson } from "./openrouter-api";
+import { groqChatCompletionJson } from "./groq-api";
 import { routeWithKolmogorovDetailed } from "./kolmogorov-router";
 
 type Zai = InstanceType<typeof ZAI>;
@@ -48,6 +51,12 @@ export async function runReactAgentLoop(opts: {
   zai?: Zai;
   /** When set, planner steps use OpenAI Chat Completions (JSON steps). */
   openaiApiKey?: string;
+  /** When set, planner steps use Anthropic Claude (JSON steps). */
+  anthropicApiKey?: string;
+  /** When set, planner steps use OpenRouter Claude (JSON steps — fallback). */
+  openrouterApiKey?: string;
+  /** When set, planner steps use Groq free tier (JSON steps — zero-cost fallback). */
+  groqApiKey?: string;
   /** User/assistant messages only (no leading system — added here) */
   messages: { role: "user" | "assistant" | "system"; content: string }[];
   preferredModel: ModelTier;
@@ -61,8 +70,8 @@ export async function runReactAgentLoop(opts: {
   routingReason: string;
   plannerModel: ModelTier;
 }> {
-  if (!opts.zai && !opts.openaiApiKey) {
-    throw new Error("runReactAgentLoop: provide zai or openaiApiKey");
+  if (!opts.zai && !opts.openaiApiKey && !opts.anthropicApiKey && !opts.openrouterApiKey && !opts.groqApiKey) {
+    throw new Error("runReactAgentLoop: provide zai, openaiApiKey, anthropicApiKey, openrouterApiKey, or groqApiKey");
   }
 
   const errorCorrectionLog: ErrorCorrectionLogEntry[] = [];
@@ -100,24 +109,45 @@ export async function runReactAgentLoop(opts: {
     const thinkingMode =
       opts.thinking ? ({ type: "enabled" as const } satisfies { type: "enabled" }) : { type: "disabled" as const };
 
-    let res: unknown;
-    if (opts.zai) {
-      res = await opts.zai.chat.completions.create({
+    let text: string;
+    if (opts.anthropicApiKey && isClaudeTier(plannerModel)) {
+      // Claude path via Anthropic — returns plain text directly
+      text = await claudeChatCompletionJson({
+        apiKey: opts.anthropicApiKey,
+        model: plannerModel,
+        messages: dialog.map((m) => ({ role: m.role, content: m.content })),
+      });
+    } else if (opts.openrouterApiKey && isClaudeTier(plannerModel)) {
+      // Claude path via OpenRouter — same result, no credit balance required
+      text = await openRouterChatCompletionJson({
+        apiKey: opts.openrouterApiKey,
+        model: plannerModel,
+        messages: dialog.map((m) => ({ role: m.role, content: m.content })),
+      });
+    } else if (opts.groqApiKey) {
+      // Groq free tier — Llama 3.3 70B, zero cost, no card required
+      text = await groqChatCompletionJson({
+        apiKey: opts.groqApiKey,
+        model: plannerModel,
+        messages: dialog.map((m) => ({ role: m.role, content: m.content })),
+      });
+    } else if (opts.zai) {
+      const res = await opts.zai.chat.completions.create({
         model: plannerModel,
         messages: dialog,
         stream: false,
         thinking: thinkingMode,
       });
+      text = extractAssistantText(res);
     } else {
       const omodel = mapTierToOpenAIModel(plannerModel);
-      res = await openaiChatCompletionJson({
+      const res = await openaiChatCompletionJson({
         apiKey: opts.openaiApiKey!,
         model: omodel,
         messages: dialog.map((m) => ({ role: m.role, content: m.content })),
       });
+      text = extractAssistantText(res);
     }
-
-    const text = extractAssistantText(res);
     dialog.push({ role: "assistant", content: text });
 
     const parsed = parseAgentJson(text);

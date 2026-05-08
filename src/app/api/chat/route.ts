@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { buildHolographicMessages } from "@/lib/holographic-context";
 import { resolveLlm } from "@/lib/llm-resolve";
 import { mapTierToOpenAIModel, streamOpenAIChat } from "@/lib/openai-api";
+import { streamClaudeChat, isClaudeTier } from "@/lib/anthropic-api";
+import { streamOpenRouterChat } from "@/lib/openrouter-api";
+import { streamGroqChat } from "@/lib/groq-api";
 import { mergeOpenAiThinkingDirective } from "@/lib/openai-thinking";
 import { routeWithKolmogorovDetailed } from "@/lib/kolmogorov-router";
 import { extractStyleDNA } from "@/lib/user-dna";
@@ -41,7 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "messages[] and a valid model tier are required" }, { status: 400 });
   }
 
-  const llm = resolveLlm();
+  const llm = resolveLlm(model);
   if (llm.provider === "none") {
     return NextResponse.json({ error: llm.message }, { status: 503 });
   }
@@ -98,6 +101,59 @@ export async function POST(req: NextRequest) {
   };
 
   try {
+    // -- Anthropic Claude ---------------------------------------------------
+    if (llm.provider === "anthropic" || isClaudeTier(routed)) {
+      const anthropicKey =
+        llm.provider === "anthropic"
+          ? llm.apiKey
+          : (process.env.ANTHROPIC_API_KEY?.trim() ?? "");
+      const stream = await streamClaudeChat({
+        apiKey: anthropicKey,
+        model: routed,
+        messages: msgs.map((m) => ({ role: m.role, content: m.content })),
+        thinking: thinking === "on",
+      });
+      return new Response(stream, {
+        headers: {
+          ...commonHeaders,
+          "X-bbGPT-Provider": "anthropic",
+          "X-bbGPT-Claude-Model": routed,
+        },
+      });
+    }
+
+    // -- OpenRouter (Claude via OpenAI-compat — fallback) -------------------
+    if (llm.provider === "openrouter") {
+      const stream = await streamOpenRouterChat({
+        apiKey: llm.apiKey,
+        model: routed,
+        messages: msgs.map((m) => ({ role: m.role, content: m.content })),
+      });
+      return new Response(stream, {
+        headers: {
+          ...commonHeaders,
+          "X-bbGPT-Provider": "openrouter",
+          "X-bbGPT-Claude-Model": routed,
+        },
+      });
+    }
+
+    // -- Groq (free tier — Llama 3.3 70B fallback for Claude tiers) ----------
+    if (llm.provider === "groq") {
+      const stream = await streamGroqChat({
+        apiKey: llm.apiKey,
+        model: routed,
+        messages: msgs.map((m) => ({ role: m.role, content: m.content })),
+      });
+      return new Response(stream, {
+        headers: {
+          ...commonHeaders,
+          "X-bbGPT-Provider": "groq",
+        },
+      });
+    }
+
+    // -- Z.AI / GLM ---------------------------------------------------------
     if (llm.provider === "zai") {
       const thinkingMode =
         thinking === "on" ? { type: "enabled" as const } : { type: "disabled" as const };
@@ -119,6 +175,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(result);
     }
 
+    // -- OpenAI fallback ----------------------------------------------------
     const omodel = mapTierToOpenAIModel(routed);
     let openaiMsgs = msgs.map((m) => ({
       role: m.role as "system" | "user" | "assistant",
@@ -128,7 +185,7 @@ export async function POST(req: NextRequest) {
       openaiMsgs = mergeOpenAiThinkingDirective(openaiMsgs);
     }
     const stream = await streamOpenAIChat({
-      apiKey: llm.apiKey,
+      apiKey: (llm as { apiKey: string }).apiKey,
       model: omodel,
       messages: openaiMsgs,
     });

@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "messages[] and a valid model tier are required" }, { status: 400 });
   }
 
-  const llm = resolveLlm();
+  const llm = resolveLlm(model);
   if (llm.provider === "none") {
     return NextResponse.json({ error: llm.message }, { status: 503 });
   }
@@ -80,24 +80,23 @@ export async function POST(req: NextRequest) {
   }));
 
   try {
+    const agentOpts = {
+      messages: agentMessages,
+      preferredModel: model,
+      kolmogorov: Boolean(quantum?.kolmogorov),
+      thinking: thinking === "on",
+      extraSystem: extra || undefined,
+    };
     const result = await runReactAgentLoop(
       llm.provider === "zai"
-        ? {
-            zai: llm.zai,
-            messages: agentMessages,
-            preferredModel: model,
-            kolmogorov: Boolean(quantum?.kolmogorov),
-            thinking: thinking === "on",
-            extraSystem: extra || undefined,
-          }
-        : {
-            openaiApiKey: llm.apiKey,
-            messages: agentMessages,
-            preferredModel: model,
-            kolmogorov: Boolean(quantum?.kolmogorov),
-            thinking: thinking === "on",
-            extraSystem: extra || undefined,
-          },
+        ? { ...agentOpts, zai: llm.zai }
+        : llm.provider === "anthropic"
+        ? { ...agentOpts, anthropicApiKey: llm.apiKey }
+        : llm.provider === "openrouter"
+        ? { ...agentOpts, openrouterApiKey: llm.apiKey }
+        : llm.provider === "groq"
+        ? { ...agentOpts, groqApiKey: llm.apiKey }
+        : { ...agentOpts, openaiApiKey: (llm as { apiKey: string }).apiKey },
     );
 
     const enc = new TextEncoder();
