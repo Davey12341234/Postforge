@@ -1,5 +1,8 @@
 import { resolveLlm } from "@/lib/llm-resolve";
 import { openaiChatCompletionJson, pickChatTextFromCompletion } from "@/lib/openai-api";
+import { claudeChatCompletionJson } from "@/lib/anthropic-api";
+import { openRouterChatCompletionJson } from "@/lib/openrouter-api";
+import { groqChatCompletionJson } from "@/lib/groq-api";
 
 export async function completeBillingText(opts: {
   system: string;
@@ -25,6 +28,34 @@ export async function completeBillingText(opts: {
       return { text: pickChatTextFromCompletion(data).trim() };
     }
 
+    if (llm.provider === "anthropic") {
+      const text = await claudeChatCompletionJson({
+        apiKey: llm.apiKey,
+        model: "claude-haiku",
+        messages,
+      });
+      return { text: text.trim() };
+    }
+
+    if (llm.provider === "openrouter") {
+      const text = await openRouterChatCompletionJson({
+        apiKey: llm.apiKey,
+        model: "claude-haiku",
+        messages,
+      });
+      return { text: text.trim() };
+    }
+
+    if (llm.provider === "groq") {
+      const text = await groqChatCompletionJson({
+        apiKey: llm.apiKey,
+        model: "claude-haiku",
+        messages,
+      });
+      return { text: text.trim() };
+    }
+
+    // Z.AI / GLM
     const zai = llm.zai;
     const raw = await zai.chat.completions.create({
       model: "glm-4-flash",

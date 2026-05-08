@@ -51,6 +51,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (llm.provider !== "zai") {
+      return NextResponse.json({ error: "Debate mode requires Z.AI or OpenAI" }, { status: 503 });
+    }
     const zai = llm.zai;
     const [a, b] = await Promise.all([
       zai.chat.completions.create({
