@@ -1,0 +1,23 @@
+[Unit]
+Description=BabyGPT (Next.js production server)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=babygpt
+Group=babygpt
+WorkingDirectory=/opt/babygpt
+Environment=NODE_ENV=production
+Environment=HOME=/opt/babygpt
+# Production secrets and AI keys — create /opt/babygpt/.env on the server (see .env.local.example).
+EnvironmentFile=-/opt/babygpt/.env
+ExecStart=/usr/bin/npm run start -- --hostname 0.0.0.0 --port 3000
+Restart=on-failure
+RestartSec=10
+
+# Allow the Node process to use server RAM for Next.js; adjust if you need tighter limits.
+# MemoryMax=8G
+
+[Install]
+WantedBy=multi-user.target

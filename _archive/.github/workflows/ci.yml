@@ -1,0 +1,57 @@
+# Lint, typecheck, unit tests, and production build (same checks as local `npm run ci:full`).
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Dummy values so `next build` can evaluate config and Prisma client generation.
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+      NEXTAUTH_SECRET: ci-build-secret-at-least-32-chars-long-ok
+      NEXTAUTH_URL: https://ci.example.com
+      ANTHROPIC_API_KEY: sk-ant-ci-placeholder
+      OPENAI_API_KEY: sk-ci-placeholder
+      STRIPE_SECRET_KEY: sk_test_ci_placeholder
+      STRIPE_PUBLISHABLE_KEY: pk_test_ci_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
+      STRIPE_PRICE_PRO: price_ci_placeholder_pro
+      STRIPE_PRICE_BUSINESS: price_ci_placeholder_business
+      STRIPE_PRICE_ENTERPRISE: price_ci_placeholder_enterprise
+      ADMIN_REVENUE_SECRET: ci-admin-revenue-secret-32chars-min
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Migration SQL (no UTF-8 BOM)
+        run: npm run check:migrations
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build

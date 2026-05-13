@@ -1,0 +1,12 @@
+rem GPT boot-stub: 550 MB FAT32 (ESP) + rest unformatted for /boot in Ubuntu installer.
+rem Uses PRIMARY + set id (EFI GUID) because "create partition efi" often fails on removable USB.
+
+select disk 1
+clean
+convert gpt
+create partition primary size=550
+set id=c12a7328-f81f-11d2-ba4b-00a0c93ec93b override
+format quick fs=fat32 label="BABYGPTBOOT"
+assign letter=T
+create partition primary
+exit

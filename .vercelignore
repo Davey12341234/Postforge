@@ -1,0 +1,37 @@
+# Vercel upload bundle — keep under platform limits (exclude large local trees).
+node_modules
+.next
+out
+build
+coverage
+.turbo
+
+# Not the Next.js app (local ISOs, archives, experiments)
+deploy
+_archive
+games
+.data
+.cursor
+
+# Secrets & local env
+.env
+.env.*
+!.env.local.example
+
+# Misc
+*.tsbuildinfo
+public/uploads
+
+# Large binary files that should never be deployed
+*.iso
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.mp4
+*.mkv
+*.avi
+*.dmg
+*.exe
+*.msi

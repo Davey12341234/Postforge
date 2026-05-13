@@ -1,0 +1,24 @@
+HP ProLiant DL360p Gen8 — flash installer USB for LEGACY / BIOS / CSM
+(Use this if the server shows Rufus's "BIOS Legacy Boot of UEFI only media" error.)
+
+Copying files onto the USB does NOT change GPT vs MBR — you must reflash in Rufus.
+
+Fast open (loads the ISO for you — you still set MBR + click START):
+  cd c:\Users\mckel\postforge
+  powershell -ExecutionPolicy Bypass -File .\scripts\open-rufus-mbr-legacy.ps1
+
+Manual:
+1. Rufus. Device = your USB (correct size — NOT C:).
+2. SELECT = deploy\proliant\staging\ubuntu-22.04-live-server-amd64.iso
+3. Partition scheme: MBR
+4. Target system: BIOS or UEFI-CSM  (NOT "UEFI only")
+5. START. Wait until finished.
+
+Then put BabyGPT back on the stick (drive letter may change after flash):
+   cd c:\Users\mckel\postforge
+   npm run build
+   .\scripts\full-usb-deploy.ps1 -DriveLetter D
+
+Server: F11 -> One-Time Boot to USB Drive Key.
+
+After Ubuntu: babygpt-server-kit + RUNBOOK.md (bootstrap.sh).

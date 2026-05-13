@@ -1,9 +1,7 @@
-import { logProductionEnvWarnings } from "@/lib/env-production-warnings";
-
 /**
- * Runs once when the Node server starts (production deploy).
- * @see https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
+ * Next.js instrumentation hook (runs once when the Node server starts).
+ * @see https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation
  */
 export async function register() {
-  logProductionEnvWarnings();
+  // bbGPT: add server bootstrap here if needed (metrics, tracing, etc.).
 }

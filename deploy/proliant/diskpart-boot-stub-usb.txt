@@ -1,0 +1,9 @@
+select disk 1
+clean
+convert gpt
+create partition primary size=550
+set id=c12a7328-f81f-11d2-ba4b-00a0c93ec93b override
+format quick fs=fat32 label="UBUNTU-ESP"
+assign letter=T
+create partition primary
+exit
