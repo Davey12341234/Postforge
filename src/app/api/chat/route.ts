@@ -11,6 +11,7 @@ import { extractStyleDNA } from "@/lib/user-dna";
 import { adiabaticSystemPrompt } from "@/lib/adiabatic-prompt";
 import { guardChatSend } from "@/lib/chat-route-guard";
 import { parseModelTierBody } from "@/lib/model-tier";
+import { trimContext } from "@/lib/context-trim";
 import type { ChatMessage, ModelTier } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -91,6 +92,8 @@ export async function POST(req: NextRequest) {
       ? msgs.map((m) => (m.role === "system" ? { ...m, content: merged } : m))
       : [{ role: "system", content: merged }, ...msgs];
   }
+
+  msgs = trimContext(msgs);
 
   const commonHeaders = {
     "Content-Type": "text/event-stream; charset=utf-8",

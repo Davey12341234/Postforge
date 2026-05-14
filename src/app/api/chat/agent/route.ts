@@ -7,6 +7,7 @@ import { parseModelTierBody } from "@/lib/model-tier";
 import type { ChatMessage, ModelTier } from "@/lib/types";
 import { extractStyleDNA } from "@/lib/user-dna";
 import { resolveLlm } from "@/lib/llm-resolve";
+import { trimContext } from "@/lib/context-trim";
 
 export const runtime = "nodejs";
 
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     return gated;
   }
 
-  const folded = buildHolographicMessages(messages, { enabled: quantum?.holographic });
+  const folded = trimContext(buildHolographicMessages(messages, { enabled: quantum?.holographic }));
   const extraParts = [memoryPrompt, skillPrompt].filter(Boolean);
   if (quantum?.dna) {
     const dna = extractStyleDNA(messages as ChatMessage[]);
